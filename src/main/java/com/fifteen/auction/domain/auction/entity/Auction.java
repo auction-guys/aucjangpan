@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.auction.entity;
 
+import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -16,7 +17,9 @@ public class Auction extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Todo: Product
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     private Long winnerId;
 
@@ -52,9 +55,10 @@ public class Auction extends BaseEntity {
     private LocalDateTime expiresAt;
 
     public Auction(
-            String auctionNum, Long startPrice, Long buyNowPrice, int bidUnit,
+            Product product, String auctionNum, Long startPrice, Long buyNowPrice, int bidUnit,
             boolean isBuyNowSet, boolean isAutoExtensible, LocalDateTime expiresAt
     ) {
+        this.product = product;
         this.auctionNum = auctionNum;
         this.startPrice = startPrice;
         this.buyNowPrice = isBuyNowSet ? 0 : buyNowPrice;

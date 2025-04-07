@@ -1,5 +1,7 @@
 package com.fifteen.auction.domain.product.entity;
 
+import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.entity.BaseEntity;
 import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
