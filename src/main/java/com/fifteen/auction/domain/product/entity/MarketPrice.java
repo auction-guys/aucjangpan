@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.product.entity;
 
-import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
