@@ -1,10 +1,7 @@
 package com.fifteen.auction.domain.auction.entity;
 
 import com.fifteen.auction.global.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,26 +20,35 @@ public class Auction extends BaseEntity {
 
     private Long winnerId;
 
+    @Column(nullable = false, length = 10)
     private String auctionNum;
 
+    @Column(nullable = false)
     private Long startPrice;
 
+    @Column(nullable = false)
     private Long buyNowPrice;
 
     private Long winPrice;
 
+    @Column(nullable = false)
     private int bidUnit;
 
+    @Column(nullable = false)
     private int views;
 
+    @Column(nullable = false)
     private boolean isBuyNowSet;
 
+    @Column(nullable = false)
     private boolean isAutoExtensible;
 
+    @Enumerated(EnumType.STRING)
     private AuctionStatus status;
 
     private LocalDateTime doneAt;
 
+    @Column(nullable = false)
     private LocalDateTime expiresAt;
 
     public Auction(
@@ -51,12 +57,13 @@ public class Auction extends BaseEntity {
     ) {
         this.auctionNum = auctionNum;
         this.startPrice = startPrice;
-        this.buyNowPrice = buyNowPrice;
+        this.buyNowPrice = isBuyNowSet ? 0 : buyNowPrice;
         this.bidUnit = bidUnit;
         this.isBuyNowSet = isBuyNowSet;
         this.isAutoExtensible = isAutoExtensible;
         this.expiresAt = expiresAt;
         this.status = AuctionStatus.PENDING;
+        this.views = 0;
     }
 
     public void open() {
