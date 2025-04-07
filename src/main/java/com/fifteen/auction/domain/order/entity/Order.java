@@ -2,6 +2,7 @@ package com.fifteen.auction.domain.order.entity;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.order.enums.OrderStatus;
+import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -22,4 +23,12 @@ public class Order extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id")
     private Auction auction;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public Order(Auction auction) {
+        this.auction = auction;
+    }
 }

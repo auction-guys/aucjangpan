@@ -16,7 +16,7 @@ public class PaymentController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final PaymentService paymentService;
 
-    @PostMapping(value = "api/v1/payments/confirm")
+    @PostMapping("api/v1/payments/confirm")
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
             @RequestParam String orderId,
             @RequestParam String amount,
