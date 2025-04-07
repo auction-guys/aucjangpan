@@ -30,7 +30,7 @@ public class PaymentService {
     public ConfirmResponse confirm(String orderId, String amount, String paymentKey) throws IOException, ParseException {
 
         Order order = orderRepository.findById(Long.parseLong(orderId)) // 이부분 더 생각해보기 받은 order id가 아니라 보낼때 쓴 id로 받아야 할듯
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
 
         if(!order.getId().equals(Long.parseLong(orderId)) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))){
             throw new ServerException(ErrorCode.ORDER_NOT_MACHED);

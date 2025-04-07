@@ -13,7 +13,7 @@ public enum ErrorCode {
      * '// user 에러 코드' 와 같은 주석으로 도메인을 분리해주시면 됩니다.
      * 상수를 선언하실 때, code 부분은 '도메인-숫자'의 형식으로 해주세요. 예) USER-1
      */
-    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
+    ORDER_NOT_FOUNDED(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_NOT_MACHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문정보가 일치하지 않습니다."),
 
     // Auction Exceptions
