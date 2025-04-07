@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.product.entity;
 
 import com.fifteen.auction.global.entity.BaseEntity;
+import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,8 +24,8 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
     private ProductCategory category;
 
     @Column(nullable = false, length = 100)
