@@ -74,6 +74,11 @@ public class Auction extends BaseEntity {
         this.status = AuctionStatus.OPEN;
     }
 
+    public void cancel(LocalDateTime doneAt) {
+        this.status = AuctionStatus.CANCELED;
+        this.doneAt = doneAt;
+    }
+
     public void finalize(Long winnerId, Long winPrice, LocalDateTime doneAt) {
         this.winnerId = winnerId;
         this.winPrice = winPrice;
@@ -91,5 +96,20 @@ public class Auction extends BaseEntity {
     public void misCarry() {
         this.status = AuctionStatus.MISCARRY;
         this.doneAt = this.expiresAt;
+    }
+
+    public void updateInfo(
+            Long startPrice, Long buyNowPrice, Integer bidUnit,
+            Boolean isBuyNowSet, Boolean isAutoExtensible
+    ) {
+        this.startPrice = useIfNotNull(startPrice, this.startPrice);
+        this.buyNowPrice = useIfNotNull(buyNowPrice, this.buyNowPrice);
+        this.bidUnit = useIfNotNull(bidUnit, this.bidUnit);
+        this.isBuyNowSet = useIfNotNull(isBuyNowSet, this.isBuyNowSet);
+        this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
+    }
+
+    private <T> T useIfNotNull(T input, T existing) {
+        return existing == null ? input : existing;
     }
 }
