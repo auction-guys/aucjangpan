@@ -1,5 +1,7 @@
 package com.fifteen.auction.domain.favorite.entity;
 
+import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

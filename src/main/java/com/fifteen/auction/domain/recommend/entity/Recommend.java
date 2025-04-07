@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.recommend.entity;
 
+import com.fifteen.auction.domain.auction.entity.Auction;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
