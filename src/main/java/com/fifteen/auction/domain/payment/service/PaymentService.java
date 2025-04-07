@@ -78,6 +78,7 @@ public class PaymentService {
 
         InputStream responseStream = isSuccess ? connection.getInputStream() : connection.getErrorStream();
 
+        // 결제 성공 및 실패 비즈니스 로직을 구현하세요.
         JSONParser parser = new JSONParser();
         Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8);
         JSONObject jsonObject = (JSONObject) parser.parse(reader);
