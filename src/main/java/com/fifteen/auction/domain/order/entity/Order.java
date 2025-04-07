@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.order.entity;
 
+import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
