@@ -24,7 +24,7 @@ public class Auction extends BaseEntity {
     private Long winnerId;
 
     @Column(nullable = false, length = 10)
-    private String auctionNum;
+    private String auctionSeq;
 
     @Column(nullable = false)
     private Long startPrice;
@@ -55,11 +55,11 @@ public class Auction extends BaseEntity {
     private LocalDateTime expiresAt;
 
     public Auction(
-            Product product, String auctionNum, Long startPrice, Long buyNowPrice, int bidUnit,
+            Product product, String auctionSeq, Long startPrice, Long buyNowPrice, int bidUnit,
             boolean isBuyNowSet, boolean isAutoExtensible, LocalDateTime expiresAt
     ) {
         this.product = product;
-        this.auctionNum = auctionNum;
+        this.auctionSeq = auctionSeq;
         this.startPrice = startPrice;
         this.buyNowPrice = isBuyNowSet ? 0 : buyNowPrice;
         this.bidUnit = bidUnit;
