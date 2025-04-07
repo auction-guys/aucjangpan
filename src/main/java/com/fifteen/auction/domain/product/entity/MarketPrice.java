@@ -16,7 +16,7 @@ public class MarketPrice extends BaseEntity {
 
     @OneToOne
     @JoinColumn(name = "product_id")
-    private Product product;;
+    private Product product;
     private Long minMarketPrice;
     private Long maxMarketPrice;
     private LocalDateTime createdAt;
