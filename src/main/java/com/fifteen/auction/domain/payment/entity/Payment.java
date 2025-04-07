@@ -20,6 +20,7 @@ public class Payment {
     private String paymentKey;
     private String paymentMethod;
     private int amount;
+    @Enumerated(EnumType.STRING)
     private PaymentStatus status = PaymentStatus.READY;
     private LocalDateTime requestedAt;
     private LocalDateTime approvedAt;

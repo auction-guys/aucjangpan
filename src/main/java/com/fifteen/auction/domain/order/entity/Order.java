@@ -15,7 +15,8 @@ public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private OrderStatus Status = OrderStatus.PENDING;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.PENDING;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id")

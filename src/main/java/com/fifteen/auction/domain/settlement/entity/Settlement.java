@@ -18,6 +18,7 @@ public class Settlement {
     private Long id;
     private int charge;
     private int settlement_amount;
+    @Enumerated(EnumType.STRING)
     private SettlementStatus status = SettlementStatus.PENDING;
     private LocalDateTime created_at;
     private LocalDateTime settled_at;
