@@ -17,10 +17,11 @@
 
 
     async function main() {
+        const orderId = "1";
         const button = document.getElementById("payment-button");
 
         // 주문정보 가져오기
-        const res = await fetch("/api/v1/orders/{orderId}/payment"); // api추가!!!!!!!!!!!!!
+        const res = await fetch("/api/v1/orders/"+orderId+"/payment"); // api추가!!!!!!!!!!!!!
         const data = await res.json();
 
         // ------  결제위젯 초기화 ------
@@ -54,13 +55,12 @@
         // ------ '결제하기' 버튼 누르면 결제창 띄우기 ------
         button.addEventListener("click", async function () {
             await widgets.requestPayment({
-                orderId: data.orderId,
+                orderId: orderId,
                 orderName: data.orderName,
                 successUrl: window.location.origin + "/api/v1/payments/confirm",
-                failUrl: window.location.origin + "/fail.html",
+                failUrl: window.location.origin + "/fail.html", // 작성해야함
                 customerEmail: data.customerEmail,
                 customerName: data.customerName,
-                customerMobilePhone: data.customerMobilePhone,
             });
         });
     }
