@@ -23,14 +23,14 @@ public class ProductCategory extends BaseEntity {
     /** 상위 카테고리 여부 확장성 고려 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    private Category parent;
+    private ProductCategory parent;
 
-    private Category(String name, Category parent) {
+    private ProductCategory(String name, ProductCategory parent) {
         this.name = name;
         this.parent = parent;
     }
 
-    public static Category create(String name, Category parent) {
-        return new Category(name, parent);
+    public static ProductCategory create(String name, ProductCategory parent) {
+        return new ProductCategory(name, parent);
     }
 }
