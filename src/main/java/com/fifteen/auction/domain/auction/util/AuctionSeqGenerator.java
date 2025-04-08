@@ -4,8 +4,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
-import java.util.Locale;
 import java.util.Random;
 
 @Component
@@ -13,7 +11,7 @@ public class AuctionSeqGenerator {
     private final Random random = new Random();
 
     private static final String CANDIDATE_STRING = "123456789abcdefghklmnpqrstwxyzABCDEFGHKLMNPQRSTWXYZ";
-    private static final int RAND_LENGTH = 4;
+    private static final int RAND_LENGTH = 6;
 
     public String generate(LocalDate date) {
         String yyMM = date.format(DateTimeFormatter.ofPattern("yyMM"));
