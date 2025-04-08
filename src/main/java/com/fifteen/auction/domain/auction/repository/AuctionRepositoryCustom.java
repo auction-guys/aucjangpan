@@ -12,7 +12,4 @@ public interface AuctionRepositoryCustom {
     Page<AuctionListItem> findAllOpenByCond(Pageable pageable);
 
     Optional<Auction> findOpenOneByAuctionSeq(String auctionSeq);
-
-    Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId);
-
 }

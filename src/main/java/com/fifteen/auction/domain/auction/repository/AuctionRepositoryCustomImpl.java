@@ -57,18 +57,6 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
         return Optional.ofNullable(result);
     }
 
-
-    @Override
-    public Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId) {
-        Auction result = queryFactory
-                .selectFrom(auction)
-                .join(auction.product, product).fetchJoin()
-                .join(product.seller, user).fetchJoin()
-                .where(auctionSeqEquals(auctionSeq), sellerIdEquals(sellerId))
-                .fetchOne();
-        return Optional.ofNullable(result);
-    }
-
     private BooleanExpression statusIsOpen() {
         return auction.status.eq(AuctionStatus.OPEN);
     }

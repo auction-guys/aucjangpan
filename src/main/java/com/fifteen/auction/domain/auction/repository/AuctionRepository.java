@@ -14,4 +14,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
             WHERE a.auctionSeq = :auctionSeq AND s.id = :sellerId 
             """)
     Optional<Auction> findOneBySeqAndSellerId(@Param("auctionSeq") String auctionSeq, @Param("sellerId") Long sellerId);
+
+    @Query("SELECT a FROM Auction a JOIN FETCH a.product p JOIN FETCH p.seller s WHERE a.auctionSeq = :auctionSeq")
+    Optional<Auction> findOpenOneBySeqWithSeller(@Param("auctionSeq") String auctionSeq);
 }
