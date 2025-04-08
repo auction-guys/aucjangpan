@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -41,7 +42,6 @@ public class OrderService {
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
-    @GetMapping("\"/api/v1/orders/\"+orderId+\"/payment\"")
     public OrderInfoResponse getOrderInfo(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
@@ -126,7 +126,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void cancleOrder(Long loginedId, String orderId) {
+    public void cancelOrder(Long loginedId, String orderId) {
         User user = userRepository.findById(loginedId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
         Order order = orderRepository.findById(Long.parseLong(orderId))
@@ -137,7 +137,7 @@ public class OrderService {
         }
 
         // 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
-        order.cancle();
+        order.cancel();
     }
 
     // 구매 확정

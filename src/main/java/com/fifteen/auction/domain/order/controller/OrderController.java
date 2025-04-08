@@ -21,7 +21,7 @@ public class OrderController {
 
     @GetMapping("/api/v1/orders/{orderId}/payment")
     public ResponseEntity<OrderInfoResponse> getOrderInfo(
-            @RequestParam Long orderId) {
+            @PathVariable Long orderId) {
         return ResponseEntity.ok(orderService.getOrderInfo(orderId));
     }
 
@@ -50,11 +50,11 @@ public class OrderController {
         return ResponseEntity.ok(Response.of(orderService.findOrder(loginedId, orderId)));
     }
 
-    @DeleteMapping("api/v1/orders/{orderId}/cancle")
-    public ResponseEntity<Void> cancleOrder(
+    @DeleteMapping("api/v1/orders/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
             Long loginedId,
             @PathVariable String orderId) {
-        orderService.cancleOrder(loginedId, orderId);
+        orderService.cancelOrder(loginedId, orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

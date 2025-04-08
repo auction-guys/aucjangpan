@@ -3,6 +3,7 @@ package com.fifteen.auction.domain.payment.entity;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,7 +20,7 @@ public class Payment {
     private String mid;
     private String paymentKey;
     private String paymentMethod;
-    private int amount;
+    private Long amount;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status = PaymentStatus.READY;
     private LocalDateTime requestedAt;
@@ -28,4 +29,20 @@ public class Payment {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
+
+    @Builder
+    public Payment(String mid, String paymentKey, String paymentMethod, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
+        this.mid = mid;
+        this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
+        this.amount = amount;
+        this.status = status;
+        this.requestedAt = requestedAt;
+        this.approvedAt = approvedAt;
+        this.order = order;
+    }
+
+    public void cancel(){
+        this.status = PaymentStatus.CANCELED;
+    }
 }

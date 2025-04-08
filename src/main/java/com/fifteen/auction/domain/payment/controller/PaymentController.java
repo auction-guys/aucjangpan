@@ -1,9 +1,11 @@
 package com.fifteen.auction.domain.payment.controller;
 
+import com.fifteen.auction.domain.payment.dto.request.SavePaymentRequset;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +22,13 @@ public class PaymentController {
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
             @RequestParam String orderId,
             @RequestParam String amount,
-            @RequestParam String paymentKey) throws Exception {
+            @RequestParam String paymentKey,
+            Long loginedId) throws Exception {
 
-        return ResponseEntity.ok(Response.of(paymentService.confirm(orderId, amount, paymentKey)));
+        SavePaymentRequset dto = paymentService.confirm(orderId, amount, paymentKey, loginedId);
+
+        ConfirmResponse confirmResponse = paymentService.savePayment(dto, orderId, amount);
+
+        return ResponseEntity.ok(Response.of(confirmResponse));
     }
 }

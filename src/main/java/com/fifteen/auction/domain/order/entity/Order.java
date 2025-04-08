@@ -4,6 +4,7 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.entity.BaseEntity;
+import java.util.UUID;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,8 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
 
+    private final String idempotencyKey = UUID.randomUUID().toString();
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id")
     private Auction auction;
@@ -33,11 +36,14 @@ public class Order extends BaseEntity {
         this.user = user;
     }
 
-    public void cancle(){
-        this.status = OrderStatus.CANCLED;
+    public void cancel(){
+        this.status = OrderStatus.CANCELED;
     }
 
     public void confirm(){
         this.status = OrderStatus.CONFIRMED;
+    }
+    public void paid(){
+        this.status = OrderStatus.PAID;
     }
 }
