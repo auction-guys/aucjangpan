@@ -61,7 +61,7 @@ public class Auction extends BaseEntity {
         this.product = product;
         this.auctionSeq = auctionSeq;
         this.startPrice = startPrice;
-        this.buyNowPrice = isBuyNowSet ? 0 : buyNowPrice;
+        this.buyNowPrice = isBuyNowSet ? buyNowPrice : 0;
         this.bidUnit = bidUnit;
         this.isBuyNowSet = isBuyNowSet;
         this.isAutoExtensible = isAutoExtensible;
