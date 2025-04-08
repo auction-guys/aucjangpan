@@ -9,9 +9,10 @@ import java.util.Optional;
 
 public interface AuctionRepositoryCustom {
 
-    Page<AuctionListItem> findAllByCond(Pageable pageable);
+    Page<AuctionListItem> findAllOpenByCond(Pageable pageable);
 
     Optional<Auction> findOpenOneByAuctionSeq(String auctionSeq);
 
-    Optional<Auction> findOpenOneBySeqAndSellerId(String auctionSeq, Long sellerId);
+    Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId);
+
 }

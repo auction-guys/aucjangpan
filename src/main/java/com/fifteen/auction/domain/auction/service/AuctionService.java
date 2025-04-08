@@ -48,7 +48,7 @@ public class AuctionService {
     @Transactional
     public void cancel(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
-                .findOpenOneBySeqAndSellerId(auctionSeq, sellerId)
+                .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         auction.cancel(LocalDateTime.now());
     }
@@ -56,7 +56,7 @@ public class AuctionService {
     @Transactional
     public void open(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
-                .findOpenOneBySeqAndSellerId(auctionSeq, sellerId)
+                .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         auction.open();
     }
@@ -66,7 +66,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-
+        
         auction.updateInfo(
                 req.getStartPrice(),
                 req.getBuyNowPrice(),
@@ -80,7 +80,7 @@ public class AuctionService {
     @Transactional(readOnly = true)
     public Page<AuctionListItem> findAll(PageCond cond) {
         Pageable pageable = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
-        return auctionRepository.findAllByCond(pageable);
+        return auctionRepository.findAllOpenByCond(pageable);
     }
 
     @Transactional(readOnly = true)

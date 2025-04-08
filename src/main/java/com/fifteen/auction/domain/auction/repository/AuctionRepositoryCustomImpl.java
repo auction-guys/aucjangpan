@@ -27,7 +27,7 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
     }
 
     @Override
-    public Page<AuctionListItem> findAllByCond(Pageable pageable) {
+    public Page<AuctionListItem> findAllOpenByCond(Pageable pageable) {
         List<AuctionListItem> result = queryFactory
                 .selectFrom(auction)
                 .join(auction.product, product).fetchJoin()
@@ -59,12 +59,12 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
 
 
     @Override
-    public Optional<Auction> findOpenOneBySeqAndSellerId(String auctionSeq, Long sellerId) {
+    public Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId) {
         Auction result = queryFactory
                 .selectFrom(auction)
                 .join(auction.product, product).fetchJoin()
                 .join(product.seller, user).fetchJoin()
-                .where(auctionSeqEquals(auctionSeq), sellerIdEquals(sellerId), statusIsOpen())
+                .where(auctionSeqEquals(auctionSeq), sellerIdEquals(sellerId))
                 .fetchOne();
         return Optional.ofNullable(result);
     }

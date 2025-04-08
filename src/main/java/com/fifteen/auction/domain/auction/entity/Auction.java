@@ -110,6 +110,6 @@ public class Auction extends BaseEntity {
     }
 
     private <T> T useIfNotNull(T input, T existing) {
-        return existing == null ? input : existing;
+        return input == null ? existing : input;
     }
 }

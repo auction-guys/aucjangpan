@@ -24,6 +24,7 @@ public class AuctionController {
 
     private final AuctionService auctionService;
 
+    // TODO: AuthUser 적용
     @PostMapping("/v1/auctions")
     ResponseEntity<Object> create(@RequestBody AuctionCreateRequest req) {
         String auctionSeq = auctionService.create(req);
