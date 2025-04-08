@@ -2,9 +2,9 @@ package com.fifteen.auction.domain.payment.service;
 
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
-import com.fifteen.auction.domain.order.service.OrderService;
 import com.fifteen.auction.domain.payment.dto.request.SavePaymentRequset;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
+import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.entity.Payment;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
@@ -23,12 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +34,6 @@ public class PaymentService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final OrderService orderService;
 
     public SavePaymentRequset confirm(String orderId, String amount, String paymentKey, Long loginedId) throws IOException, ParseException {
 
@@ -45,7 +42,7 @@ public class PaymentService {
 
         // orderId, amount 변조 검증
         if(!order.getUser().getId().equals(loginedId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))){
-            throw new ServerException(ErrorCode.ORDER_NOT_MACHED);
+            throw new ServerException(ErrorCode.ORDER_NOT_MATCHED);
         }
 
         // Toss 승인 요청 API JSON 생성
@@ -92,44 +89,61 @@ public class PaymentService {
             throw new PaymentFailException(HttpStatus.valueOf(Integer.parseInt(error.get("code").toString())), error.get("message").toString());
         }
 
+        // 성공
         return SavePaymentRequset.builder()
                 .jsonObject(jsonObject)
                 .order(order)
                 .build();
     }
 
+    // 결제 정보 저장
     @Transactional
-    public ConfirmResponse savePayment(SavePaymentRequset dto, String orderId, String amount) throws IOException, ParseException {
+    public ConfirmResponse savePayment(SavePaymentRequset dto) throws IOException, ParseException {
         JSONObject jsonObject = dto.getJsonObject();
+        Order order = dto.getOrder();
 
-        try {
-            if(!String.valueOf(jsonObject.get("orderId")).equals(orderId) && String.valueOf(jsonObject.get("amount")).equals(amount)){
-                throw new ClientException(ErrorCode.ORDER_NOT_MACHED);
+        // 결제 정보 검증
+        try{
+            if(!order.getId().equals(jsonObject.get("orderId")) && order.getAuction().getWinPrice().equals(jsonObject.get("amount"))){
+
+                throw new ClientException(ErrorCode.PAYMENT_INFO_EXCEPTION);
             }
+        }catch (Exception e){
+            // 결제 정보 오류 시 결제 취소
+            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")),e.getMessage(),order.getId());
+            throw e;
+        }
 
+        // 결제 정보 저장
+        try {
+            // 들어갈 데이터 타입 변환    이후 깔끔하게 할 방법 찾기
             String rawRequest = String.valueOf(jsonObject.get("requestedAt"));
             String requestedAt = rawRequest.substring(0, 19);
             String rawApprovedAt = String.valueOf(jsonObject.get("approvedAt"));
             String approvedAt = rawApprovedAt.substring(0, 19);
+            JSONObject card = (JSONObject) jsonObject.get("card");
+            String cardNumber = card.get("number").toString();
 
             paymentRepository.save(Payment.builder()
                             .mid(String.valueOf(jsonObject.get("mid")))
                             .paymentKey(String.valueOf(jsonObject.get("paymentKey")))
                             .paymentMethod(String.valueOf(jsonObject.get("paymentMethod")))
+                            .cardNumber(cardNumber)
                             .amount(Long.parseLong(String.valueOf(jsonObject.get("amount"))))
                             .status(PaymentStatus.valueOf(String.valueOf(jsonObject.get("status"))))
                             .requestedAt(LocalDateTime.parse(requestedAt))
                             .approvedAt(LocalDateTime.parse(approvedAt))
-                            .order(orderRepository.findById(Long.parseLong(orderId)).get())
+                            .order(order)
                             .build());
+            // 주문 상태 변환
             dto.getOrder().paid();
-
         } catch (Exception e) {
-            String paymentKey = String.valueOf(jsonObject.get("paymentKey"));
-            cancelPayment(paymentKey, Long.parseLong(orderId), e.getMessage());
+            // 결제 정보 저장 중 오류 - 현재는 결제 취소를 하지만 고도화 때 결제 취소 => 취소 X 로그 남김으로 변경 예정
+            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")),e.getMessage(),order.getId());
             throw e;
         }
 
+        // 주문 성공, 데이터 저장 성공
         return new ConfirmResponse(
             jsonObject.get("mid").toString(),
             jsonObject.get("paymentKey").toString(),
@@ -140,9 +154,32 @@ public class PaymentService {
         );
     }
 
-    // 결제 취소
+
+    // 결제 취소 검증 - 구매자 결제 취소
+    @Transactional
+    public void cancelPaymentByUser(String paymentKey, String cancelReason, Long loginedId) throws IOException, ParseException {
+        Payment payment = paymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
+        Order order = payment.getOrder();
+        // 권한 검증
+        if(!order.getUser().getId().equals(loginedId)){
+            throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
+        }
+        cancelPayment(paymentKey, cancelReason, order.getId());
+        payment.cancel(); // 이게 환불인가 환불을 구현하는가
+    }
+    // 결제 취소 검증 - 결제 중 오류로 결제 취소
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void cancelPayment(String paymentKey, Long orderId, String cancelReason) throws IOException, ParseException {
+    public void cancelInvalidPayment(String paymentKey, String cancelReason, Long orderId) throws IOException, ParseException {
+        cancelPayment(paymentKey, cancelReason, orderId);
+    }
+
+    // 결제 취소 공통 로직
+    public void cancelPayment(String paymentKey, String cancelReason, Long orderId) throws IOException, ParseException {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+
         // Toss 인증용 헤더 설정
         // 토스페이먼츠 API는 시크릿 키를 사용자 ID로 사용하고, 비밀번호는 사용하지 않습니다.
         // 비밀번호가 없다는 것을 알리기 위해 시크릿 키 뒤에 콜론을 추가합니다.
@@ -150,9 +187,6 @@ public class PaymentService {
         Base64.Encoder encoder = Base64.getEncoder();
         byte[] encodedBytes = encoder.encode((widgetSecretKey + ":").getBytes(StandardCharsets.UTF_8));
         String authorizations = "Basic " + new String(encodedBytes);
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
 
         // HTTP POST 요청
         // 결제 취소 요청
@@ -184,8 +218,28 @@ public class PaymentService {
             JSONObject error = (JSONObject) jsonObject.get("error");
             throw new PaymentFailException(HttpStatus.valueOf(Integer.parseInt(error.get("code").toString())), error.get("message").toString());
         }
+    }
 
-        Optional<Payment> payment = paymentRepository.findByPaymentKey(paymentKey);
-        payment.ifPresent(Payment::cancel);
+    @Transactional(readOnly = true)
+    public FindPaymentResponse findPayment(String paymentKey, Long loginedId) {
+        Payment payment = paymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
+        Order order = payment.getOrder();
+        // 권한 검증
+        if(!order.getUser().getId().equals(loginedId)){
+            throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
+        }
+
+        return FindPaymentResponse.builder()
+                .paymentKey(payment.getPaymentKey())
+                .orderId(String.valueOf(order.getId()))
+                .orderName(order.getAuction().getProduct().getName())
+                .status(payment.getStatus().toString())
+                .requestAt(payment.getRequestedAt().toString())
+                .approvedAt(payment.getApprovedAt().toString())
+                .paymentMethod(payment.getPaymentMethod())
+                .cardNumber(payment.getCardNumber())
+                .amount(order.getAuction().getWinPrice().toString())
+                .build();
     }
 }

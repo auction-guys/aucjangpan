@@ -20,6 +20,7 @@ public class Payment {
     private String mid;
     private String paymentKey;
     private String paymentMethod;
+    private String cardNumber;
     private Long amount;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status = PaymentStatus.READY;
@@ -31,10 +32,11 @@ public class Payment {
     private Order order;
 
     @Builder
-    public Payment(String mid, String paymentKey, String paymentMethod, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
+    public Payment(String mid, String paymentKey, String paymentMethod, String cardNumber, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
         this.mid = mid;
         this.paymentKey = paymentKey;
         this.paymentMethod = paymentMethod;
+        this.cardNumber = cardNumber;
         this.amount = amount;
         this.status = status;
         this.requestedAt = requestedAt;

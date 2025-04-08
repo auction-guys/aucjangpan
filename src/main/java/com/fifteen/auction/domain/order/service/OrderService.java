@@ -110,7 +110,7 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
         return OrderResponse.builder()
@@ -133,7 +133,7 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
         // 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
@@ -149,7 +149,7 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
         if(!order.getStatus().equals(OrderStatus.PAID)){
             throw new ClientException(ErrorCode.ORDER_ALREADY_PROCESSED);
