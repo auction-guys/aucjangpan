@@ -21,20 +21,22 @@ public class OrderController {
 
     @GetMapping("/api/v1/orders/{orderId}/payment")
     public ResponseEntity<OrderInfoResponse> getOrderInfo(
-            @RequestParam Long orderId){
+            @RequestParam Long orderId) {
         return ResponseEntity.ok(orderService.getOrderInfo(orderId));
     }
 
     @PostMapping("api/v1/orders")
-    public ResponseEntity<Void> createOrder(@RequestBody CreateOrderRequest dto){
-        orderService.createOrder(dto);
+    public ResponseEntity<Void> createOrder(
+            Long loginedId,
+            @RequestBody CreateOrderRequest dto) {
+        orderService.createOrder(loginedId, dto);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("api/v1/orders")
     public ResponseEntity<Response<Page<OrdersResponse>>> findOrders(
             Long loginedId,
-            PageCond pageCond){
+            PageCond pageCond) {
         Response<Page<OrdersResponse>> response = orderService.findOrders(loginedId, pageCond);
 
         return ResponseEntity.ok(response);
@@ -43,7 +45,7 @@ public class OrderController {
     @GetMapping("api/v1/orders/{orderId}")
     public ResponseEntity<Response<OrderResponse>> findOrder(
             Long loginedId,
-            @PathVariable String orderId){
+            @PathVariable String orderId) {
 
         return ResponseEntity.ok(Response.of(orderService.findOrder(loginedId, orderId)));
     }
@@ -51,8 +53,17 @@ public class OrderController {
     @DeleteMapping("api/v1/orders/{orderId}/cancle")
     public ResponseEntity<Void> cancleOrder(
             Long loginedId,
-            @PathVariable String orderId){
+            @PathVariable String orderId) {
         orderService.cancleOrder(loginedId, orderId);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping("api/v1/orders/{orderId}/confirmed")
+    public ResponseEntity<Void> confirmOrder(
+            Long loginedId,
+            @PathVariable String orderId) {
+        orderService.confirmOrder(loginedId, orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

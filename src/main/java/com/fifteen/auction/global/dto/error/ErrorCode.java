@@ -14,9 +14,11 @@ public enum ErrorCode {
      * 상수를 선언하실 때, code 부분은 '도메인-숫자'의 형식으로 해주세요. 예) USER-1
      */
     ORDER_NOT_FOUNDED(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
-    ORDER_ACCESS_DENIDED(HttpStatus.UNAUTHORIZED, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
+    ORDER_ACCESS_DENIDED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
+    ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
     ORDER_NOT_MACHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문 정보가 일치하지 않습니다."),
     AUCTION_NOT_FOUNDED(HttpStatus.NOT_FOUND, "AUCTION-1", "해당 경매를 찾을 수 없습니다."),
+    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-2", "해당 경매에 접근할 수 없습니다."),
     USER_NOT_FOUNDED(HttpStatus.NOT_FOUND, "USER-1", "해당 회원 정보를 찾을 수 없습니다."),
     PAYMENT_NOT_FOUNDED(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
 

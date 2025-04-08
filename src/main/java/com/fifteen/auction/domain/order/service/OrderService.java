@@ -7,9 +7,12 @@ import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
 import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.entity.Order;
+import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.entity.Payment;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
+import com.fifteen.auction.domain.settlement.entity.Settlement;
+import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
@@ -34,6 +37,7 @@ public class OrderService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final SettlementRepository settlementRepository;
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
@@ -53,11 +57,17 @@ public class OrderService {
 
     // 주문 생성
     @Transactional
-    public void createOrder(CreateOrderRequest dto) {
+    public void createOrder(Long loginedId, CreateOrderRequest dto) {
         Auction auction = auctionRepository.findById(dto.getAuctionId())
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUNDED));
+        User user = userRepository.findById(loginedId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
 
-        Order order = new Order(auction);
+        if(!auction.getWinnerId().equals(loginedId)){
+            throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
+        }
+
+        Order order = new Order(auction, user);
         orderRepository.save(order);
     }
 
@@ -126,6 +136,29 @@ public class OrderService {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
         }
 
+        // 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
         order.cancle();
+    }
+
+    // 구매 확정
+    @Transactional
+    public void confirmOrder(Long loginedId, String orderId) {
+        User user = userRepository.findById(loginedId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+        Order order = orderRepository.findById(Long.parseLong(orderId))
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+
+        if(!user.getId().equals(order.getAuction().getWinnerId())){
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+        }
+        if(!order.getStatus().equals(OrderStatus.PAID)){
+            throw new ClientException(ErrorCode.ORDER_ALREADY_PROCESSED);
+        }
+
+        order.confirm();
+
+        // 정산 데이터 생성
+        Settlement settlement = new Settlement(order);
+        settlementRepository.save(settlement);
     }
 }

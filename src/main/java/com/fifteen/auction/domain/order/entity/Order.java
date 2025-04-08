@@ -28,11 +28,16 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    public Order(Auction auction) {
+    public Order(Auction auction, User user) {
         this.auction = auction;
+        this.user = user;
     }
 
     public void cancle(){
         this.status = OrderStatus.CANCLED;
+    }
+
+    public void confirm(){
+        this.status = OrderStatus.CONFIRMED;
     }
 }
