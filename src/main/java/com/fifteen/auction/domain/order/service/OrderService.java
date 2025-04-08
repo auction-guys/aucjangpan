@@ -4,9 +4,12 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.AuctionRepository;
 import com.fifteen.auction.domain.order.dto.request.CreateOrderRequest;
 import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
+import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
+import com.fifteen.auction.domain.payment.entity.Payment;
+import com.fifteen.auction.domain.payment.repository.PaymentRepository;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
@@ -30,6 +33,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
@@ -65,13 +69,14 @@ public class OrderService {
         Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Order> pages = orderRepository.findByUser(user, pageable);
 
-        Page<OrdersResponse> result = pages.map(order -> new OrdersResponse(
-                order.getId().toString(),
-                order.getAuction().getProduct().getName(),
-                order.getAuction().getWinPrice().toString(),
-                order.getStatus(),
-                order.getCreatedAt().toLocalDate()
-        ));
+        Page<OrdersResponse> result = pages.map(order -> OrdersResponse.builder()
+                                .orderId(order.toString())
+                                .productName(order.getAuction().getProduct().getName())
+                                .amount(order.getAuction().getWinPrice().toString())
+                                .status(order.getStatus())
+                                .orderedDate(order.getCreatedAt().toLocalDate())
+                                .build()
+        );
 
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pageCond.getPageNum())
@@ -82,5 +87,31 @@ public class OrderService {
 
         return Response.of(result, pageInfo);
 
+    }
+
+    // 주문 내역 상세 조회
+    @Transactional(readOnly = true)
+    public OrderResponse findOrder(Long loginedId, String orderId) {
+        User user = userRepository.findById(loginedId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+        Order order = orderRepository.findById(Long.parseLong(orderId))
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+        Payment payment = paymentRepository.findByOrderId(Long.parseLong(orderId))
+                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
+
+        if(!user.getId().equals(order.getAuction().getWinnerId())){
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+        }
+
+        return OrderResponse.builder()
+                .name(user.getName())
+                .orderId(orderId)
+                .address(user.getAddress())
+                .paymentType(payment.getPaymentMethod())
+                .productName(order.getAuction().getProduct().getName())
+                .amount(order.getAuction().getWinPrice().toString())
+                .status(order.getStatus())
+                .orderedDate(order.getCreatedAt().toLocalDate())
+                .build();
     }
 }

@@ -2,6 +2,7 @@ package com.fifteen.auction.domain.order.controller;
 
 import com.fifteen.auction.domain.order.dto.request.CreateOrderRequest;
 import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
+import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.service.OrderService;
 import com.fifteen.auction.global.dto.PageCond;
@@ -37,5 +38,13 @@ public class OrderController {
         Response<Page<OrdersResponse>> response = orderService.findOrders(loginedId, pageCond);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("api/v1/orders/{orderId}")
+    public ResponseEntity<Response<OrderResponse>> findOrder(
+            Long loginedId,
+            @PathVariable String orderId){
+
+        return ResponseEntity.ok(Response.of(orderService.findOrder(loginedId, orderId)));
     }
 }

@@ -7,16 +7,22 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 @Getter
-public class OrdersResponse {
+public class OrderResponse {
+    private String name;
     private String orderId;
+    private String address;
+    private String paymentType;
     private String productName;
     private String amount;
     private OrderStatus status;
     private LocalDate orderedDate;
 
     @Builder
-    public OrdersResponse(String orderId, String productName, String amount, OrderStatus status, LocalDate orderedDate) {
+    public OrderResponse(String name, String orderId, String address, String paymentType, String productName, String amount, OrderStatus status, LocalDate orderedDate) {
+        this.name = name;
         this.orderId = orderId;
+        this.address = address;
+        this.paymentType = paymentType;
         this.productName = productName;
         this.amount = amount;
         this.status = status;
