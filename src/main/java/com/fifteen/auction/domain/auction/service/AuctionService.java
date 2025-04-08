@@ -30,10 +30,15 @@ public class AuctionService {
     private final AuctionSeqGenerator auctionSeqGenerator;
 
     @Transactional
-    public String create(AuctionCreateRequest req) {
+    public String create(AuctionCreateRequest req, Long userId) {
         // TODO: 에러코드 변경
-        Product product = productRepository.findById(req.getProductId())
+        Product product = productRepository.findByIdWithSeller(req.getProductId())
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+
+        // 자신이 생성한 물품인지 확인
+        if (!product.getSeller().getId().equals(userId)) {
+            throw new ClientException(ErrorCode.NOT_OWNING_PRODUCT);
+        }
 
         String auctionSeq = auctionSeqGenerator.generate(LocalDate.now());
 
@@ -66,7 +71,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        
+
         auction.updateInfo(
                 req.getStartPrice(),
                 req.getBuyNowPrice(),
