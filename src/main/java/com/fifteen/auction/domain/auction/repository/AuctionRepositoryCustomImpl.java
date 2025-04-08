@@ -30,8 +30,10 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
     public Page<AuctionListItem> findAllByCond(Pageable pageable) {
         List<AuctionListItem> result = queryFactory
                 .selectFrom(auction)
-                .join(auction.product, product)
+                .join(auction.product, product).fetchJoin()
                 .join(product.seller, user).fetchJoin()
+                .where(statusIsOpen())
+                .orderBy(auction.createdAt.desc())
                 .fetch()
                 .stream()
                 .map(AuctionListItem::fromAuction)
@@ -39,17 +41,12 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
 
         JPAQuery<Long> countQuery = queryFactory
                 .select(auction.count())
-                .from(auction);
+                .from(auction)
+                .where(statusIsOpen());
 
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
     }
 
-
-    //    @Query("""
-    //            SELECT a FROM Auction a
-    //            JOIN FETCH a.product p JOIN FETCH p.seller s
-    //            WHERE a.auctionSeq = :auctionSeq AND s.id = :sellerId
-    //            """)
     @Override
     public Optional<Auction> findOpenOneByAuctionSeq(String auctionSeq) {
         Auction result = queryFactory
@@ -65,7 +62,7 @@ public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
     public Optional<Auction> findOpenOneBySeqAndSellerId(String auctionSeq, Long sellerId) {
         Auction result = queryFactory
                 .selectFrom(auction)
-                .join(auction.product, product)
+                .join(auction.product, product).fetchJoin()
                 .join(product.seller, user).fetchJoin()
                 .where(auctionSeqEquals(auctionSeq), sellerIdEquals(sellerId), statusIsOpen())
                 .fetchOne();

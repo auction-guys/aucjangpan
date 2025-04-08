@@ -79,7 +79,7 @@ public class AuctionService {
 
     @Transactional(readOnly = true)
     public Page<AuctionListItem> findAll(PageCond cond) {
-        Pageable pageable = PageRequest.of(cond.getPageNum(), cond.getPageSize());
+        Pageable pageable = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
         return auctionRepository.findAllByCond(pageable);
     }
 

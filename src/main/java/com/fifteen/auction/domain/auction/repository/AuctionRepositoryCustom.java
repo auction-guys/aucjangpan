@@ -4,7 +4,6 @@ import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -14,6 +13,5 @@ public interface AuctionRepositoryCustom {
 
     Optional<Auction> findOpenOneByAuctionSeq(String auctionSeq);
 
-    Optional<Auction> findOpenOneBySeqAndSellerId(@Param("auctionSeq") String auctionSeq,
-                                                  @Param("sellerId") Long sellerId);
+    Optional<Auction> findOpenOneBySeqAndSellerId(String auctionSeq, Long sellerId);
 }
