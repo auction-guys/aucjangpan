@@ -31,4 +31,8 @@ public class Order extends BaseEntity {
     public Order(Auction auction) {
         this.auction = auction;
     }
+
+    public void cancle(){
+        this.status = OrderStatus.CANCLED;
+    }
 }

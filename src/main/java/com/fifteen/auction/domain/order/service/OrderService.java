@@ -114,4 +114,18 @@ public class OrderService {
                 .orderedDate(order.getCreatedAt().toLocalDate())
                 .build();
     }
+
+    @Transactional
+    public void cancleOrder(Long loginedId, String orderId) {
+        User user = userRepository.findById(loginedId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+        Order order = orderRepository.findById(Long.parseLong(orderId))
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+
+        if(!user.getId().equals(order.getAuction().getWinnerId())){
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIDED);
+        }
+
+        order.cancle();
+    }
 }

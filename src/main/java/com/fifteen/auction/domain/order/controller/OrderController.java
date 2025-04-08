@@ -47,4 +47,13 @@ public class OrderController {
 
         return ResponseEntity.ok(Response.of(orderService.findOrder(loginedId, orderId)));
     }
+
+    @DeleteMapping("api/v1/orders/{orderId}/cancle")
+    public ResponseEntity<Void> cancleOrder(
+            Long loginedId,
+            @PathVariable String orderId){
+        orderService.cancleOrder(loginedId, orderId);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
