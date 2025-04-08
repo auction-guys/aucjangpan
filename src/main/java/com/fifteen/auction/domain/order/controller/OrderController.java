@@ -68,11 +68,11 @@ public class OrderController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("api/v1/orders/{orderId}/cancle")
-    public ResponseEntity<Void> cancleOrder(
+    @DeleteMapping("api/v1/orders/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
             Long loginedId,
             @PathVariable String orderId) {
-        orderService.cancleOrder(loginedId, orderId);
+        orderService.cancelOrder(loginedId, orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
