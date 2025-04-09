@@ -35,13 +35,13 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
 
-    public SavePaymentRequset confirm(String orderId, String amount, String paymentKey, Long loginedId) throws IOException, ParseException {
+    public SavePaymentRequset confirm(String orderId, String amount, String paymentKey, Long currentUserId) throws IOException, ParseException {
 
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
 
         // orderId, amount 변조 검증
-        if(!order.getUser().getId().equals(loginedId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))){
+        if(!order.getUser().getId().equals(currentUserId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))){
             throw new ServerException(ErrorCode.ORDER_NOT_MATCHED);
         }
 
@@ -157,12 +157,12 @@ public class PaymentService {
 
     // 결제 취소 검증 - 구매자 결제 취소
     @Transactional
-    public void cancelPaymentByUser(String paymentKey, String cancelReason, Long loginedId) throws IOException, ParseException {
+    public void cancelPaymentByUser(String paymentKey, String cancelReason, Long currentUserId) throws IOException, ParseException {
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
         Order order = payment.getOrder();
         // 권한 검증
-        if(!order.getUser().getId().equals(loginedId)){
+        if(!order.getUser().getId().equals(currentUserId)){
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
         }
         cancelPayment(paymentKey, cancelReason, order.getId());
@@ -221,12 +221,12 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public FindPaymentResponse findPayment(String paymentKey, Long loginedId) {
+    public FindPaymentResponse findPayment(String paymentKey, Long currentUserId) {
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
         Order order = payment.getOrder();
         // 권한 검증
-        if(!order.getUser().getId().equals(loginedId)){
+        if(!order.getUser().getId().equals(currentUserId)){
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
         }
 

@@ -28,9 +28,9 @@ public class PaymentController {
             @RequestParam String orderId,
             @RequestParam String amount,
             @RequestParam String paymentKey,
-            Long loginedId) throws Exception {
+            Long currentUserId) throws Exception {
 
-        SavePaymentRequset dto = paymentService.confirm(orderId, amount, paymentKey, loginedId);
+        SavePaymentRequset dto = paymentService.confirm(orderId, amount, paymentKey, currentUserId);
 
         ConfirmResponse confirmResponse = paymentService.savePayment(dto);
 
@@ -41,17 +41,17 @@ public class PaymentController {
     public ResponseEntity<Void> cancelPayment(
             @PathVariable String paymentKey,
             @RequestBody CancelPaymentRequest dto,
-            Long loginedId) throws IOException, ParseException {
+            Long currentUserId) throws IOException, ParseException {
 
-        paymentService.cancelPaymentByUser(paymentKey, dto.getResson(), loginedId);
+        paymentService.cancelPaymentByUser(paymentKey, dto.getResson(), currentUserId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/api/v1/payments/{paymentKey}")
     public ResponseEntity<Response<FindPaymentResponse>> findPayment(
             @PathVariable String paymentKey,
-            Long loginedId){
+            Long currentUserId){
 
-        return ResponseEntity.ok(Response.of(paymentService.findPayment(paymentKey, loginedId)));
+        return ResponseEntity.ok(Response.of(paymentService.findPayment(paymentKey, currentUserId)));
     }
 }

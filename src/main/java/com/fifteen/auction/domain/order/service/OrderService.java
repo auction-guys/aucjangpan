@@ -57,13 +57,13 @@ public class OrderService {
 
     // 주문 생성
     @Transactional
-    public void createOrder(Long loginedId, CreateOrderRequest dto) {
+    public void createOrder(Long currentUserId, CreateOrderRequest dto) {
         Auction auction = auctionRepository.findById(dto.getAuctionId())
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUNDED));
-        User user = userRepository.findById(loginedId)
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
 
-        if(!auction.getWinnerId().equals(loginedId)){
+        if(!auction.getWinnerId().equals(currentUserId)){
             throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
         }
 
@@ -73,8 +73,8 @@ public class OrderService {
 
     // 주문 목록 조회
     @Transactional(readOnly = true)
-    public Response<Page<OrdersResponse>> findOrders(Long loginedId, PageCond pageCond) {
-        User user = userRepository.findById(loginedId)
+    public Response<Page<OrdersResponse>> findOrders(Long currentUserId, PageCond pageCond) {
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
         Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Order> pages = orderRepository.findByUser(user, pageable);
@@ -101,8 +101,8 @@ public class OrderService {
 
     // 주문 내역 상세 조회
     @Transactional(readOnly = true)
-    public OrderResponse findOrder(Long loginedId, String orderId) {
-        User user = userRepository.findById(loginedId)
+    public OrderResponse findOrder(Long currentUserId, String orderId) {
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
@@ -126,8 +126,8 @@ public class OrderService {
     }
 
     @Transactional
-    public void cancelOrder(Long loginedId, String orderId) {
-        User user = userRepository.findById(loginedId)
+    public void cancelOrder(Long currentUserId, String orderId) {
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
@@ -142,8 +142,8 @@ public class OrderService {
 
     // 구매 확정
     @Transactional
-    public void confirmOrder(Long loginedId, String orderId) {
-        User user = userRepository.findById(loginedId)
+    public void confirmOrder(Long currentUserId, String orderId) {
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));

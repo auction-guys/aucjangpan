@@ -27,43 +27,43 @@ public class OrderController {
 
     @PostMapping("api/v1/orders")
     public ResponseEntity<Void> createOrder(
-            Long loginedId,
+            Long currentUserId,
             @RequestBody CreateOrderRequest dto) {
-        orderService.createOrder(loginedId, dto);
+        orderService.createOrder(currentUserId, dto);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("api/v1/orders")
     public ResponseEntity<Response<Page<OrdersResponse>>> findOrders(
-            Long loginedId,
+            Long currentUserId,
             PageCond pageCond) {
-        Response<Page<OrdersResponse>> response = orderService.findOrders(loginedId, pageCond);
+        Response<Page<OrdersResponse>> response = orderService.findOrders(currentUserId, pageCond);
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("api/v1/orders/{orderId}")
     public ResponseEntity<Response<OrderResponse>> findOrder(
-            Long loginedId,
+            Long currentUserId,
             @PathVariable String orderId) {
 
-        return ResponseEntity.ok(Response.of(orderService.findOrder(loginedId, orderId)));
+        return ResponseEntity.ok(Response.of(orderService.findOrder(currentUserId, orderId)));
     }
 
     @DeleteMapping("api/v1/orders/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
-            Long loginedId,
+            Long currentUserId,
             @PathVariable String orderId) {
-        orderService.cancelOrder(loginedId, orderId);
+        orderService.cancelOrder(currentUserId, orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PatchMapping("api/v1/orders/{orderId}/confirmed")
     public ResponseEntity<Void> confirmOrder(
-            Long loginedId,
+            Long currentUserId,
             @PathVariable String orderId) {
-        orderService.confirmOrder(loginedId, orderId);
+        orderService.confirmOrder(currentUserId, orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

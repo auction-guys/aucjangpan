@@ -30,33 +30,33 @@ public class SettlementService {
         List<Settlement> settlements = settlementRepository.findByStatus(SettlementStatus.PENDING);
 
         // 정산 가능 데이터 존재 여부
-        if(settlements.isEmpty()){
-            throw new ServerException(ErrorCode.ORDER_NOT_FOUNDED);
+        if (settlements.isEmpty()) {
+            throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUNDED);
         }
 
-        // csv 파일 저장 위치
+        // csv 파일 저장 위치, 생성
         String filePath = System.getProperty("java.io.tmpdir") + "settlement_" + LocalDate.now() + ".csv";
 
         // csv 파일에 받은 데이터 정리
         List<SettlementResponse> list = settlements.stream()
                 .map(settlement -> SettlementResponse.builder()
-                .settlementId(settlement.getId().toString())
-                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
-                .orderId(settlement.getOrder().getId().toString())
-                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                .charge(settlement.getCharge().toString())
-                .settlementAmount(settlement.getSettlementAmount().toString())
-                .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreated_at().toString())
-                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                .build()).toList();
+                        .settlementId(settlement.getId().toString())
+                        .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                        .orderId(settlement.getOrder().getId().toString())
+                        .amount(settlement.getOrder().getAuction().getWinPrice().toString())
+                        .charge(settlement.getCharge().toString())
+                        .settlementAmount(settlement.getSettlementAmount().toString())
+                        .settlementDate(LocalDate.now().toString())
+                        .createdAt(settlement.getCreated_at().toString())
+                        .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
+                        .build()).toList();
 
         // 정산 처리
         for (Settlement s : settlements) {
             s.settled();
         }
 
-        // 파일 생성
+        // 파일 작성
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
             // CSV 헤더
             writer.writeNext(new String[]{"ID", "Seller ID", "Order Id", "Amount", "Charge", "Settlement Amount", "Settlement Date", "Created At", "Bank Account"});
@@ -74,6 +74,55 @@ public class SettlementService {
                         String.valueOf(s.getBankAccount())
                 });
             }
+        } catch (IOException e) {
+            throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
+        }
+    }
+
+    @Transactional
+    public void settleImmediately(Long settlementId, Long currentUserId) {
+        // 검증
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUNDED));
+        if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
+
+        // csv 파일 저장 위치, 생성 - 이것도 나중에 환경변수 같은거롤 변경
+        String filePath = System.getProperty("java.io.tmpdir") + "settlement_immediately_"+ currentUserId + LocalDate.now() + ".csv";
+
+        // csv 파일에 받은 데이터 정리
+        SettlementResponse dto = SettlementResponse.builder()
+                        .settlementId(settlement.getId().toString())
+                        .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                        .orderId(settlement.getOrder().getId().toString())
+                        .amount(settlement.getOrder().getAuction().getWinPrice().toString())
+                        .charge(settlement.getCharge().toString())
+                        .settlementAmount(settlement.getSettlementAmount().toString())
+                        .settlementDate(LocalDate.now().toString())
+                        .createdAt(settlement.getCreated_at().toString())
+                        .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
+                        .build();
+
+        // 정산 처리
+        settlement.settleNow(settlement.getOrder().getAuction().getWinPrice());
+
+        // 파일 작성
+        try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
+            // CSV 헤더
+            writer.writeNext(new String[]{"ID", "Seller ID", "Order Id", "Amount", "Charge", "Settlement Amount", "Settlement Date", "Created At", "Bank Account"});
+            // 파일에 데이터 입력
+                writer.writeNext(new String[]{
+                        String.valueOf(dto.getSettlementId()),
+                        String.valueOf(dto.getSellerId()),
+                        String.valueOf(dto.getOrderId()),
+                        String.valueOf(dto.getAmount()),
+                        String.valueOf(dto.getCharge()),
+                        String.valueOf(dto.getSettlementAmount()),
+                        String.valueOf(dto.getSettlementDate()),
+                        String.valueOf(dto.getCreatedAt()),
+                        String.valueOf(dto.getBankAccount())
+                });
         } catch (IOException e) {
             throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
         }

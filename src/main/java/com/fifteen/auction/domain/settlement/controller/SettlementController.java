@@ -4,6 +4,7 @@ import com.fifteen.auction.domain.settlement.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +22,12 @@ public class SettlementController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-
+    @PostMapping("api/v1/settlements/{settlementId}")
+    public ResponseEntity<Void> settleImmediately(
+            @PathVariable Long settlementId,
+            Long currentUserId){
+        settlementService.settleImmediately(settlementId, currentUserId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
 }
