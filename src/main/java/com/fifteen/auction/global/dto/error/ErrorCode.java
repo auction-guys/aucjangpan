@@ -61,8 +61,12 @@ public enum ErrorCode {
 
 
     // Uncaught Exceptions
-    EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
+    EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다."),
 
+
+    // MarketPrice Exception
+    MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다.");
+    ;
     private final HttpStatus status;
     private final String code;
     private final String message;
