@@ -1,14 +1,25 @@
 package com.fifteen.auction.domain.settlement.service;
 
+import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
+import com.fifteen.auction.domain.order.entity.Order;
+import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
 import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
+import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.global.dto.PageCond;
+import com.fifteen.auction.global.dto.PageInfo;
+import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +33,7 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
+    private final OrderRepository orderRepository;
 
     // 정산 - 스케줄러 등록은 crud 끝나고나 고도화 때
     @Transactional
@@ -126,5 +138,62 @@ public class SettlementService {
         } catch (IOException e) {
             throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Response<Page<SettlementResponse>> findSettlements(Long currentUserId, PageCond pageCond) {
+
+        Order order = orderRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+
+        Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Settlement> pages = settlementRepository.findByOrderId(order.getId(), pageable);
+
+        Page<SettlementResponse> result = pages.map(settlement -> SettlementResponse.builder()
+                .settlementId(settlement.getId().toString())
+                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                .orderId(settlement.getOrder().getId().toString())
+                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
+                .charge(settlement.getCharge().toString())
+                .settlementAmount(settlement.getSettlementAmount().toString())
+                .settlementDate(LocalDate.now().toString())
+                .createdAt(settlement.getCreated_at().toString())
+                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
+                .build()
+        );
+
+        PageInfo pageInfo = PageInfo.builder()
+                .pageNum(pageCond.getPageNum())
+                .pageSize(pageCond.getPageSize())
+                .totalPage(result.getTotalPages())
+                .totalElement(result.getTotalElements())
+                .build();
+
+        return Response.of(result, pageInfo);
+    }
+
+
+    @Transactional(readOnly = true)
+    public SettlementResponse findSettlement(Long currentUserId, Long settlementId) {
+
+        // 검증
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUNDED));
+        if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
+
+        return SettlementResponse.builder()
+                .settlementId(settlement.getId().toString())
+                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                .orderId(settlement.getOrder().getId().toString())
+                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
+                .charge(settlement.getCharge().toString())
+                .settlementAmount(settlement.getSettlementAmount().toString())
+                .settlementDate(LocalDate.now().toString())
+                .createdAt(settlement.getCreated_at().toString())
+                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
+                .build();
     }
 }
