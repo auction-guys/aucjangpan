@@ -21,8 +21,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handlePaymentFailException(PaymentFailException pe) {
 
         Map<String, Object> body = new HashMap<>();
-        body.put("error", "PaymentFailException");
-        body.put("status", "PAYMENT_2");
+        body.put("error", pe.getErrorCode());
+        body.put("status", pe.getStatus());
         body.put("message", pe.getMessage());
 
         return ResponseEntity.status(pe.getStatus()).body(body);
