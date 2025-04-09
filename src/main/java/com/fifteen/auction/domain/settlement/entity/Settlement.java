@@ -25,8 +25,9 @@ public class Settlement {
     private BigDecimal settlementAmount;
     @Enumerated(EnumType.STRING)
     private SettlementStatus status = SettlementStatus.PENDING;
-    private LocalDateTime created_at = LocalDateTime.now();
-    private LocalDateTime settled_at = null;
+    private Long sellerId;
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime settledAt = null;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
@@ -35,18 +36,19 @@ public class Settlement {
     public Settlement(Order order) {
         this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * 0.1)); // 수수료는 나중에 환경변수 같은걸로 설정
         this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
+        this.sellerId = order.getAuction().getProduct().getSeller().getId();
         this.order = order;
     }
 
     public void settled(){
         this.status = SettlementStatus.IN_PROGRESS;
-        this.settled_at = LocalDate.now().atStartOfDay();
+        this.settledAt = LocalDate.now().atStartOfDay();
     }
 
     public void settleNow(Long winPrice){
         this.charge = new BigDecimal(String.valueOf(winPrice * 0.2)); // 수수료는 나중에 환경변수 같은걸로 설정
         this.settlementAmount = new BigDecimal(winPrice).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
-        this.settled_at = LocalDate.now().atStartOfDay();
+        this.settledAt = LocalDate.now().atStartOfDay();
     }
 }

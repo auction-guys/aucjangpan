@@ -9,7 +9,6 @@ import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,16 +26,16 @@ public class OrderController {
 
     @PostMapping("api/v1/orders")
     public ResponseEntity<Void> createOrder(
-            Long currentUserId,
+            @RequestParam Long currentUserId,
             @RequestBody CreateOrderRequest dto) {
         orderService.createOrder(currentUserId, dto);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("api/v1/orders")
     public ResponseEntity<Response<Page<OrdersResponse>>> findOrders(
-            Long currentUserId,
-            PageCond pageCond) {
+            @RequestParam Long currentUserId,
+            @ModelAttribute PageCond pageCond) {
         Response<Page<OrdersResponse>> response = orderService.findOrders(currentUserId, pageCond);
 
         return ResponseEntity.ok(response);
@@ -44,27 +43,26 @@ public class OrderController {
 
     @GetMapping("api/v1/orders/{orderId}")
     public ResponseEntity<Response<OrderResponse>> findOrder(
-            Long currentUserId,
             @PathVariable String orderId) {
-
+        Long currentUserId = 2L;
         return ResponseEntity.ok(Response.of(orderService.findOrder(currentUserId, orderId)));
     }
 
     @DeleteMapping("api/v1/orders/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
-            Long currentUserId,
             @PathVariable String orderId) {
+        Long currentUserId = 2L;
         orderService.cancelOrder(currentUserId, orderId);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("api/v1/orders/{orderId}/confirmed")
     public ResponseEntity<Void> confirmOrder(
-            Long currentUserId,
             @PathVariable String orderId) {
+        Long currentUserId = 2L;
         orderService.confirmOrder(currentUserId, orderId);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -26,9 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +42,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderInfoResponse getOrderInfo(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         return new OrderInfoResponse(
                 orderId.toString(),
@@ -59,9 +57,9 @@ public class OrderService {
     @Transactional
     public void createOrder(Long currentUserId, CreateOrderRequest dto) {
         Auction auction = auctionRepository.findById(dto.getAuctionId())
-                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
         if(!auction.getWinnerId().equals(currentUserId)){
             throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
@@ -75,7 +73,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Response<Page<OrdersResponse>> findOrders(Long currentUserId, PageCond pageCond) {
         User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Order> pages = orderRepository.findByUser(user, pageable);
 
@@ -103,11 +101,11 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse findOrder(Long currentUserId, String orderId) {
         User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
         Payment payment = paymentRepository.findByOrderId(Long.parseLong(orderId))
-                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
@@ -128,9 +126,9 @@ public class OrderService {
     @Transactional
     public void cancelOrder(Long currentUserId, String orderId) {
         User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
@@ -144,9 +142,9 @@ public class OrderService {
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
         User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         if(!user.getId().equals(order.getAuction().getWinnerId())){
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);

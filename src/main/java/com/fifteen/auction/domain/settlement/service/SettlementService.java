@@ -3,6 +3,8 @@ package com.fifteen.auction.domain.settlement.service;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
+import com.fifteen.auction.domain.product.entity.Product;
+import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
@@ -43,7 +45,7 @@ public class SettlementService {
 
         // 정산 가능 데이터 존재 여부
         if (settlements.isEmpty()) {
-            throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUNDED);
+            throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
         }
 
         // csv 파일 저장 위치, 생성
@@ -59,7 +61,7 @@ public class SettlementService {
                         .charge(settlement.getCharge().toString())
                         .settlementAmount(settlement.getSettlementAmount().toString())
                         .settlementDate(LocalDate.now().toString())
-                        .createdAt(settlement.getCreated_at().toString())
+                        .createdAt(settlement.getCreatedAt().toString())
                         .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
                         .build()).toList();
 
@@ -95,7 +97,7 @@ public class SettlementService {
     public void settleImmediately(Long settlementId, Long currentUserId) {
         // 검증
         Settlement settlement = settlementRepository.findById(settlementId)
-                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUNDED));
+                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
         if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
@@ -112,7 +114,7 @@ public class SettlementService {
                         .charge(settlement.getCharge().toString())
                         .settlementAmount(settlement.getSettlementAmount().toString())
                         .settlementDate(LocalDate.now().toString())
-                        .createdAt(settlement.getCreated_at().toString())
+                        .createdAt(settlement.getCreatedAt().toString())
                         .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
                         .build();
 
@@ -143,12 +145,9 @@ public class SettlementService {
     @Transactional(readOnly = true)
     public Response<Page<SettlementResponse>> findSettlements(Long currentUserId, PageCond pageCond) {
 
-        Order order = orderRepository.findByUserId(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUNDED));
-
         Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Settlement> pages = settlementRepository.findByOrderId(order.getId(), pageable);
+        Page<Settlement> pages = settlementRepository.findBySellerId(currentUserId, pageable);
 
         Page<SettlementResponse> result = pages.map(settlement -> SettlementResponse.builder()
                 .settlementId(settlement.getId().toString())
@@ -158,7 +157,7 @@ public class SettlementService {
                 .charge(settlement.getCharge().toString())
                 .settlementAmount(settlement.getSettlementAmount().toString())
                 .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreated_at().toString())
+                .createdAt(settlement.getCreatedAt().toString())
                 .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
                 .build()
         );
@@ -179,20 +178,20 @@ public class SettlementService {
 
         // 검증
         Settlement settlement = settlementRepository.findById(settlementId)
-                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUNDED));
-        if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
+                .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
+        if (!settlement.getSellerId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
         return SettlementResponse.builder()
                 .settlementId(settlement.getId().toString())
-                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                .sellerId(settlement.getSellerId().toString())
                 .orderId(settlement.getOrder().getId().toString())
                 .amount(settlement.getOrder().getAuction().getWinPrice().toString())
                 .charge(settlement.getCharge().toString())
                 .settlementAmount(settlement.getSettlementAmount().toString())
                 .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreated_at().toString())
+                .createdAt(settlement.getCreatedAt().toString())
                 .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
                 .build();
     }

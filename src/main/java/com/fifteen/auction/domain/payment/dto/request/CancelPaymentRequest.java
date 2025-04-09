@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public class CancelPaymentRequest {
-    private String resson;
+    private String reason;
 
-    public CancelPaymentRequest(String resson) {
-        this.resson = resson;
+    public CancelPaymentRequest(String reason) {
+        this.reason = reason;
     }
 }

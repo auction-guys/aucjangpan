@@ -40,7 +40,7 @@
 
         await widgets.setAmount({
             currency: "KRW",
-            value: data.amount,
+            value: Number(data.amount),
         });
 
         await Promise.all([
@@ -58,8 +58,8 @@
             await widgets.requestPayment({
                 orderId: orderId,
                 orderName: data.orderName,
-                successUrl: window.location.origin + "/api/v1/payments/confirm/",
-                failUrl: window.location.origin + "/fail.html", // 작성해야함
+                successUrl: window.location.origin + "/api/v1/payments/confirm",
+                failUrl: window.location.origin + "/api/v1/payment/cancelReason", // 작성해야함
                 customerEmail: data.customerEmail,
                 customerName: data.customerName,
             });
