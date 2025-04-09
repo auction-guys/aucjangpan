@@ -2,11 +2,13 @@ package com.fifteen.auction.domain.product.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
+@AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class ProductUpdateRequest {
 
     @NotBlank
@@ -22,17 +24,6 @@ public class ProductUpdateRequest {
     private final List<Long> deleteImageIds;
 
     private final List<String> imageUrls;
-
-    private ProductUpdateRequest(String name, String description, Long categoryId,
-                                 String thumbnailUrl, List<Long> deleteImageIds,
-                                 List<String> imageUrls) {
-        this.name = name;
-        this.description = description;
-        this.categoryId = categoryId;
-        this.thumbnailUrl = thumbnailUrl;
-        this.deleteImageIds = deleteImageIds;
-        this.imageUrls = imageUrls;
-    }
 
     public static ProductUpdateRequest of(String name, String description, Long categoryId,
                                           String thumbnailUrl, List<Long> deleteImageIds,

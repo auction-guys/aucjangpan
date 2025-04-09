@@ -31,22 +31,22 @@ public class FavoriteService {
         if (existing.isPresent()) {
             favoriteRepository.delete(existing.get());
         } else {
-            User user = getUser(userId);
-            Auction auction = getAuction(auctionId);
+            User user = findUser(userId);
+            Auction auction = findAuction(auctionId);
             favoriteRepository.save(Favorite.create(user, auction));
         }
     }
 
-    public List<Favorite> getMyFavorites(Long userId) {
+    public List<Favorite> findMyFavorites(Long userId) {
         return favoriteRepository.findAllWithUserAndAuctionByUserId(userId);
     }
 
-    private User getUser(Long userId) {
+    private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private Auction getAuction(Long auctionId) {
+    private Auction findAuction(Long auctionId) {
         return auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
     }
