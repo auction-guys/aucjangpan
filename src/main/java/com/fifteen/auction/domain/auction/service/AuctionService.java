@@ -7,8 +7,10 @@ import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.AuctionRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
+import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
+import com.fifteen.auction.domain.product.service.MarketPriceService;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -28,6 +30,7 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
     private final AuctionSeqGenerator auctionSeqGenerator;
+    private final MarketPriceService marketPriceService;
 
     @Transactional
     public String create(AuctionCreateRequest req) {
@@ -88,6 +91,7 @@ public class AuctionService {
         Auction findAuction = auctionRepository
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        return AuctionDetail.fromAuction(findAuction);
+        MarketPriceFullResponse marketPrice = marketPriceService.getMarketPriceFullResponse(findAuction.getProduct().getId());
+        return AuctionDetail.fromAuction(findAuction, marketPrice);
     }
 }
