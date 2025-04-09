@@ -24,7 +24,7 @@ public class Auction extends BaseEntity {
     private Long winnerId;
 
     @Column(nullable = false, length = 10)
-    private String auctionNum;
+    private String auctionSeq;
 
     @Column(nullable = false)
     private Long startPrice;
@@ -55,13 +55,13 @@ public class Auction extends BaseEntity {
     private LocalDateTime expiresAt;
 
     public Auction(
-            Product product, String auctionNum, Long startPrice, Long buyNowPrice, int bidUnit,
+            Product product, String auctionSeq, Long startPrice, Long buyNowPrice, int bidUnit,
             boolean isBuyNowSet, boolean isAutoExtensible, LocalDateTime expiresAt
     ) {
         this.product = product;
-        this.auctionNum = auctionNum;
+        this.auctionSeq = auctionSeq;
         this.startPrice = startPrice;
-        this.buyNowPrice = isBuyNowSet ? 0 : buyNowPrice;
+        this.buyNowPrice = isBuyNowSet ? buyNowPrice : 0;
         this.bidUnit = bidUnit;
         this.isBuyNowSet = isBuyNowSet;
         this.isAutoExtensible = isAutoExtensible;
@@ -72,6 +72,11 @@ public class Auction extends BaseEntity {
 
     public void open() {
         this.status = AuctionStatus.OPEN;
+    }
+
+    public void cancel(LocalDateTime doneAt) {
+        this.status = AuctionStatus.CANCELED;
+        this.doneAt = doneAt;
     }
 
     public void finalize(Long winnerId, Long winPrice, LocalDateTime doneAt) {
@@ -91,5 +96,20 @@ public class Auction extends BaseEntity {
     public void misCarry() {
         this.status = AuctionStatus.MISCARRY;
         this.doneAt = this.expiresAt;
+    }
+
+    public void updateInfo(
+            Long startPrice, Long buyNowPrice, Integer bidUnit,
+            Boolean isBuyNowSet, Boolean isAutoExtensible
+    ) {
+        this.startPrice = useIfNotNull(startPrice, this.startPrice);
+        this.buyNowPrice = useIfNotNull(buyNowPrice, this.buyNowPrice);
+        this.bidUnit = useIfNotNull(bidUnit, this.bidUnit);
+        this.isBuyNowSet = useIfNotNull(isBuyNowSet, this.isBuyNowSet);
+        this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
+    }
+
+    private <T> T useIfNotNull(T input, T existing) {
+        return input == null ? existing : input;
     }
 }
