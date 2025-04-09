@@ -1,5 +1,7 @@
 package com.fifteen.auction.domain.product.entity;
 
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -23,12 +25,20 @@ public class ProductImage extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    private ProductImage(String imageUrl, Product product) {
+    @Column(nullable = false)
+    private boolean isThumbnail;
+
+    private ProductImage(String imageUrl, boolean isThumbnail, Product product) {
         this.imageUrl = imageUrl;
+        this.isThumbnail = isThumbnail;
         this.product = product;
     }
 
-    public static ProductImage create(String imageUrl, Product product) {
-        return new ProductImage(imageUrl, product);
+    public static ProductImage create(String imageUrl, Product product, boolean isThumbnail) {
+        return new ProductImage(imageUrl, isThumbnail, product);
+    }
+
+    public void changeThumbnail(boolean isThumbnail) {
+        this.isThumbnail = isThumbnail;
     }
 }
