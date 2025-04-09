@@ -8,6 +8,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+
 public class ProductImageUploadResponse {
 
     private final List<String> urls;

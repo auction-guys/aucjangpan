@@ -31,8 +31,10 @@ public class FavoriteService {
         if (existing.isPresent()) {
             favoriteRepository.delete(existing.get());
         } else {
+
             User user = findUser(userId);
             Auction auction = findAuction(auctionId);
+
             favoriteRepository.save(Favorite.create(user, auction));
         }
     }
@@ -46,7 +48,9 @@ public class FavoriteService {
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
     }
 
+
     private Auction findAuction(Long auctionId) {
+
         return auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
     }

@@ -2,6 +2,7 @@ package com.fifteen.auction.domain.product.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+
 public class ProductUpdateRequest {
 
     @NotBlank

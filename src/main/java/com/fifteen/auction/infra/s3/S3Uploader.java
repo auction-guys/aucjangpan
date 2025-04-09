@@ -3,6 +3,7 @@ package com.fifteen.auction.infra.s3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fifteen.auction.global.dto.error.ErrorCode;
+
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,6 @@ public class S3Uploader {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
     public String upload(MultipartFile multipartFile, String dir) {
         try {
             String originalName = multipartFile.getOriginalFilename();
