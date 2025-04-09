@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +22,7 @@ public class Settlement {
     @Column(precision = 11, scale = 2)
     private BigDecimal charge;
     @Column(precision = 11, scale = 2)
-    private BigDecimal settlement_amount;
+    private BigDecimal settlementAmount;
     @Enumerated(EnumType.STRING)
     private SettlementStatus status = SettlementStatus.PENDING;
     private LocalDateTime created_at = LocalDateTime.now();
@@ -32,8 +33,13 @@ public class Settlement {
     private Order order;
 
     public Settlement(Order order) {
-        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * 0.1));
-        this.settlement_amount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
+        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * 0.1)); // 수수료는 나중에 환경변수 같은걸로 설정
+        this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
         this.order = order;
+    }
+
+    public void settled(){
+        this.status = SettlementStatus.IN_PROGRESS;
+        this.settled_at = LocalDate.now().atStartOfDay();
     }
 }
