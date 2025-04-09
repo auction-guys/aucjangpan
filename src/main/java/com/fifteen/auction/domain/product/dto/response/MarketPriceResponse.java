@@ -25,7 +25,6 @@ public class MarketPriceResponse {
                 .minMarketPrice(marketPrice.getMinMarketPrice())
                 .maxMarketPrice(marketPrice.getMaxMarketPrice())
                 .priceDate(marketPrice.getPriceDate())
-                .createdAt(marketPrice.getCreatedAt())
                 .build();
     }
 }
