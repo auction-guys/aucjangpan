@@ -14,6 +14,7 @@ import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class MarketPriceService {
 
     private final MarketPriceRepository marketPriceRepository;
+    private final ProductRepository productRepository;
     private final OpenAIClient openAIClient;
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -65,8 +67,6 @@ public class MarketPriceService {
                     .priceDate(priceDate)
                     .minMarketPrice(dto.getMin())
                     .maxMarketPrice(dto.getMax())
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
                     .build();
 
             if (isToday) {
@@ -113,5 +113,25 @@ public class MarketPriceService {
                 .todayPrice(today)
                 .historicalPrices(history)
                 .build();
+    }
+
+    @Scheduled(fixedRate = 60_000) // 1분마다 한번씩 실행
+    public void refreshExpiredCacheProducts() {
+        List<Product> products = productRepository.findAll();
+
+        for (Product product : products) {
+            String key = CACHE_PREFIX + product.getId();
+            Boolean hasCache = redisTemplate.hasKey(key);
+
+            if (Boolean.FALSE.equals(hasCache)) {
+                try {
+                    predictAndSavePrice(product);
+                    System.out.println("재예측 성공 - productId: " + product.getId());
+                } catch (Exception e) {
+                    System.err.println("재예측 실패 - productId: " + product.getId());
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
