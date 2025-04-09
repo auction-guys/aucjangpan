@@ -4,6 +4,7 @@ package com.fifteen.auction.domain.auction.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,8 +29,9 @@ public class AuctionDetail {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     private LocalDateTime expiresAt;
+    private MarketPriceFullResponse marketPrice;
 
-    public static AuctionDetail fromAuction(Auction auction) {
+    public static AuctionDetail fromAuction(Auction auction, MarketPriceFullResponse marketPrice) {
         return new AuctionDetail(
                 auction.getProduct().getName(),
                 auction.getAuctionSeq(),
@@ -37,7 +39,8 @@ public class AuctionDetail {
                 auction.getBuyNowPrice(),
                 auction.isBuyNowSet(),
                 auction.isAutoExtensible(),
-                auction.getExpiresAt()
+                auction.getExpiresAt(),
+                marketPrice
         );
     }
 }
