@@ -44,7 +44,7 @@ public class MarketPriceService {
                 product.getDescription()
         );
 
-        Set<LocalDate> savedDates = new HashSet<>();
+        Set<LocalDate> savedDates = new HashSet<>(); // 중복날짜 저장 방지
 
         for (int i = 0; i < historicalPrices.size(); i++) {
             GPTPricePredictionResponse dto = historicalPrices.get(i);
@@ -81,7 +81,7 @@ public class MarketPriceService {
 
     //오늘 + 최근 3개월 시세조회
     @Transactional(readOnly = true)
-    public MarketPriceFullResponse getMarketPriceFullResponse(Long productId) {
+    public MarketPriceFullResponse findMarketPriceFullResponse(Long productId) {
         // 1. 오늘 시세 (Redis)
         Object raw = redisTemplate.opsForValue().get(CACHE_PREFIX + productId);
         MarketPrice todayPrice = null;

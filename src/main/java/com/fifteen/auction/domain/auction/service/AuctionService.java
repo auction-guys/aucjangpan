@@ -91,7 +91,7 @@ public class AuctionService {
         Auction findAuction = auctionRepository
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        MarketPriceFullResponse marketPrice = marketPriceService.getMarketPriceFullResponse(findAuction.getProduct().getId());
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
         return AuctionDetail.fromAuction(findAuction, marketPrice);
     }
 }
