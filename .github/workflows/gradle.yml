@@ -1,0 +1,100 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout 
+      uses: actions/checkout@v4
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # Spring Boot app Build
+    - name: Spring Boot build
+      run: ./gradlew clean build -Dspring.profiles.active=prod
+
+    # Docker Image Build
+    - name: docker image build
+      run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan .
+
+    # DockerHub Login
+    - name: docker login
+      uses: docker/login-action@v2
+      with:
+        username: ${{secrets.DOCKERHUB_USERNAME}}
+        password: ${{secrets.DOCKERHUB_PASSWORD}}
+
+    # DockerHub push
+    - name: docker hub push
+      run: docker push ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan
+
+# GET GitHub IP
+    - name: get GitHub IP 
+      id: ip
+      uses: haythem/public-ip@v1.2
+      
+# Configure AWS Credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with: 
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+# Add github ip to AWS
+    - name: Add GitHub IP to AWS
+      run: |
+        aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+    - name: Make .env file
+      run: |
+        cat <<EOF > .env
+        DB_URL=${{ secrets.DB_URL }}
+        DB_USERNAME=${{ secrets.DB_USERNAME }}
+        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        REDIS_HOST=${{ secrets.REDIS_HOST }}
+        REDIS_PORT=${{ secrets.REDIS_PORT }}
+        S3_ACCESS_KEY=${{secrets.S3_ACCESS_KEY}}
+        S3_SECRET_KEY=${{secrets.S3_SECRET_KEY}}
+        JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
+        OAUTH_CLIENT_ID=${{secrets.OAUTH_CLIENT_ID}}
+        OAUTH_SECRET=${{secrets.OAUTH_SECRET}}
+        OAUTH_REDIRECT_URI=${{secrets.OAUTH_REDIRECT_URI}}
+        EOF
+        
+    - name: Copy .env to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.SSH_PEM_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        source: "./.env"
+        target: "/home/ubuntu/"
+
+# AWS EC2 Server Connect & Docker 명령어 실행
+    - name: AWS EC2 Connection
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{secrets.SSH_PEM_KEY}} 
+        port: ${{ secrets.EC2_SSH_PORT }}
+        timeout: 60s
+        script: |
+          docker pull friedsaewoo/aucjangpan:latest
+          sudo docker stop aucjangpan-ci || true
+          sudo docker rm aucjangpan-ci || true
+          sudo docker run -d -p 8080:8080 --name aucjangpan-ci --env-file /home/ubuntu/.env friedsaewoo/aucjangpan:latest
+
+    # REMOVE Github IP FROM security group
+    - name: Remove IP FROM security group
+      run: |
+        aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      
