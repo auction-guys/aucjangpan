@@ -58,11 +58,4 @@ public class Settlement {
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();
     }
-
-    public void settleNow(Long winPrice){
-        this.charge = new BigDecimal(String.valueOf(winPrice * 0.2)); // 수수료는 나중에 환경변수 같은걸로 설정
-        this.settlementAmount = new BigDecimal(winPrice).subtract(charge);
-        this.status = SettlementStatus.IN_PROGRESS;
-        this.settled_at = LocalDate.now().atStartOfDay();
-    }
 }
