@@ -1,16 +1,21 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.request.DoBidRequest;
+import com.fifteen.auction.domain.auction.dto.request.BidRequest;
+import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.entity.Bid;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
-import com.fifteen.auction.domain.auction.repository.BidRepository;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
+import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,31 +34,48 @@ public class BidService {
 
 
     @Transactional
-    public Long bid(String auctionSeq, Long userId, DoBidRequest req) {
-
-        LocalDateTime bidAt = LocalDateTime.now();
+    public void bid(String auctionSeq, Long userId, BidRequest req) {
 
         // 본인이 생성한 경매이거나 마감된 경매인지 체크
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime bidAt = LocalDateTime.now();
 
         if (isInvalidBid(userId, findAuction, bidAt)) {
             throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
         }
 
         // bid price cache 체크
-        if (auctionCacheService.isBidUnderPrice(auctionSeq, req.getBidPrice(), findAuction.getBidUnit())) {
+        if (auctionCacheService.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
-        // 이벤트 던짐
         applicationEventPublisher.publishEvent(
-                new BidProcessEvent(auctionSeq, userId, req.getBidPrice(), bidAt));
+                new BidProcessEvent(auctionSeq, userId, req.getPrice(), bidAt));
 
-        // bid commit
-        return bidRepository
-                .save(new Bid(findAuction, userId, req.getBidPrice(), bidAt))
-                .getId();
+        bidRepository.save(new Bid(findAuction, userId, req.getPrice(), bidAt));
+    }
+
+    @Transactional
+    public void buyNow(String auctionSeq, Long userId) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime buyAt = LocalDateTime.now();
+
+        if (isInvalidBid(userId, findAuction, buyAt)) {
+            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
+        }
+
+        findAuction.buyNow(userId, buyAt);
+        bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BidHistoryInfo> bidHistoriesInProgress(String auctionSeq, PageCond cond) {
+        Pageable pageRequest = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
+        return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
     }
 
     private boolean isInvalidBid(Long userId, Auction findAuction, LocalDateTime bidAt) {

@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.auction.repository;
+package com.fifteen.auction.domain.auction.repository.auction;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
 import org.springframework.data.jpa.repository.JpaRepository;
