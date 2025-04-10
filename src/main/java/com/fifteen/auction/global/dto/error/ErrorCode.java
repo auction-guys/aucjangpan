@@ -29,7 +29,7 @@ public enum ErrorCode {
 
     // Favorite Exception
     FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-1", "찜 내역이 존재하지 않습니다."),
-    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "해당 경매가 존재하지 않습니다."),
+//    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "해당 경매가 존재하지 않습니다."),
 
     // S3 Exception
     S3_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "S3-1", "이미지 업로드에 실패했습니다."),

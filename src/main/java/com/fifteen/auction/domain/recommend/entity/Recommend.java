@@ -25,6 +25,7 @@ public class Recommend {
 
     private Double score;
 
+    @Column(name = "ranking")
     private Integer rank;
 
     private Recommend(Long groupId, Auction auction, Double score, Integer rank) {
