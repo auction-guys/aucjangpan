@@ -83,15 +83,15 @@ jobs:
       uses: appleboy/ssh-action@v0.1.6
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
+        username: ${{EC2_USERNAME}}
         key: ${{secrets.SSH_PEM_KEY}} 
         port: ${{ secrets.EC2_SSH_PORT }}
         timeout: 60s
         script: |
-          docker pull friedsaewoo/aucjangpan:latest
+          docker pull ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan:latest
           sudo docker stop aucjangpan-ci || true
           sudo docker rm aucjangpan-ci || true
-          sudo docker run -d -p 8080:8080 --name aucjangpan-ci --env-file /home/ubuntu/.env friedsaewoo/aucjangpan:latest
+          sudo docker run -d -p 8080:8080 --name aucjangpan-ci --env-file /home/ubuntu/.env ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan:latest
 
     # REMOVE Github IP FROM security group
     - name: Remove IP FROM security group
