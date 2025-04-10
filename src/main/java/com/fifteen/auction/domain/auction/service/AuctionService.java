@@ -28,6 +28,7 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
     private final AuctionSeqGenerator auctionSeqGenerator;
+    private final AuctionCacheService auctionCacheService;
 
     @Transactional
     public String create(AuctionCreateRequest req, Long userId) {
@@ -64,6 +65,7 @@ public class AuctionService {
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         auction.open();
+        auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
     }
 
     @Transactional

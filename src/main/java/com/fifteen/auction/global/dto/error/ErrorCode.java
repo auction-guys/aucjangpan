@@ -42,6 +42,9 @@ public enum ErrorCode {
 
     // Auction Exceptions
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
+    NOT_OWNING_PRODUCT(HttpStatus.BAD_REQUEST, "AUCTION-2", "자신의 상품만 경매에 등록할 수 있습니다."),
+    INVALID_BID_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-3", "입찰할 수 없는 경매입니다."),
+    LOW_BID_PRICE(HttpStatus.BAD_REQUEST, "AUCTION-4", "현재가보다 높은 가격으로 입찰해 주세요."),
     AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-2", "해당 경매에 접근할 수 없습니다."),
 
     // Product Custom Exception

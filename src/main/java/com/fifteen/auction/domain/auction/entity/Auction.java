@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Auction extends BaseEntity {
 
+    public static final long EXTENSION_TIME = 3L;
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -96,6 +97,10 @@ public class Auction extends BaseEntity {
     public void misCarry() {
         this.status = AuctionStatus.MISCARRY;
         this.doneAt = this.expiresAt;
+    }
+
+    public void extendExpireTime() {
+        this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
     }
 
     public void updateInfo(
