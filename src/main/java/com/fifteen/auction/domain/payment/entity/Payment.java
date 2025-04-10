@@ -44,7 +44,7 @@ public class Payment {
         this.order = order;
     }
 
-    public void cancel(){
+    public void cancel() {
         this.status = PaymentStatus.CANCELED;
     }
 }

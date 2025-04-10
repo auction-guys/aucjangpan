@@ -1,15 +1,9 @@
 package com.fifteen.auction.domain.settlement.service;
 
-import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
-import com.fifteen.auction.domain.order.entity.Order;
-import com.fifteen.auction.domain.order.repository.OrderRepository;
-import com.fifteen.auction.domain.product.entity.Product;
-import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
 import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
-import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
@@ -35,7 +29,6 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
-    private final OrderRepository orderRepository;
 
     // 정산 - 스케줄러 등록은 crud 끝나고나 고도화 때
     @Transactional
@@ -102,21 +95,21 @@ public class SettlementService {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
-        // csv 파일 저장 위치, 생성 - 이것도 나중에 환경변수 같은거롤 변경
-        String filePath = System.getProperty("java.io.tmpdir") + "settlement_immediately_"+ currentUserId + LocalDate.now() + ".csv";
+        // csv 파일 저장 위치, 생성 - 이것도 나중에 환경변수 같은거롤 변경 (현재 위치 임시폴더)
+        String filePath = System.getProperty("java.io.tmpdir") + "settlement_immediately_" + currentUserId + LocalDate.now() + ".csv";
 
         // csv 파일에 받은 데이터 정리
         SettlementResponse dto = SettlementResponse.builder()
-                        .settlementId(settlement.getId().toString())
-                        .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
-                        .orderId(settlement.getOrder().getId().toString())
-                        .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                        .charge(settlement.getCharge().toString())
-                        .settlementAmount(settlement.getSettlementAmount().toString())
-                        .settlementDate(LocalDate.now().toString())
-                        .createdAt(settlement.getCreatedAt().toString())
-                        .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                        .build();
+                .settlementId(settlement.getId().toString())
+                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
+                .orderId(settlement.getOrder().getId().toString())
+                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
+                .charge(settlement.getCharge().toString())
+                .settlementAmount(settlement.getSettlementAmount().toString())
+                .settlementDate(LocalDate.now().toString())
+                .createdAt(settlement.getCreatedAt().toString())
+                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
+                .build();
 
         // 정산 처리
         settlement.settleNow(settlement.getOrder().getAuction().getWinPrice());
@@ -126,17 +119,17 @@ public class SettlementService {
             // CSV 헤더
             writer.writeNext(new String[]{"ID", "Seller ID", "Order Id", "Amount", "Charge", "Settlement Amount", "Settlement Date", "Created At", "Bank Account"});
             // 파일에 데이터 입력
-                writer.writeNext(new String[]{
-                        String.valueOf(dto.getSettlementId()),
-                        String.valueOf(dto.getSellerId()),
-                        String.valueOf(dto.getOrderId()),
-                        String.valueOf(dto.getAmount()),
-                        String.valueOf(dto.getCharge()),
-                        String.valueOf(dto.getSettlementAmount()),
-                        String.valueOf(dto.getSettlementDate()),
-                        String.valueOf(dto.getCreatedAt()),
-                        String.valueOf(dto.getBankAccount())
-                });
+            writer.writeNext(new String[]{
+                    String.valueOf(dto.getSettlementId()),
+                    String.valueOf(dto.getSellerId()),
+                    String.valueOf(dto.getOrderId()),
+                    String.valueOf(dto.getAmount()),
+                    String.valueOf(dto.getCharge()),
+                    String.valueOf(dto.getSettlementAmount()),
+                    String.valueOf(dto.getSettlementDate()),
+                    String.valueOf(dto.getCreatedAt()),
+                    String.valueOf(dto.getBankAccount())
+            });
         } catch (IOException e) {
             throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
         }
@@ -145,7 +138,7 @@ public class SettlementService {
     @Transactional(readOnly = true)
     public Response<Page<SettlementResponse>> findSettlements(Long currentUserId, PageCond pageCond) {
 
-        Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(pageCond.getPageNum() - 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Settlement> pages = settlementRepository.findBySellerId(currentUserId, pageable);
 

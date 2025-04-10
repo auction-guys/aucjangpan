@@ -41,7 +41,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         // orderId, amount 변조 검증
-        if(!order.getUser().getId().equals(currentUserId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))){
+        if (!order.getUser().getId().equals(currentUserId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))) {
             throw new ServerException(ErrorCode.ORDER_NOT_MATCHED);
         }
 
@@ -75,7 +75,6 @@ public class PaymentService {
 
         int code = connection.getResponseCode();
         boolean isSuccess = code == 200;
-        System.out.println("djflkdjfljsdlfjsdlkjfk                     "+code);
 
         InputStream responseStream = isSuccess ? connection.getInputStream() : connection.getErrorStream();
 
@@ -85,7 +84,7 @@ public class PaymentService {
         responseStream.close();
 
         // 실패
-        if(!isSuccess){
+        if (!isSuccess) {
             throw new PaymentFailException(HttpStatus.valueOf(code), jsonObject.get("code").toString(), jsonObject.get("message").toString());
         }
 
@@ -101,17 +100,15 @@ public class PaymentService {
     public ConfirmResponse savePayment(SavePaymentRequset dto) throws IOException, ParseException {
         JSONObject jsonObject = dto.getJsonObject();
         Order order = dto.getOrder();
-        System.out.println("33333333333333333333333333333        "+order.getId()+"                 "+jsonObject.get("orderId"));
         // 결제 정보 검증
-        try{
-            if(!order.getId().equals(jsonObject.get("orderId")) && order.getAuction().getWinPrice().equals(jsonObject.get("amount"))){
+        try {
+            if (!order.getId().equals(jsonObject.get("orderId")) && order.getAuction().getWinPrice().equals(jsonObject.get("amount"))) {
 
                 throw new ClientException(ErrorCode.PAYMENT_INFO_EXCEPTION);
             }
-        }catch (Exception e){
-            System.out.println("ddddddddddddddddddddddddddddddd               "+ e.getMessage());
+        } catch (Exception e) {
             // 결제 정보 오류 시 결제 취소
-            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")),e.getMessage(),order.getId());
+            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")), e.getMessage(), order.getId());
             throw e;
         }
         // 들어갈 데이터 타입 변환    이후 깔끔하게 할 방법 찾기
@@ -124,47 +121,32 @@ public class PaymentService {
         String cardAmount = card.get("amount").toString();
         // 결제 정보 저장
         try {
-            System.out.println(jsonObject);
-            System.out.println("start");
-            System.out.println(jsonObject.get("mId")); //dddddddddddddddd
-            System.out.println(jsonObject.get("paymentKey"));
-            System.out.println(jsonObject.get("method")); //dddddddddddddddddddd
-            System.out.println(cardNumber);
-            System.out.println(cardAmount);// ddddddddddd
-            System.out.println(PaymentStatus.valueOf(String.valueOf(jsonObject.get("status"))));
-            System.out.println(LocalDateTime.parse(requestedAt));
-            System.out.println(LocalDateTime.parse(approvedAt));
-            System.out.println(order);
-            System.out.println("end");
-
-
             paymentRepository.save(Payment.builder()
-                            .mid(String.valueOf(jsonObject.get("mId")))
-                            .paymentKey(String.valueOf(jsonObject.get("paymentKey")))
-                            .paymentMethod(String.valueOf(jsonObject.get("method")))
-                            .cardNumber(cardNumber)
-                            .amount(Long.parseLong(cardAmount))
-                            .status(PaymentStatus.valueOf(String.valueOf(jsonObject.get("status"))))
-                            .requestedAt(LocalDateTime.parse(requestedAt))
-                            .approvedAt(LocalDateTime.parse(approvedAt))
-                            .order(order)
-                            .build());
+                    .mid(String.valueOf(jsonObject.get("mId")))
+                    .paymentKey(String.valueOf(jsonObject.get("paymentKey")))
+                    .paymentMethod(String.valueOf(jsonObject.get("method")))
+                    .cardNumber(cardNumber)
+                    .amount(Long.parseLong(cardAmount))
+                    .status(PaymentStatus.valueOf(String.valueOf(jsonObject.get("status"))))
+                    .requestedAt(LocalDateTime.parse(requestedAt))
+                    .approvedAt(LocalDateTime.parse(approvedAt))
+                    .order(order)
+                    .build());
             // 주문 상태 변환
             dto.getOrder().paid();
         } catch (Exception e) {
             // 결제 정보 저장 중 오류 - 현재는 결제 취소를 하지만 고도화 때 결제 취소 => 취소 X 로그 남김으로 변경 예정
-            System.out.println("ccccccccccccccccccccccccccccc              "+ e.getMessage());
-            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")),e.getMessage(),order.getId());
+            cancelInvalidPayment(String.valueOf(jsonObject.get("paymentKey")), e.getMessage(), order.getId());
             throw e;
         }
         // 주문 성공, 데이터 저장 성공
         return new ConfirmResponse(
-            jsonObject.get("mId").toString(),
-            jsonObject.get("paymentKey").toString(),
-            jsonObject.get("method").toString(),
-            Long.parseLong(cardAmount),
-            LocalDateTime.parse(requestedAt),
-            LocalDateTime.parse(approvedAt)
+                jsonObject.get("mId").toString(),
+                jsonObject.get("paymentKey").toString(),
+                jsonObject.get("method").toString(),
+                Long.parseLong(cardAmount),
+                LocalDateTime.parse(requestedAt),
+                LocalDateTime.parse(approvedAt)
         );
     }
 
@@ -176,12 +158,13 @@ public class PaymentService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
         Order order = payment.getOrder();
         // 권한 검증
-        if(!order.getUser().getId().equals(currentUserId)){
+        if (!order.getUser().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
         }
         cancelPayment(paymentKey, cancelReason, order.getId());
         payment.cancel(); // 이게 환불인가 환불을 구현하는가
     }
+
     // 결제 취소 검증 - 결제 중 오류로 결제 취소
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancelInvalidPayment(String paymentKey, String cancelReason, Long orderId) throws IOException, ParseException {
@@ -198,8 +181,6 @@ public class PaymentService {
         JSONObject json = new JSONObject();
         json.put("cancelReason", cancelReason);
         String obj = json.toString();
-        System.out.println(obj);
-        System.out.println("ddppppppppppppppppppppppppppppppp          "+paymentKey+"               ");
         // Toss 인증용 헤더 설정
         // 토스페이먼츠 API는 시크릿 키를 사용자 ID로 사용하고, 비밀번호는 사용하지 않습니다.
         // 비밀번호가 없다는 것을 알리기 위해 시크릿 키 뒤에 콜론을 추가합니다.
@@ -207,30 +188,24 @@ public class PaymentService {
         Base64.Encoder encoder = Base64.getEncoder();
         byte[] encodedBytes = encoder.encode((widgetSecretKey + ":").getBytes(StandardCharsets.UTF_8));
         String authorizations = "Basic " + new String(encodedBytes);
-        System.out.println(encodedBytes);
         // HTTP POST 요청
         // 결제 취소 요청
 
-        URL url = new URL("https://api.tosspayments.com/v1/payments/"+paymentKey+"/cancel");
+        URL url = new URL("https://api.tosspayments.com/v1/payments/" + paymentKey + "/cancel");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Authorization", authorizations);
         connection.setRequestProperty("Idempotency-Key", order.getIdempotencyKey()); // 멱등키
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
-        System.out.println("URL: " + url.toString());
-        System.out.println(obj);
         // 전송
         try (OutputStream outputStream = connection.getOutputStream()) {
             outputStream.write(obj.getBytes(StandardCharsets.UTF_8));
-        }catch (Exception e){
-            System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         }
 
         // 응답
         int code = connection.getResponseCode();
         boolean isSuccess = code == 200;
-        System.out.println("22222222222222222222222222222222222222222222222222222              "+code);
         InputStream responseStream = isSuccess ? connection.getInputStream() : connection.getErrorStream(); // 응답 본문 스트림
         JSONParser parser = new JSONParser();
         Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8); // 스트림 → 리더
@@ -238,8 +213,7 @@ public class PaymentService {
         responseStream.close();
 
         // 실패
-        if(!isSuccess){
-            System.out.println("sa1d2s1a3d13as21d13as21d13a2s1d2");
+        if (!isSuccess) {
             throw new PaymentFailException(HttpStatus.valueOf(code), jsonObject.get("code").toString(), jsonObject.get("message").toString());
         }
     }
@@ -250,7 +224,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
         Order order = payment.getOrder();
         // 권한 검증
-        if(!order.getUser().getId().equals(currentUserId)){
+        if (!order.getUser().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
         }
 

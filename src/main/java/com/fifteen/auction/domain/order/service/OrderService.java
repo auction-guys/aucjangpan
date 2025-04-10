@@ -44,6 +44,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
+        // 쿼리 dsl이나 @Query 활용해서 dto로 바로 받기
         return new OrderInfoResponse(
                 orderId.toString(),
                 order.getAuction().getProduct().getName(),
@@ -61,7 +62,7 @@ public class OrderService {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
-        if(!auction.getWinnerId().equals(currentUserId)){
+        if (!auction.getWinnerId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
         }
 
@@ -74,16 +75,17 @@ public class OrderService {
     public Response<Page<OrdersResponse>> findOrders(Long currentUserId, PageCond pageCond) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
-        Pageable pageable = PageRequest.of(pageCond.getPageNum()- 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(pageCond.getPageNum() - 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Order> pages = orderRepository.findByUser(user, pageable);
 
+        // 쿼리 dsl이나 @Query 활용해서 dto로 바로 받기
         Page<OrdersResponse> result = pages.map(order -> OrdersResponse.builder()
-                                .orderId(order.toString())
-                                .productName(order.getAuction().getProduct().getName())
-                                .amount(order.getAuction().getWinPrice().toString())
-                                .status(order.getStatus())
-                                .orderedDate(order.getCreatedAt().toLocalDate())
-                                .build()
+                .orderId(order.toString())
+                .productName(order.getAuction().getProduct().getName())
+                .amount(order.getAuction().getWinPrice().toString())
+                .status(order.getStatus())
+                .orderedDate(order.getCreatedAt().toLocalDate())
+                .build()
         );
 
         PageInfo pageInfo = PageInfo.builder()
@@ -100,21 +102,21 @@ public class OrderService {
     // 주문 내역 상세 조회
     @Transactional(readOnly = true)
     public OrderResponse findOrder(Long currentUserId, String orderId) {
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 결제 내역 없을 경우로 분리해서 하나 만들기
         Payment payment = paymentRepository.findByOrderId(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
 
-        if(!user.getId().equals(order.getAuction().getWinnerId())){
+        if (!order.getUser().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
         return OrderResponse.builder()
-                .name(user.getName())
+                .name(order.getUser().getName())
                 .orderId(orderId)
-                .address(user.getAddress())
+                .address(order.getUser().getAddress())
                 .paymentType(payment.getPaymentMethod())
                 .productName(order.getAuction().getProduct().getName())
                 .amount(order.getAuction().getWinPrice().toString())
@@ -125,12 +127,10 @@ public class OrderService {
 
     @Transactional
     public void cancelOrder(Long currentUserId, String orderId) {
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
-        if(!user.getId().equals(order.getAuction().getWinnerId())){
+        if (!order.getUser().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
@@ -141,15 +141,13 @@ public class OrderService {
     // 구매 확정
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
-        if(!user.getId().equals(order.getAuction().getWinnerId())){
+        if (!order.getUser().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
-        if(!order.getStatus().equals(OrderStatus.PAID)){
+        if (!order.getStatus().equals(OrderStatus.PAID)) {
             throw new ClientException(ErrorCode.ORDER_ALREADY_PROCESSED);
         }
 

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class OrderController {
 
+    // 회원 인증 기능 생기면 currentUserId를 그걸로 대체
+
     private final OrderService orderService;
 
     @GetMapping("/api/v1/orders/{orderId}/payment")

@@ -4,7 +4,9 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.entity.BaseEntity;
+
 import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,14 +38,15 @@ public class Order extends BaseEntity {
         this.user = user;
     }
 
-    public void cancel(){
+    public void cancel() {
         this.status = OrderStatus.CANCELED;
     }
 
-    public void confirm(){
+    public void confirm() {
         this.status = OrderStatus.CONFIRMED;
     }
-    public void paid(){
+
+    public void paid() {
         this.status = OrderStatus.PAID;
     }
 }

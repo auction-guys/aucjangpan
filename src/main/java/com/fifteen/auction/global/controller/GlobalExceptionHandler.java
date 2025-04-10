@@ -28,7 +28,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(pe.getStatus()).body(body);
     }
 
-
     @ExceptionHandler(ClientException.class)
     public ResponseEntity<ErrorResponse> handleClientException(ClientException ce) {
         return ResponseEntity.status(ce.getErrorCode().getStatus())

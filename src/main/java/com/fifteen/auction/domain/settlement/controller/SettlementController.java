@@ -3,7 +3,6 @@ package com.fifteen.auction.domain.settlement.controller;
 import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.service.SettlementService;
 import com.fifteen.auction.global.dto.PageCond;
-import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,7 +33,7 @@ public class SettlementController {
 
     @GetMapping("api/v1/settlements")
     public ResponseEntity<Response<Page<SettlementResponse>>> findSettlements(
-            @ModelAttribute  PageCond pageCond) {
+            @ModelAttribute PageCond pageCond) {
         Long currentUserId = 1L;
 
         return ResponseEntity.ok(settlementService.findSettlements(currentUserId, pageCond));
