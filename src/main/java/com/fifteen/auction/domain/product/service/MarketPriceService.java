@@ -32,7 +32,7 @@ public class MarketPriceService {
     private final MarketPriceRepository marketPriceRepository;
     private final ProductRepository productRepository;
     private final OpenAIClient openAIClient;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplateObject;
     private static final String CACHE_PREFIX = "price:";
     private static final long TTL_HOURS = 24L;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
@@ -66,7 +66,7 @@ public class MarketPriceService {
                     .build();
 
             if (isToday) {
-                redisTemplate.opsForValue().set(
+                redisTemplateObject.opsForValue().set(
                         CACHE_PREFIX + product.getId(),
                         price,
                         TTL_HOURS,
@@ -83,7 +83,7 @@ public class MarketPriceService {
     @Transactional(readOnly = true)
     public MarketPriceFullResponse findMarketPriceFullResponse(Long productId) {
         // 1. 오늘 시세 (Redis)
-        Object raw = redisTemplate.opsForValue().get(CACHE_PREFIX + productId);
+        Object raw = redisTemplateObject.opsForValue().get(CACHE_PREFIX + productId);
         MarketPrice todayPrice = null;
 
         if (raw instanceof LinkedHashMap map) {
@@ -117,7 +117,7 @@ public class MarketPriceService {
 
         for (Product product : products) {
             String key = CACHE_PREFIX + product.getId();
-            Boolean hasCache = redisTemplate.hasKey(key);
+            Boolean hasCache = redisTemplateObject.hasKey(key);
 
             if (Boolean.FALSE.equals(hasCache)) {
                 try {
