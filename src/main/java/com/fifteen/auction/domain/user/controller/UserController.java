@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users/{userId}")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserService userService;
 
-    @GetMapping
+    @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> findUser(
             @PathVariable Long userId
     ) {
@@ -28,19 +28,17 @@ public class UserController {
 
     @PutMapping("/profile")
     public ResponseEntity<UserUpdateResponse> updateProfile(
-            @PathVariable Long userId,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid UserUpdateRequest request
     ) {
-        return ResponseEntity.ok(userService.updateProfile(userId, authUser, request));
+        return ResponseEntity.ok(userService.updateProfile(authUser, request));
     }
 
     @PutMapping("/password")
     public void updatePassword(
-            @PathVariable Long userId,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid UserUpdatePasswordRequest request
     ) {
-        userService.updatePassword(userId, authUser, request);
+        userService.updatePassword(authUser, request);
     }
 }

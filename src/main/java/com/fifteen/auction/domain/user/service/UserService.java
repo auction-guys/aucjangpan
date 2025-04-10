@@ -31,15 +31,10 @@ public class UserService {
     }
 
     @Transactional
-    public UserUpdateResponse updateProfile(Long userId, AuthUser authUser, UserUpdateRequest request) {
+    public UserUpdateResponse updateProfile(AuthUser authUser, UserUpdateRequest request) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
-
-        //본인의 프로필만 수정 가능.
-        if (!user.getId().equals(authUser.getId())) {
-            throw new ClientException(ErrorCode.UNAUTHORIZED_PROFILE_UPDATE);
-        }
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new ClientException(ErrorCode.UNAUTHORIZED_PROFILE_UPDATE));
 
         //이미 존재하는 닉네임.
         if (userRepository.existsByNickname(request.getNickname())) {
@@ -60,19 +55,13 @@ public class UserService {
                                       user.getPreferCategory(),
                                       user.getAccountNumber()
         );
-
     }
 
     @Transactional
-    public void updatePassword(Long userId, AuthUser authUser, UserUpdatePasswordRequest request) {
+    public void updatePassword(AuthUser authUser, UserUpdatePasswordRequest request) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
-
-        //본인의 비밀번호만 수정 가능.
-        if (!authUser.getId().equals(user.getId())) {
-            throw new ClientException(ErrorCode.UNAUTHORIZED_PASSWORD_UPDATE);
-        }
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new ClientException(ErrorCode.UNAUTHORIZED_PASSWORD_UPDATE));
 
         //기존의 비밀번호와 같은 경우에만 수정 가능.
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {

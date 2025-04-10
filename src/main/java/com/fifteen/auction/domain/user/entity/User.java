@@ -44,6 +44,9 @@ public class User {
     @Column(nullable = false)
     private String accountNumber;
 
+    @Column(nullable = false)
+    private boolean deleted = false; // 기본값 false
+
     public User(String email, String nickname, String name, String gender, String ageGroup, String password, String address, String contactNumber, String preferCategory, String accountNumber) {
         this.email = email;
         this.nickname = nickname;

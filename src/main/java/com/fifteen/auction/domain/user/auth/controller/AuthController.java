@@ -7,9 +7,12 @@ import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.service.AuthService;
 import com.fifteen.auction.domain.user.auth.service.OAuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,19 +23,24 @@ public class AuthController {
     private final OAuthService oAuthService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody SignupRequest signupRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(signupRequest));
+    public ResponseEntity<Object> signup(@RequestBody SignupRequest signupRequest) {
+        authService.signup(signupRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Collections.emptyList());
     }
 
     @PostMapping("/login")
     public ResponseEntity<SigninResponse> login(@RequestBody SigninRequest signinRequest) {
-        return ResponseEntity.ok(authService.login(signinRequest));
+        SigninResponse response = authService.login(signinRequest);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, response.getJwt())
+                .build(); // 바디 없이 헤더만 응답
     }
 
     @PostMapping("/logout")  // 수정
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String authorizationHeader) {
         authService.logout(authorizationHeader);  // 헤더 그대로 전달
-        return ResponseEntity.ok("로그아웃이 완료되었습니다.");
+        return ResponseEntity.ok("로그 아웃이 완료되었습니다.");
     }
 
     @DeleteMapping("/withdraw")

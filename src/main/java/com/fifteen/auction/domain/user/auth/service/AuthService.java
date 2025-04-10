@@ -28,9 +28,9 @@ public class AuthService {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
-    public String signup(SignupRequest signupRequest) {
+    public void signup(SignupRequest signupRequest) {
 
-        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+        if (userRepository.existsByEmailAndDeletedFalse(signupRequest.getEmail())) {
             throw new ClientException(ErrorCode.DUPLICATE_EMAIL);
         }
 
@@ -48,14 +48,12 @@ public class AuthService {
                              signupRequest.getAccountNumber());
 
         userRepository.save(user);
-
-        return "회원가입이 완료되었습니다";
     }
 
     @Transactional
     public SigninResponse login(SigninRequest signinRequest) {
 
-        User user = userRepository.findByEmail(signinRequest.getEmail()).orElseThrow(
+        User user = userRepository.findByEmailAndDeletedFalse(signinRequest.getEmail()).orElseThrow(
                 () -> new ClientException(ErrorCode.USER_NOT_FOUND)
         );
 
@@ -72,30 +70,31 @@ public class AuthService {
     @Transactional
     public void logout(String authorizationHeader) {
 
-        // Authorization 헤더에서 토큰 추출
+        // 1. Authorization 헤더에서 토큰 추출
         if (!StringUtils.hasText(authorizationHeader) || !authorizationHeader.startsWith("Bearer ")) {
             throw new ClientException(ErrorCode.INVALID_TOKEN);
         }
         String token = authorizationHeader.substring(7);
 
-        // 토큰 유효성 검사
+        // 2. 토큰 유효성 검사
         if (!jwtUtil.validateToken(token)) {
             throw new ClientException(ErrorCode.INVALID_TOKEN);
         }
 
-        String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + token);
-        if ("logout".equals(isBlacklisted)) {
-            throw new ClientException(ErrorCode.ALREADY_LOGOUT);  // 커스텀 예외 코드 사용
-        }
-
-        // Redis에 블랙리스트 등록
+        // 3. Redis에 이미 로그아웃된 토큰인지 확인 + 저장 (원자적으로 처리)
+        String key = "BLACKLIST:" + token;
         Long expiration = jwtUtil.getTokenExpiration(token);
-        redisTemplate.opsForValue().set("BLACKLIST:" + token, "logout", expiration, TimeUnit.MILLISECONDS);
+        Boolean isSet = redisTemplate.opsForValue().setIfAbsent(key, "logout", expiration, TimeUnit.MILLISECONDS);
+
+        // 4. 이미 존재한다면 → 이미 로그아웃된 토큰
+        if (Boolean.FALSE.equals(isSet)) {
+            throw new ClientException(ErrorCode.ALREADY_LOGOUT);
+        }
     }
 
     @Transactional
     public void withdraw(WithdrawRequest withdrawRequest) {
-        User user = userRepository.findByEmail(withdrawRequest.getEmail()).orElseThrow(
+        User user = userRepository.findByEmailAndDeletedFalse(withdrawRequest.getEmail()).orElseThrow(
                 () -> new ClientException(ErrorCode.USER_NOT_FOUND)
         );
 
@@ -103,6 +102,6 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_PASSWORD);
         }
 
-        userRepository.delete(user);
+        userRepository.softDeleteByEmail(user.getEmail()); // soft-delete 기능 구현
     }
 }
