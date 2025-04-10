@@ -1,7 +1,8 @@
 package com.fifteen.auction.domain.product.entity;
 
-import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
 import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,31 +38,45 @@ public class Product extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private int views = 0;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ProductImage> images = new ArrayList<>();
 
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Auction auction;
+    @Column(nullable = false)
+    private boolean deleted;
+
+    private LocalDateTime deletedAt;
 
     private Product(User seller, ProductCategory category, String name, String description) {
         this.seller = seller;
         this.category = category;
         this.name = name;
         this.description = description;
+        this.deleted = false;
     }
 
     public static Product create(User seller, ProductCategory category, String name, String description) {
         return new Product(seller, category, name, description);
     }
 
+    public void update(String name, String description, ProductCategory category) {
+        this.name = name;
+        this.description = description;
+        this.category = category;
+    }
+
     public void addImage(ProductImage image) {
         images.add(image);
     }
 
-    public void increaseViews() {
-        this.views++;
+    public void softDelete() {
+        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public ProductImage getThumbnailImage() {
+        return images.stream()
+                .filter(ProductImage::isThumbnail)
+                .findFirst()
+                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
     }
 }

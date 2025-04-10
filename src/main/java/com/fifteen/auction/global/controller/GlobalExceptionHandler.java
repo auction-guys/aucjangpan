@@ -4,11 +4,12 @@ import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.error.ErrorResponse;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.ServerException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+@Slf4j @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClientException.class)
@@ -25,6 +26,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
+
+        log.debug("exceptionHandler", e);
+
         return ResponseEntity.internalServerError()
                 .body(ErrorResponse.ofErrorCode(ErrorCode.EXCEPTION));
     }
