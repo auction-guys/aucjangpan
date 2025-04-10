@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,11 +33,8 @@ public class MarketPriceService {
     private final ProductRepository productRepository;
     private final OpenAIClient openAIClient;
     private final RedisTemplate<String, Object> redisTemplate;
-
-
     private static final String CACHE_PREFIX = "price:";
     private static final long TTL_HOURS = 24L;
-
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     //GPT로 시세 예측 → 최근 3개월 시세는 DB, 오늘은 Redis 캐시에 저장
