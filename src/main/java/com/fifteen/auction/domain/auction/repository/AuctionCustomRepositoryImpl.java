@@ -18,11 +18,11 @@ import static com.fifteen.auction.domain.auction.entity.QAuction.auction;
 import static com.fifteen.auction.domain.product.entity.QProduct.product;
 import static com.fifteen.auction.domain.user.entity.QUser.user;
 
-public class AuctionRepositoryCustomImpl implements AuctionRepositoryCustom {
+public class AuctionCustomRepositoryImpl implements AuctionCustomRepository {
 
     private JPAQueryFactory queryFactory;
 
-    public AuctionRepositoryCustomImpl(EntityManager em) {
+    public AuctionCustomRepositoryImpl(EntityManager em) {
         queryFactory = new JPAQueryFactory(em);
     }
 

@@ -21,6 +21,27 @@ spring:
       max-file-size: 10MB
       max-request-size: 20MB
 
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_CLIENT_ID}
+            client-secret: ${OAUTH_SECRET}
+            redirect-uri: ${OAUTH_REDIRECT_URI}
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
 cloud:
   aws:
     credentials:
@@ -32,26 +53,3 @@ cloud:
       bucket: aucjangpan-api-images
     stack:
       auto: false
-
-jwt:
-  secret:
-    key: ${JWT_SECRET_KEY}
-
-security:
-  oauth2:
-    client:
-      registration:
-        google:
-          client-id: ${OAUTH_CLIENT_ID}
-          client-secret: ${OAUTH_SECRET}
-          redirect-uri: ${OAUTH_REDIRECT_URI}
-
-          scope:
-            - email
-            - profile
-      provider:
-        google:
-          authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-          token-uri: https://oauth2.googleapis.com/token
-          user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-          user-name-attribute: sub
