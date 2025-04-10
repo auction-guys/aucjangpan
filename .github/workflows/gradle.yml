@@ -1,0 +1,35 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "dev" ]
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  
+    steps:
+    - name: Checkout 
+      uses: actions/checkout@v4
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # Spring Boot app Build
+    - name: Spring Boot build
+      run: ./gradlew clean build -Dspring.profiles.active=prod
+
+    # Docker Image Build
+    - name: docker image build
+      run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan .
+
+    # DockerHub Login
+    - name: docker login
+      uses: docker/login-action@v2
+      with:
+        username: ${{secrets.DOCKERHUB_USERNAME}}
+        password: ${{secrets.DOCKERHUB_PASSWORD}}
+
+    # DockerHub push
+    - name: docker hub push
+      run: docker push ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan
