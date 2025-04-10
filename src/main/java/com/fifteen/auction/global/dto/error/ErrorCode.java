@@ -15,7 +15,7 @@ public enum ErrorCode {
      */
 
     // Auction Exceptions
-    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
+//    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
 
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다."),
