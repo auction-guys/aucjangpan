@@ -1,5 +1,5 @@
 package com.fifteen.auction.domain.payment.enums;
 
 public enum PaymentStatus {
-    READY, DONE, CANCLED, ABORTED
+    READY, IN_PROGRESS, WAITING_FOR_DEPOSIT, DONE, CANCELED, PARTIAL_CANCELED, ABORTED, EXPIRED
 }
