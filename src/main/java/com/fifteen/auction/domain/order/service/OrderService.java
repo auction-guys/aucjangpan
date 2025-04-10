@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.order.service;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.order.dto.request.CreateOrderRequest;
 import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
 import com.fifteen.auction.domain.order.dto.response.OrderResponse;
