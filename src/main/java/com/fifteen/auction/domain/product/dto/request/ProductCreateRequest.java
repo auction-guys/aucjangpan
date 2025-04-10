@@ -4,7 +4,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.util.List;
+
+@Getter
+@AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 
 public class ProductCreateRequest {
 
@@ -22,23 +28,8 @@ public class ProductCreateRequest {
     @NotBlank
     private final String thumbnailUrl;
 
-    private ProductCreateRequest(Long categoryId, String name, String description,
-                                 List<String> imageUrls, String thumbnailUrl) {
-        this.categoryId = categoryId;
-        this.name = name;
-        this.description = description;
-        this.imageUrls = imageUrls;
-        this.thumbnailUrl = thumbnailUrl;
-    }
-
     public static ProductCreateRequest of(Long categoryId, String name, String description,
                                           List<String> imageUrls, String thumbnailUrl) {
         return new ProductCreateRequest(categoryId, name, description, imageUrls, thumbnailUrl);
     }
-
-    public Long getCategoryId() { return categoryId; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public List<String> getImageUrls() { return imageUrls; }
-    public String getThumbnailUrl() { return thumbnailUrl; }
 }
