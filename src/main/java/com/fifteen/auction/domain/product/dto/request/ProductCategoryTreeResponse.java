@@ -10,7 +10,9 @@ import java.util.stream.Collectors;
 public class ProductCategoryTreeResponse {
 
     private Long id;
+  
     private String name;
+
     private List<ProductCategoryTreeResponse> children;
 
     private ProductCategoryTreeResponse(Long id, String name, List<ProductCategoryTreeResponse> children) {

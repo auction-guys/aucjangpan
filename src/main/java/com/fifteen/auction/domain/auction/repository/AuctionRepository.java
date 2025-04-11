@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface AuctionRepository extends JpaRepository<Auction, Long>, AuctionRepositoryCustom {
+public interface AuctionRepository extends JpaRepository<Auction, Long>, AuctionCustomRepository {
 
     @Query("""
             SELECT a FROM Auction a JOIN FETCH a.product p JOIN FETCH p.seller s
