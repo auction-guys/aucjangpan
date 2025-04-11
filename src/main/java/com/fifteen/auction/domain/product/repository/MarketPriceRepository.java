@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface MarketPriceRepository extends JpaRepository<MarketPrice, Long> {
 
-    // 품의 특정 날짜 시세가 이미 존재하는지 확인
+    // 상품의 특정 날짜 시세가 이미 존재하는지 확인
     boolean existsByProductIdAndPriceDate(Long productId, LocalDate marketDate);
 
     // 상품의 최근 3개월 시세 전체 조회

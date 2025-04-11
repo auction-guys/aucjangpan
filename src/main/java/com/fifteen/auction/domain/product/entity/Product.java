@@ -8,6 +8,7 @@ import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,9 @@ public class Product extends BaseEntity {
 
     @Column(nullable = false)
     private boolean deleted;
+
+    @Column(name = "last_price_updated_at")
+    private LocalDate lastPriceUpdatedAt;
 
     private LocalDateTime deletedAt;
 

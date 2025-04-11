@@ -14,7 +14,6 @@ import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +65,7 @@ public class MarketPriceService {
                     .build();
 
             if (isToday) {
+                // Redis 캐시에 저장 (TTL 설정)
                 redisTemplateObject.opsForValue().set(
                         CACHE_PREFIX + product.getId(),
                         price,
@@ -87,6 +87,7 @@ public class MarketPriceService {
         MarketPrice todayPrice = null;
 
         if (raw instanceof LinkedHashMap map) {
+            //Redis에 JSON 형식으로 저장된 경우 반환처리
             todayPrice = objectMapper.convertValue(map, MarketPrice.class);
         } else if (raw instanceof MarketPrice cached) {
             todayPrice = cached;
@@ -109,25 +110,5 @@ public class MarketPriceService {
                 .todayPrice(today)
                 .historicalPrices(history)
                 .build();
-    }
-
-    @Scheduled(fixedRate = 60_000) // 1분마다 한번씩 실행
-    public void refreshExpiredCacheProducts() {
-        List<Product> products = productRepository.findAll();
-
-        for (Product product : products) {
-            String key = CACHE_PREFIX + product.getId();
-            Boolean hasCache = redisTemplateObject.hasKey(key);
-
-            if (Boolean.FALSE.equals(hasCache)) {
-                try {
-                    predictAndSavePrice(product);
-                    System.out.println("재예측 성공 - productId: " + product.getId());
-                } catch (Exception e) {
-                    System.err.println("재예측 실패 - productId: " + product.getId());
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }
