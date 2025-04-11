@@ -24,7 +24,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponse findUser(Long userId) {
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
         return new UserResponse(user.getId(), user.getEmail(), user.getNickname(), user.getPreferCategory());
