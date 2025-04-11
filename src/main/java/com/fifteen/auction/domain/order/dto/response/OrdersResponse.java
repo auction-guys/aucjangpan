@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.order.dto.response;
 
-import com.fifteen.auction.domain.order.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,11 +10,11 @@ public class OrdersResponse {
     private String orderId;
     private String productName;
     private String amount;
-    private OrderStatus status;
-    private LocalDate orderedDate;
+    private String status;
+    private String orderedDate;
 
     @Builder
-    public OrdersResponse(String orderId, String productName, String amount, OrderStatus status, LocalDate orderedDate) {
+    public OrdersResponse(String orderId, String productName, String amount, String status, String orderedDate) {
         this.orderId = orderId;
         this.productName = productName;
         this.amount = amount;

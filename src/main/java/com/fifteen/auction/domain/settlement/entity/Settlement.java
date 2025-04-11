@@ -25,7 +25,6 @@ public class Settlement {
     private BigDecimal settlementAmount;
     @Enumerated(EnumType.STRING)
     private SettlementStatus status = SettlementStatus.PENDING;
-    private Long sellerId;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime settledAt = null;
 
@@ -36,7 +35,6 @@ public class Settlement {
     public Settlement(Order order) {
         this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * 0.1)); // 수수료는 나중에 환경변수 같은걸로 설정
         this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
-        this.sellerId = order.getAuction().getProduct().getSeller().getId();
         this.order = order;
     }
 

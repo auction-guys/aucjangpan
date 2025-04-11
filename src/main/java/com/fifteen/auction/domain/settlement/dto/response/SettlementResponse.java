@@ -1,9 +1,11 @@
 package com.fifteen.auction.domain.settlement.dto.response;
 
-import lombok.Builder;
+import com.fifteen.auction.domain.settlement.entity.Settlement;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public class SettlementResponse {
     private String settlementId;
     private String sellerId;
@@ -15,16 +17,18 @@ public class SettlementResponse {
     private String createdAt;
     private String bankAccount;
 
-    @Builder
-    public SettlementResponse(String settlementId, String sellerId, String orderId, String amount, String charge, String settlementAmount, String settlementDate, String createdAt, String bankAccount) {
-        this.settlementId = settlementId;
-        this.sellerId = sellerId;
-        this.orderId = orderId;
-        this.amount = amount;
-        this.charge = charge;
-        this.settlementAmount = settlementAmount;
-        this.settlementDate = settlementDate;
-        this.createdAt = createdAt;
-        this.bankAccount = bankAccount;
+    public static SettlementResponse from(Settlement settlement) {
+        return new SettlementResponse(
+                settlement.getSettlementAmount().toString(),
+                settlement.getOrder().getAuction().getProduct().getSeller().getId().toString(),
+                settlement.getOrder().getId().toString(),
+                settlement.getOrder().getAuction().getWinPrice().toString(),
+                settlement.getCharge().toString(),
+                settlement.getSettlementAmount().toString(),
+                settlement.getSettledAt().toString(),
+                settlement.getCreatedAt().toString(),
+                settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber());
     }
+
+
 }

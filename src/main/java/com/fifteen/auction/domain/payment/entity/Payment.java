@@ -19,7 +19,7 @@ public class Payment {
     private Long id;
     private String mid;
     private String paymentKey;
-    private String paymentMethod;
+    private String paymentMethod = "Pending";
     private String cardNumber;
     private Long amount;
     @Enumerated(EnumType.STRING)

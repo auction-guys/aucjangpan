@@ -41,28 +41,18 @@ public class SettlementService {
             throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
         }
 
+        // 정산 처리
+        for (Settlement s : settlements) {
+            s.settled();
+        }
         // csv 파일 저장 위치, 생성
         String filePath = System.getProperty("java.io.tmpdir") + "settlement_" + LocalDate.now() + ".csv";
 
         // csv 파일에 받은 데이터 정리
         List<SettlementResponse> list = settlements.stream()
-                .map(settlement -> SettlementResponse.builder()
-                        .settlementId(settlement.getId().toString())
-                        .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
-                        .orderId(settlement.getOrder().getId().toString())
-                        .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                        .charge(settlement.getCharge().toString())
-                        .settlementAmount(settlement.getSettlementAmount().toString())
-                        .settlementDate(LocalDate.now().toString())
-                        .createdAt(settlement.getCreatedAt().toString())
-                        .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                        .build()).toList();
+                .map(SettlementResponse::from).toList();
 
-        // 정산 처리
-        for (Settlement s : settlements) {
-            s.settled();
-        }
-
+        //TODO csv 파일 작성 로직 분리
         // 파일 작성
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
             // CSV 헤더
@@ -91,29 +81,21 @@ public class SettlementService {
         // 검증
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
+        // TODO 아래 검증을 위에 조회 조건에 넣을지 말지 고민
         if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
+
+        // 정산 처리
+        settlement.settleNow(settlement.getOrder().getAuction().getWinPrice());
 
         // csv 파일 저장 위치, 생성 - 이것도 나중에 환경변수 같은거롤 변경 (현재 위치 임시폴더)
         String filePath = System.getProperty("java.io.tmpdir") + "settlement_immediately_" + currentUserId + LocalDate.now() + ".csv";
 
         // csv 파일에 받은 데이터 정리
-        SettlementResponse dto = SettlementResponse.builder()
-                .settlementId(settlement.getId().toString())
-                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
-                .orderId(settlement.getOrder().getId().toString())
-                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                .charge(settlement.getCharge().toString())
-                .settlementAmount(settlement.getSettlementAmount().toString())
-                .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreatedAt().toString())
-                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                .build();
+        SettlementResponse dto = SettlementResponse.from(settlement);
 
-        // 정산 처리
-        settlement.settleNow(settlement.getOrder().getAuction().getWinPrice());
-
+        //TODO csv 파일 작성 로직 분리
         // 파일 작성
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
             // CSV 헤더
@@ -139,30 +121,16 @@ public class SettlementService {
     public Response<Page<SettlementResponse>> findSettlements(Long currentUserId, PageCond pageCond) {
 
         Pageable pageable = PageRequest.of(pageCond.getPageNum() - 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        Page<Settlement> pages = settlementRepository.findBySellerId(currentUserId, pageable);
-
-        Page<SettlementResponse> result = pages.map(settlement -> SettlementResponse.builder()
-                .settlementId(settlement.getId().toString())
-                .sellerId(settlement.getOrder().getAuction().getProduct().getSeller().getId().toString())
-                .orderId(settlement.getOrder().getId().toString())
-                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                .charge(settlement.getCharge().toString())
-                .settlementAmount(settlement.getSettlementAmount().toString())
-                .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreatedAt().toString())
-                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                .build()
-        );
+        Page<SettlementResponse> pages = settlementRepository.findBySellerId(currentUserId, pageable);
 
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pageCond.getPageNum())
                 .pageSize(pageCond.getPageSize())
-                .totalPage(result.getTotalPages())
-                .totalElement(result.getTotalElements())
+                .totalPage(pages.getTotalPages())
+                .totalElement(pages.getTotalElements())
                 .build();
 
-        return Response.of(result, pageInfo);
+        return Response.of(pages, pageInfo);
     }
 
 
@@ -170,22 +138,12 @@ public class SettlementService {
     public SettlementResponse findSettlement(Long currentUserId, Long settlementId) {
 
         // 검증
-        Settlement settlement = settlementRepository.findById(settlementId)
+        Settlement settlement = settlementRepository.findByIdSettlementId(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
-        if (!settlement.getSellerId().equals(currentUserId)) {
+        if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
 
-        return SettlementResponse.builder()
-                .settlementId(settlement.getId().toString())
-                .sellerId(settlement.getSellerId().toString())
-                .orderId(settlement.getOrder().getId().toString())
-                .amount(settlement.getOrder().getAuction().getWinPrice().toString())
-                .charge(settlement.getCharge().toString())
-                .settlementAmount(settlement.getSettlementAmount().toString())
-                .settlementDate(LocalDate.now().toString())
-                .createdAt(settlement.getCreatedAt().toString())
-                .bankAccount(settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber())
-                .build();
+        return SettlementResponse.from(settlement);
     }
 }
