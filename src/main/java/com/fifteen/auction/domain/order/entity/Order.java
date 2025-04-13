@@ -3,6 +3,8 @@ package com.fifteen.auction.domain.order.entity;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
 
 import java.util.UUID;
@@ -38,11 +40,33 @@ public class Order extends BaseEntity {
         this.user = user;
     }
 
-    public void cancel() {
+    private void validateOwner(Long userId){
+        if(this.user.getId().equals(userId)){
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
+    }
+
+    private void validateCancelable() {
+        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED) {
+            throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+        }
+    }
+
+    private void validateConfirmable() {
+        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED) {
+            throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+        }
+    }
+
+    public void cancel(Long userId) {
+        validateOwner(userId);
+        validateCancelable();
         this.status = OrderStatus.CANCELED;
     }
 
-    public void confirm() {
+    public void confirm(Long userId) {
+        validateOwner(userId);
+        validateConfirmable();
         this.status = OrderStatus.CONFIRMED;
     }
 

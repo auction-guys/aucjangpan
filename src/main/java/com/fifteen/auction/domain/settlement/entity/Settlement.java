@@ -2,6 +2,8 @@ package com.fifteen.auction.domain.settlement.entity;
 
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,14 +40,21 @@ public class Settlement {
         this.order = order;
     }
 
+    private void validateOwner(Long userId){
+        if(!this.order.getAuction().getWinnerId().equals(userId)){
+            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
+        }
+    }
+
     public void settled() {
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();
     }
 
-    public void settleNow(Long winPrice) {
-        this.charge = new BigDecimal(String.valueOf(winPrice * 0.2)); // 수수료는 나중에 환경변수 같은걸로 설정
-        this.settlementAmount = new BigDecimal(winPrice).subtract(charge);
+    public void settleNow(Long userId) {
+        validateOwner(userId);
+        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice() * 0.2)); // 수수료는 나중에 환경변수 같은걸로 설정
+        this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();
     }

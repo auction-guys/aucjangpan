@@ -42,7 +42,7 @@ public class PaymentService {
 
         // orderId, amount 변조 검증
         if (!order.getUser().getId().equals(currentUserId) && order.getAuction().getWinPrice().equals(Long.parseLong(amount))) {
-            throw new ServerException(ErrorCode.ORDER_NOT_MATCHED);
+            throw new ServerException(ErrorCode.PAYMENT_INFO_NOT_MATCHED);
         }
 
         // Toss 승인 요청 API JSON 생성

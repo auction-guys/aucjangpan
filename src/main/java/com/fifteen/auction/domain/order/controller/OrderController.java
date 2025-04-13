@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.order.controller;
 
-import com.fifteen.auction.domain.order.dto.request.CreateOrderRequest;
 import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
 import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
@@ -29,8 +28,8 @@ public class OrderController {
     @PostMapping("api/v1/orders")
     public ResponseEntity<Void> createOrder(
             @RequestParam Long currentUserId,
-            @RequestBody CreateOrderRequest dto) {
-        orderService.createOrder(currentUserId, dto);
+            @RequestParam Long auctionId) {
+        orderService.createOrder(currentUserId, auctionId);
         return ResponseEntity.noContent().build();
     }
 

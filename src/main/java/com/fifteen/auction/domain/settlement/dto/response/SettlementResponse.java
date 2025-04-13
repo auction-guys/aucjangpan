@@ -1,12 +1,13 @@
 package com.fifteen.auction.domain.settlement.dto.response;
 
 import com.fifteen.auction.domain.settlement.entity.Settlement;
+import com.fifteen.auction.domain.settlement.util.RowMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class SettlementResponse {
+public class SettlementResponse implements RowMapper {
     private String settlementId;
     private String sellerId;
     private String orderId;
@@ -30,5 +31,18 @@ public class SettlementResponse {
                 settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber());
     }
 
-
+    @Override
+    public String[] toCsvRow() {
+        return new String[] {
+                String.valueOf(this.getSettlementId()),
+                String.valueOf(this.getSellerId()),
+                String.valueOf(this.getOrderId()),
+                String.valueOf(this.getAmount()),
+                String.valueOf(this.getCharge()),
+                String.valueOf(this.getSettlementAmount()),
+                String.valueOf(this.getSettlementDate()),
+                String.valueOf(this.getCreatedAt()),
+                String.valueOf(this.getBankAccount())
+        };
+    }
 }
