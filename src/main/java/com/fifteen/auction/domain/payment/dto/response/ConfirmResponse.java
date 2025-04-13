@@ -15,10 +15,11 @@ public class ConfirmResponse {
     private LocalDateTime approvedAt;
 
     public ConfirmResponse(JSONObject jsonObject) {
-        this.mid = jsonObject.get("mid").toString();
+        this.mid = jsonObject.get("mId").toString();
         this.paymentKey = jsonObject.get("paymentKey").toString();
         this.paymentMethod = jsonObject.get("method").toString();
-        this.amount = Long.parseLong(jsonObject.get("amount").toString());
+        JSONObject card = (JSONObject) jsonObject.get("card");
+        this.amount = Long.parseLong(card.get("amount").toString());
         this.requestedAt = LocalDateTime.parse(jsonObject.get("requestedAt").toString().substring(0, 19));
         this.approvedAt = LocalDateTime.parse(jsonObject.get("approvedAt").toString().substring(0, 19));
     }

@@ -40,8 +40,8 @@ public class Settlement {
         this.order = order;
     }
 
-    private void validateOwner(Long userId){
-        if(!this.order.getAuction().getWinnerId().equals(userId)){
+    public void validateOwner(Long userId){
+        if(!this.order.getAuction().getProduct().getSeller().getId().equals(userId)){
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
     }

@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.payment.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
@@ -9,31 +8,21 @@ import com.fifteen.auction.domain.payment.dto.request.PaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.entity.Payment;
-import com.fifteen.auction.domain.payment.enums.PaymentStatus;
-import com.fifteen.auction.domain.payment.provider.TossAuthorizationProvider;
 import com.fifteen.auction.domain.payment.provider.TossConnectionProvider;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
 import com.fifteen.auction.domain.payment.util.HttpRequestWriter;
 import com.fifteen.auction.domain.payment.util.HttpResponseReader;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
-import com.fifteen.auction.global.dto.exception.PaymentFailException;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -71,10 +60,10 @@ public class PaymentService {
     public ConfirmResponse savePayment(PaymentResponse dto) throws IOException, ParseException {
         // 결제 정보 검증
         try {
-            dto.getOrder().validatePaymentInfo(Long.parseLong(dto.getJsonObject().get("orderId").toString()), Long.parseLong(dto.getJsonObject().get("amount").toString()));
+            dto.getOrder().validatePaymentInfo(Long.parseLong(dto.getOrder().getUser().getId().toString()), dto.getAmount());
         } catch (Exception e) {
             // 결제 정보 오류 시 결제 취소
-            cancelInvalidPayment(String.valueOf(dto.getJsonObject().get("paymentKey")), new CancelPaymentRequest(e.getMessage()), dto.getOrder().getId());
+            cancelInvalidPayment(String.valueOf(dto.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
             throw e;
         }
         // 결제 정보 저장
@@ -84,7 +73,7 @@ public class PaymentService {
             dto.getOrder().paid();
         } catch (Exception e) {
             // 결제 정보 저장 중 오류 - 현재는 결제 취소를 하지만 고도화 때 결제 취소 => 취소 X 로그 남김으로 변경 예정
-            cancelInvalidPayment(String.valueOf(dto.getJsonObject().get("paymentKey")), new CancelPaymentRequest(e.getMessage()), dto.getOrder().getId());
+            cancelInvalidPayment(String.valueOf(dto.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
             throw e;
         }
         // 주문 성공, 데이터 저장 성공
@@ -99,8 +88,8 @@ public class PaymentService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
         // 권한 검증
         payment.validateOwner(currentUserId);
-
-        cancelPayment(paymentKey, dto, payment.getOrder().getId());
+        System.out.println("444");
+        cancelPayment(paymentKey, dto);
 
         // TODO: 현재는 그냥 취소인데 취소가 주문 취소 까지 가는지
         payment.cancel();
@@ -108,21 +97,22 @@ public class PaymentService {
 
     // 결제 취소 검증 - 결제 중 오류로 결제 취소
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void cancelInvalidPayment(String paymentKey, CancelPaymentRequest dto, Long orderId) throws IOException, ParseException {
-        cancelPayment(paymentKey, dto, orderId);
+    public void cancelInvalidPayment(String paymentKey, CancelPaymentRequest dto) throws IOException, ParseException {
+        cancelPayment(paymentKey, dto);
     }
 
     // 결제 취소 공통 로직
-    public void cancelPayment(String paymentKey, CancelPaymentRequest dto, Long orderId) throws IOException, ParseException {
+    public void cancelPayment(String paymentKey, CancelPaymentRequest dto) throws IOException, ParseException {
 
         // 결제 취소 요청 작성
         HttpURLConnection connection = tossConnectionProvider.createCanclePaymentConnection(paymentKey);
-
+        System.out.println("1");
         // 전송
         requestWriter.writeJson(connection.getOutputStream(), dto);
-
+        System.out.println("2");
         // 응답
         responseReader.parseJson(connection);
+        System.out.println("3");
     }
 
     @Transactional(readOnly = true)

@@ -2,7 +2,6 @@ package com.fifteen.auction.domain.order.repository;
 
 import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
-import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -17,7 +16,6 @@ import java.util.Optional;
 import static com.fifteen.auction.domain.auction.entity.QAuction.auction;
 import static com.fifteen.auction.domain.order.entity.QOrder.order;
 import static com.fifteen.auction.domain.product.entity.QProduct.product;
-import static com.fifteen.auction.domain.settlement.entity.QSettlement.settlement;
 import static com.fifteen.auction.domain.user.entity.QUser.user;
 
 public class OrderRepositoryImpl implements OrderRepositoryCustom{
@@ -42,9 +40,9 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
                         order.createdAt.stringValue()
                 ))
                 .from(order)
-                .join(order.auction, auction).fetchJoin()
-                .join(auction.product, product).fetchJoin()
-                .join(product.seller, user).fetchJoin()
+                .join(order.user, user)
+                .join(order.auction, auction)
+                .join(auction.product, product)
                 .where(user.id.eq(currentUserId))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -53,10 +51,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
         JPAQuery<Long> countQuery = queryFactory
                 .select(order.count())
                 .from(order)
-                .join(order.auction, auction)
-                .join(auction.product, product)
-                .join(product.seller, user)
-                .where(settlement.sellerId.eq(currentUserId));
+                .where(order.user.id.eq(currentUserId));
 
         return PageableExecutionUtils.getPage(query, pageable, countQuery::fetchOne);
     }
@@ -73,12 +68,12 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
                         product.name.stringValue(),
                         auction.winPrice.stringValue(),
                         order.status.stringValue(),
-                        order.createdAt.stringValue()
+                        order.createdAt
                 ))
                 .from(order)
-                .join(order.auction, auction).fetchJoin()
-                .join(auction.product, product).fetchJoin()
-                .join(product.seller, user).fetchJoin()
+                .join(order.auction, auction)
+                .join(auction.product, product)
+                .join(order.user, user)
                 .where(user.id.eq(currentUserId).and(order.id.eq(orderId)))
                 .fetchOne();
 

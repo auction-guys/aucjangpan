@@ -101,9 +101,7 @@ public class SettlementService {
         // 검증
         Settlement settlement = settlementRepository.findByIdSettlementId(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
-        if (!settlement.getOrder().getAuction().getProduct().getSeller().getId().equals(currentUserId)) {
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
-        }
+        settlement.validateOwner(currentUserId);
 
         return SettlementResponse.from(settlement);
     }

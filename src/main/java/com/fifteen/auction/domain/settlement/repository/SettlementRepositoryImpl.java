@@ -54,16 +54,15 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                         auction.winPrice.stringValue(),
                         settlement.charge.stringValue(),
                         settlement.settlementAmount.stringValue(),
-                        settlement.settledAt,
+                        settlement.settledAt.stringValue(),
                         settlement.createdAt.stringValue(),
                         user.accountNumber.stringValue()
                 ))
                 .from(settlement)
-                .join(settlement.order, order).fetchJoin()
-                .join(order.auction, auction).fetchJoin()
-                .join(auction.product, product).fetchJoin()
-                .join(product.seller, user).fetchJoin()
-                .where(settlement.sellerId.eq(currentUserId))
+                .join(settlement.order, order)
+                .join(order.auction, auction)
+                .join(auction.product.seller, user)
+                .where(user.id.eq(currentUserId))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -71,7 +70,11 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         JPAQuery<Long> countQuery = queryFactory
                 .select(settlement.count())
                 .from(settlement)
-                .where(settlement.sellerId.eq(currentUserId));
+                .join(settlement.order, order)
+                .join(order.auction, auction)
+                .join(auction.product, product)
+                .join(product.seller, user)
+                .where(user.id.eq(currentUserId));
 
         return PageableExecutionUtils.getPage(query, pageable, countQuery::fetchOne);
     }

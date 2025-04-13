@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 public class OrderResponse {
@@ -17,13 +18,13 @@ public class OrderResponse {
     private LocalDate orderedDate;
 
     @Builder
-    public OrderResponse(String name, String orderId, String address, String productName, String amount, OrderStatus status, LocalDate orderedDate) {
+    public OrderResponse(String name, String orderId, String address, String productName, String amount, String status, LocalDateTime orderedDate) {
         this.name = name;
         this.orderId = orderId;
         this.address = address;
         this.productName = productName;
         this.amount = amount;
-        this.status = status;
-        this.orderedDate = orderedDate;
+        this.status = OrderStatus.valueOf(status);
+        this.orderedDate = orderedDate.toLocalDate();
     }
 }

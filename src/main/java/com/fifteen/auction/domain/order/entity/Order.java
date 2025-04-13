@@ -40,19 +40,19 @@ public class Order extends BaseEntity {
     }
 
     private void validateOwner(Long userId) {
-        if (this.user.getId().equals(userId)) {
+        if (!this.user.getId().equals(userId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
     }
 
     private void validateCancelable() {
-        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED) {
+        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED) {
             throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
         }
     }
 
     private void validateConfirmable() {
-        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED) {
+        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED) {
             throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
         }
     }
@@ -75,6 +75,7 @@ public class Order extends BaseEntity {
 
     public void validatePaymentInfo( Long userId, Long amount) {
         if (!this.getUser().getId().equals(userId) && this.getAuction().getWinPrice().equals(amount)) {
+            System.out.println("       "+userId+"    "+this.getUser().getId()+"       "+amount+"      "+this.getAuction().getWinPrice());
             throw new ServerException(ErrorCode.PAYMENT_INFO_NOT_MATCHED);
         }
     }

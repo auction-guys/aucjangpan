@@ -49,7 +49,8 @@ public class Payment {
         this.mid = jsonObject.get("mId").toString();
         this.paymentKey = jsonObject.get("paymentKey").toString();
         this.paymentMethod = jsonObject.get("method").toString();
-        this.amount = Long.parseLong(jsonObject.get("amount").toString());
+        JSONObject card = (JSONObject) jsonObject.get("card");
+        this.amount = Long.parseLong(card.get("amount").toString());
         this.status = PaymentStatus.valueOf(jsonObject.get("status").toString());
         this.requestedAt = LocalDateTime.parse(jsonObject.get("requestedAt").toString().substring(0, 19));
         this.approvedAt = LocalDateTime.parse(jsonObject.get("approvedAt").toString().substring(0, 19));
@@ -58,7 +59,7 @@ public class Payment {
 
 
     public void validateOwner(Long userId) {
-        if (this.order.getUser().getId().equals(userId)) {
+        if (!this.order.getUser().getId().equals(userId)) {
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
         }
     }

@@ -14,6 +14,6 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long>, S
             "join fetch o.auction a " +
             "join fetch a.product p " +
             "join fetch p.seller u " +
-            "where u.id = :settlementId")
-    Optional<Settlement> findByIdSettlementId(@Param("auctionSeq") Long settlementId);
+            "where s.id = :settlementId")
+    Optional<Settlement> findByIdSettlementId(@Param("settlementId") Long settlementId);
 }
