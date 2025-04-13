@@ -24,14 +24,14 @@ public class HttpResponseReader {
         try {
             int code = connection.getResponseCode();
             boolean isSuccess = code == 200;
-
+            System.out.println("dfdf"+isSuccess);
             try (
                 InputStream responseStream = isSuccess ? connection.getInputStream() : connection.getErrorStream();
                 Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)
             ) {
                 JSONParser parser = new JSONParser();
                 JSONObject jsonObject = (JSONObject) parser.parse(reader);
-
+                System.out.println(jsonObject);
                 if (!isSuccess) {
                     throw new PaymentFailException(
                             HttpStatus.valueOf(code),
