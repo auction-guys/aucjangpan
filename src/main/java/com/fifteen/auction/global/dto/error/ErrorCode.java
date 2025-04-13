@@ -23,7 +23,8 @@ public enum ErrorCode {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
     PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT-2", "사용자의 결제 정보가 아닙니다."),
     PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
-    PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문 정보가 일치하지 않습니다."),
+    PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-4", "주문 정보가 일치하지 않습니다."),
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-5", "결제 승인 요청을 실패했습니다."),
 
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),

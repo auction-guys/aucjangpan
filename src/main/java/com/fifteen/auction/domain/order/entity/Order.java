@@ -5,6 +5,7 @@ import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
+import com.fifteen.auction.global.dto.exception.ServerException;
 import com.fifteen.auction.global.entity.BaseEntity;
 
 import java.util.UUID;
@@ -25,8 +26,6 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
 
-    private final String idempotencyKey = UUID.randomUUID().toString();
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auction_id")
     private Auction auction;
@@ -40,8 +39,8 @@ public class Order extends BaseEntity {
         this.user = user;
     }
 
-    private void validateOwner(Long userId){
-        if(this.user.getId().equals(userId)){
+    private void validateOwner(Long userId) {
+        if (this.user.getId().equals(userId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
     }
@@ -72,5 +71,11 @@ public class Order extends BaseEntity {
 
     public void paid() {
         this.status = OrderStatus.PAID;
+    }
+
+    public void validatePaymentInfo( Long userId, Long amount) {
+        if (!this.getUser().getId().equals(userId) && this.getAuction().getWinPrice().equals(amount)) {
+            throw new ServerException(ErrorCode.PAYMENT_INFO_NOT_MATCHED);
+        }
     }
 }

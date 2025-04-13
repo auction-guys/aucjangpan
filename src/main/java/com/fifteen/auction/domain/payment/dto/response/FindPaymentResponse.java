@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.payment.dto.response;
 
+import com.fifteen.auction.domain.payment.entity.Payment;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,5 +27,19 @@ public class FindPaymentResponse {
         this.paymentMethod = paymentMethod;
         this.cardNumber = cardNumber;
         this.amount = amount;
+    }
+
+    public static FindPaymentResponse from(Payment payment) {
+        return new FindPaymentResponse(
+            payment.getPaymentKey(),
+            payment.getOrder().getId().toString(),
+            payment.getOrder().getAuction().getProduct().getName(),
+            payment.getStatus().toString(),
+            payment.getRequestedAt().toString(),
+            payment.getApprovedAt().toString(),
+            payment.getPaymentMethod(),
+            payment.getCardNumber(),
+            payment.getOrder().getAuction().getWinPrice().toString()
+        );
     }
 }

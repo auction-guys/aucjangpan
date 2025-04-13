@@ -2,10 +2,13 @@ package com.fifteen.auction.domain.payment.entity;
 
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.json.simple.JSONObject;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +23,6 @@ public class Payment {
     private String mid;
     private String paymentKey;
     private String paymentMethod = "Pending";
-    private String cardNumber;
     private Long amount;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status = PaymentStatus.READY;
@@ -32,16 +34,33 @@ public class Payment {
     private Order order;
 
     @Builder
-    public Payment(String mid, String paymentKey, String paymentMethod, String cardNumber, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
+    public Payment(String mid, String paymentKey, String paymentMethod, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
         this.mid = mid;
         this.paymentKey = paymentKey;
         this.paymentMethod = paymentMethod;
-        this.cardNumber = cardNumber;
         this.amount = amount;
         this.status = status;
         this.requestedAt = requestedAt;
         this.approvedAt = approvedAt;
         this.order = order;
+    }
+
+    public Payment(JSONObject jsonObject, Order order) {
+        this.mid = jsonObject.get("mId").toString();
+        this.paymentKey = jsonObject.get("paymentKey").toString();
+        this.paymentMethod = jsonObject.get("method").toString();
+        this.amount = Long.parseLong(jsonObject.get("amount").toString());
+        this.status = PaymentStatus.valueOf(jsonObject.get("status").toString());
+        this.requestedAt = LocalDateTime.parse(jsonObject.get("requestedAt").toString().substring(0, 19));
+        this.approvedAt = LocalDateTime.parse(jsonObject.get("approvedAt").toString().substring(0, 19));
+        this.order = order;
+    }
+
+
+    public void validateOwner(Long userId) {
+        if (this.order.getUser().getId().equals(userId)) {
+            throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
+        }
     }
 
     public void cancel() {
