@@ -19,6 +19,7 @@ public class HttpRequestWriter {
     public void writeJson(OutputStream outputStream, Object requestDto) {
         try {
             String json = objectMapper.writeValueAsString(requestDto);
+            System.out.println("json"+json);
             outputStream.write(json.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new ServerException(ErrorCode.PAYMENT_FAILED);
