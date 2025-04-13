@@ -13,11 +13,10 @@ public class FindPaymentResponse {
     private String requestAt;
     private String approvedAt;
     private String paymentMethod;
-    private String cardNumber;
     private String amount;
 
     @Builder
-    public FindPaymentResponse(String paymentKey, String orderId, String orderName, String status, String requestAt, String approvedAt, String paymentMethod, String cardNumber, String amount) {
+    public FindPaymentResponse(String paymentKey, String orderId, String orderName, String status, String requestAt, String approvedAt, String paymentMethod, String amount) {
         this.paymentKey = paymentKey;
         this.orderId = orderId;
         this.orderName = orderName;
@@ -25,7 +24,6 @@ public class FindPaymentResponse {
         this.requestAt = requestAt;
         this.approvedAt = approvedAt;
         this.paymentMethod = paymentMethod;
-        this.cardNumber = cardNumber;
         this.amount = amount;
     }
 
@@ -38,7 +36,6 @@ public class FindPaymentResponse {
             payment.getRequestedAt().toString(),
             payment.getApprovedAt().toString(),
             payment.getPaymentMethod(),
-            payment.getCardNumber(),
             payment.getOrder().getAuction().getWinPrice().toString()
         );
     }
