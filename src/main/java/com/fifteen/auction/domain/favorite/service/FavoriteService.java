@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.favorite.service;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.favorite.entity.Favorite;
 import com.fifteen.auction.domain.favorite.repository.FavoriteRepository;
 import com.fifteen.auction.domain.user.entity.User;
