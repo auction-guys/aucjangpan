@@ -13,10 +13,10 @@ import java.util.List;
 import static com.fifteen.auction.domain.auction.entity.QAuction.auction;
 import static com.fifteen.auction.domain.auction.entity.QBid.bid;
 
-public class BidRepositoryCustomImpl implements BidRepositoryCustom {
+public class BidCustomRepositoryImpl implements BidCustomRepository {
     private final JPAQueryFactory queryFactory;
 
-    public BidRepositoryCustomImpl(EntityManager entityManager) {
+    public BidCustomRepositoryImpl(EntityManager entityManager) {
         queryFactory = new JPAQueryFactory(entityManager);
     }
 
