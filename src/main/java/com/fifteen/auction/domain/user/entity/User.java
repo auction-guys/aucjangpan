@@ -29,7 +29,7 @@ public class User {
     @Column(nullable = false)
     private String ageGroup;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false)
@@ -68,5 +68,9 @@ public class User {
 
     public void updatePassword(String newPassword) {
         this.password = newPassword;
+    }
+
+    public void setPassword(String encodedPassword) {
+        this.password = encodedPassword;
     }
 }

@@ -55,7 +55,7 @@ public class OAuthService {
                     name,
                     "male",
                     "20대",
-                    "unknown",
+                    null,
                     "서울특별시 성북구",
                     "010-9876-5432",
                     "설윤 포토카드",
