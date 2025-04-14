@@ -38,9 +38,6 @@ public class BidWorkerService {
         // 경매 표시가 반영
         auctionCacheService
                 .addNewHighPrice(event.getAuctionSeq(), event.getBidderId(), event.getBidPrice());
-
-        // 입찰 이력 캐싱
-        auctionCacheService.addToBidHistory(event.getAuctionSeq(), event.getBidderId());
     }
 
     private boolean isWithinOneMinute(LocalDateTime expiresAt, LocalDateTime bidAt) {
