@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class ProductImageService {
                 String url = s3Uploader.upload(image, "products");
                 result.add(url);
             } catch (Exception e) {
-                throw new ServerException(ErrorCode.S3_UPLOAD_FAIL, e);
+                throw new ServerException(ErrorCode.UPLOAD_FAIL);
             }
         }
         return result;
@@ -55,6 +54,7 @@ public class ProductImageService {
         productImageRepository.deleteAll(images);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductImage> createImagesWithThumbnail(Product product, List<String> imageUrls, String thumbnailUrl) {
         List<ProductImage> result = new ArrayList<>();
 

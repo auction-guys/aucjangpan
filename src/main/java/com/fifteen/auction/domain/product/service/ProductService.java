@@ -1,6 +1,6 @@
 package com.fifteen.auction.domain.product.service;
 
-import com.fifteen.auction.domain.product.dto.request.ProductCategoryTreeResponse;
+import com.fifteen.auction.domain.product.dto.response.ProductCategoryTreeResponse;
 import com.fifteen.auction.domain.product.dto.request.ProductCreateRequest;
 import com.fifteen.auction.domain.product.dto.request.ProductUpdateRequest;
 import com.fifteen.auction.domain.product.entity.Product;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class ProductService {
     }
 
     public void updateProduct(Long sellerId, Long productId, ProductUpdateRequest request) {
-        Product product = productRepository.findByIdAndDeletedFalse(productId)
+        Product product = productRepository.findByIdWithImages(productId)
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
         if (!product.getSeller().getId().equals(sellerId)) {
@@ -74,7 +74,7 @@ public class ProductService {
     }
 
     public void deleteProduct(Long sellerId, Long productId) {
-        Product product = productRepository.findByIdAndDeletedFalse(productId)
+        Product product = productRepository.findByIdWithImages(productId)
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
         if (!product.getSeller().getId().equals(sellerId)) {
@@ -84,11 +84,13 @@ public class ProductService {
         product.softDelete();
     }
 
-    public List<ProductCategoryTreeResponse> getCategoryTree() {
-        List<ProductCategory> topLevelCategories = categoryRepository.findAllByParentIsNullAndDeletedFalse();
-
-        return topLevelCategories.stream()
-                .map(ProductCategoryTreeResponse::from)
-                .collect(Collectors.toList());
+    private List<ProductCategoryTreeResponse> buildTree(Map<Long, List<ProductCategory>> grouped, Long parentId) {
+        return grouped.getOrDefault(parentId, List.of()).stream()
+                .map(category -> new ProductCategoryTreeResponse(
+                        category.getId(),
+                        category.getName(),
+                        buildTree(grouped, category.getId())
+                ))
+                .toList();
     }
 }

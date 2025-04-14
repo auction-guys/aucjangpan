@@ -41,9 +41,6 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ProductImage> images = new ArrayList<>();
 
-    @Column(nullable = false)
-    private boolean deleted;
-
     private LocalDateTime deletedAt;
 
     private Product(User seller, ProductCategory category, String name, String description) {
@@ -51,7 +48,6 @@ public class Product extends BaseEntity {
         this.category = category;
         this.name = name;
         this.description = description;
-        this.deleted = false;
     }
 
     public static Product create(User seller, ProductCategory category, String name, String description) {
@@ -69,7 +65,6 @@ public class Product extends BaseEntity {
     }
 
     public void softDelete() {
-        this.deleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 
