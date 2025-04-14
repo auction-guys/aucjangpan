@@ -26,30 +26,36 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "USER-9", "잘못된 토큰입니다."),
     ALREADY_LOGOUT(HttpStatus.BAD_REQUEST, "USER-10", "이미 로그아웃 되었습니다."),
 
-    // Auction Exceptions
+    // Auction Exceptions 에러 코드
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
 
-    // Product Custom Exception
+    // Product Custom Exception 에러 코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
     PRODUCT_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-2", "존재하지 않는 카테고리입니다."),
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-3", "대표 이미지가 존재하지 않습니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "존재하지 않는 사용자입니다."),
     UNAUTHORIZED(HttpStatus.FORBIDDEN, "COMMON-1", "접근 권한이 없습니다."),
 
-    // Favorite Exception
-    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-1", "찜 내역이 존재하지 않습니다."),
-    AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "해당 경매가 존재하지 않습니다."),
+    // FAVORITE 에러 코드
+    DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE_001", "이미 찜한 경매입니다."),
+    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE_002", "찜 내역이 존재하지 않습니다."),
 
-    // S3 Exception
-    S3_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "S3-1", "이미지 업로드에 실패했습니다."),
-    S3_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "S3-2", "이미지 삭제에 실패했습니다."),
-    S3_KEY_EXTRACTION_FAIL(HttpStatus.BAD_REQUEST, "S3-3", "키 추출에 실패했습니다."),
-    S3_INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "S3-4", "파일 확장자를 찾을 수 없습니다."),
-    
-  
+    // Image Exception 에러 코드
+    UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-1", "이미지 업로드에 실패했습니다."),
+    DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-2", "이미지 삭제에 실패했습니다."),
+    KEY_EXTRACTION_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-3", "키 추출에 실패했습니다."),
+    INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "IMAGE-4", "파일 확장자를 찾을 수 없습니다."),
+
+    // Tag 에러 코드
+    TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "Tag-1", "존재하지 않는 태그입니다."),
+    DELETE_TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "Tag-2", "태그 삭제에 실패했습니다."),
+    DUPLICATE_TAG(HttpStatus.CONFLICT, "TAG-3", "중복된 태그가 존재합니다."),
+
+    // Recommend
+    RECOMMEND_NOT_FOUND(HttpStatus.NOT_FOUND, "Recommend-1", "추천할 수 없습니다."),
+
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
-  
+
     private final HttpStatus status;
     private final String code;
     private final String message;
