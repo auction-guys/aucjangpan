@@ -31,7 +31,7 @@ public class ProductImageService {
                 String url = s3Uploader.upload(image, "products");
                 result.add(url);
             } catch (Exception e) {
-                throw new ServerException(ErrorCode.UPLOAD_FAIL, e);
+                throw new ServerException(ErrorCode.UPLOAD_FAIL);
             }
         }
         return result;
