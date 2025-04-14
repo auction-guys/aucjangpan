@@ -7,15 +7,14 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-
-public class ProductCategoryCreateRequest {
+public class ProductCategorySaveRequest {
 
     @NotBlank
     private final String name;
 
     private final Long parentId;
 
-    public static ProductCategoryCreateRequest of(String name, Long parentId) {
-        return new ProductCategoryCreateRequest(name, parentId);
+    public static ProductCategorySaveRequest of(String name, Long parentId) {
+        return new ProductCategorySaveRequest(name, parentId);
     }
 }

@@ -31,7 +31,7 @@ public class ProductImageService {
                 String url = s3Uploader.upload(image, "products");
                 result.add(url);
             } catch (Exception e) {
-                throw new ServerException(ErrorCode.S3_UPLOAD_FAIL, e);
+                throw new ServerException(ErrorCode.UPLOAD_FAIL, e);
             }
         }
         return result;
@@ -55,6 +55,7 @@ public class ProductImageService {
         productImageRepository.deleteAll(images);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductImage> createImagesWithThumbnail(Product product, List<String> imageUrls, String thumbnailUrl) {
         List<ProductImage> result = new ArrayList<>();
 
