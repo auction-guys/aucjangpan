@@ -13,6 +13,20 @@ public enum ErrorCode {
      * '// user 에러 코드' 와 같은 주석으로 도메인을 분리해주시면 됩니다.
      * 상수를 선언하실 때, code 부분은 '도메인-숫자'의 형식으로 해주세요. 예) USER-1
      */
+    // Order Exceptions
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
+    ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
+    ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
+    ORDER_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문 정보가 일치하지 않습니다."),
+
+    // Payment Exceptions
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
+    PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT-2", "사용자의 결제 정보가 아닙니다."),
+    PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
+
+    // Settlement Exceptions
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
+    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-1", "정산 데이터 출력 중 오류가 생겼습니다."),
 
     //User 에러 코드
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "해당 유저를 찾을 수 없습니다."),
@@ -28,6 +42,7 @@ public enum ErrorCode {
 
     // Auction Exceptions 에러 코드
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
+    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-2", "해당 경매에 접근할 수 없습니다."),
 
     // Product Custom Exception 에러 코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),

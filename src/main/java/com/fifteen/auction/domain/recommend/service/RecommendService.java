@@ -1,14 +1,13 @@
 package com.fifteen.auction.domain.recommend.service;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
-import com.fifteen.auction.domain.auction.repository.BidRepository;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
+import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.recommend.dto.response.RecommendationResponse;
 import com.fifteen.auction.domain.recommend.entity.Recommendation;
 import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
 import com.fifteen.auction.domain.recommend.repository.RecommendationRepository;
 import com.fifteen.auction.domain.tag.repository.AuctionTagRepository;
-import com.fifteen.auction.domain.tag.repository.TagRepository;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,11 +27,8 @@ public class RecommendService {
     private final AuctionTagRepository auctionTagRepository;
     private final RecommendationRepository recommendationRepository;
     private final AuctionRepository auctionRepository;
-    private final TagRepository tagRepository;
 
-    /**
-     * 그룹 기반 추천 생성
-     */
+    // 그룹기반 추천 생성
     public void generateRecommendationsForGroup(RecommendGroup group) {
         // Step 1: 그룹 유저 조회
         List<User> users = userRepository.findByRecommendGroup(group);
@@ -101,9 +97,7 @@ public class RecommendService {
         }
     }
 
-    /**
-     * 그룹 기반 추천 조회
-     */
+    // 그룹 기반 추천 조회
     public List<RecommendationResponse> getRecommendationsForGroup(RecommendGroup group) {
         return recommendationRepository.findAllByRecommendGroupOrderByRankingAsc(group).stream()
                 .map(RecommendationResponse::from)

@@ -8,11 +8,3 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
----
-spring:
-  profiles:
-    active: local
----
-spring:
-  profiles:
-    active: prod

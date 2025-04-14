@@ -1,7 +1,6 @@
 package com.fifteen.auction.domain.favorite.controller;
 
 import com.fifteen.auction.domain.favorite.dto.response.FavoriteResponse;
-import com.fifteen.auction.domain.favorite.entity.Favorite;
 import com.fifteen.auction.domain.favorite.service.FavoriteService;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.Response;
@@ -11,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/favorites")
