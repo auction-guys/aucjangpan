@@ -4,6 +4,8 @@ import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.recommend.entity.Recommendation;
 import com.fifteen.auction.domain.tag.entity.AuctionTag;
 import com.fifteen.auction.domain.tag.entity.Tag;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -99,15 +101,24 @@ public class Auction extends BaseEntity {
     }
 
     public void open() {
+        if (this.status != AuctionStatus.PENDING) {
+            throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
+        }
         this.status = AuctionStatus.OPEN;
     }
 
     public void cancel(LocalDateTime doneAt) {
+        if (this.status != AuctionStatus.PENDING) {
+            throw new ClientException(ErrorCode.CLOSE_NOT_PENDING);
+        }
         this.status = AuctionStatus.CANCELED;
         this.doneAt = doneAt;
     }
 
     public void finalize(Long winnerId, Long winPrice, LocalDateTime doneAt) {
+        if (this.status != AuctionStatus.OPEN || this.doneAt != null) {
+            throw new ClientException(ErrorCode.FINALIZE_ALREADY_DONE);
+        }
         this.winnerId = winnerId;
         this.winPrice = winPrice;
         this.doneAt = doneAt;
@@ -115,6 +126,9 @@ public class Auction extends BaseEntity {
     }
 
     public void misCarry() {
+        if (this.status != AuctionStatus.OPEN) {
+            throw new ClientException(ErrorCode.AUCTION_NOT_OPEN);
+        }
         this.status = AuctionStatus.MISCARRY;
         this.doneAt = this.expiresAt;
     }
@@ -127,6 +141,9 @@ public class Auction extends BaseEntity {
             Long startPrice, Long buyNowPrice, Integer bidUnit,
             Boolean isBuyNowSet, Boolean isAutoExtensible
     ) {
+        if (this.status != AuctionStatus.PENDING) {
+            throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
+        }
         this.startPrice = useIfNotNull(startPrice, this.startPrice);
         this.buyNowPrice = useIfNotNull(buyNowPrice, this.buyNowPrice);
         this.bidUnit = useIfNotNull(bidUnit, this.bidUnit);

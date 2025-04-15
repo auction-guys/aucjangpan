@@ -79,6 +79,10 @@ public class Product extends BaseEntity {
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
     }
 
+    public boolean isUserASeller(Long userId) {
+        return seller.getId().equals(userId);
+    }
+
     public List<String> getImageUrlsExcludingThumbnail() {
         return images.stream()
                 .filter(image -> !image.isThumbnail())

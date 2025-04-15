@@ -6,7 +6,6 @@ import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
 import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
@@ -43,7 +42,7 @@ public class AuctionService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 자신이 생성한 물품인지 확인
-        if (!product.getSeller().getId().equals(userId)) {
+        if (!product.isUserASeller(userId)) {
             throw new ClientException(ErrorCode.NOT_OWNING_PRODUCT);
         }
 
@@ -70,11 +69,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-
-        if (auction.getStatus() == AuctionStatus.OPEN) {
-            throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
-        }
-
+        
         auction.open();
         auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
 
@@ -109,9 +104,7 @@ public class AuctionService {
         Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        if (auction.getDoneAt() == null) {
-            auction.finalize(winnerId, winPrice, auction.getExpiresAt());
-        }
+        auction.finalize(winnerId, winPrice, auction.getExpiresAt());
     }
 
 
