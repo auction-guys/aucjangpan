@@ -80,6 +80,10 @@ dependencies {
     // jsonobject
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
+    // Spring Actuator + Prometheus
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
 }
 
 tasks.named('test') {
