@@ -7,8 +7,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface BidRepository extends JpaRepository<Bid, Long> {
-
+public interface BidRepository extends JpaRepository<Bid, Long>, BidCustomRepository {
+  
     // 특정 경매에 대한 입찰 정보를 조회
     @Query("SELECT b FROM Bid b WHERE b.bidderId = :userId")
     List<Bid> findBidsByUserId(@Param("userId") Long userId);
