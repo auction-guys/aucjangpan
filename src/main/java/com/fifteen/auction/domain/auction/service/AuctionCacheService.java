@@ -24,6 +24,11 @@ public class AuctionCacheService {
         return bidPrice < currentPrice + bidUnit;
     }
 
+    public Long findBidCount(String auctionSeq) {
+        String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
+        return redisTemplate.opsForZSet().zCard(key) - 1;
+    }
+
     public Long findCurrentPrice(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
 

@@ -69,7 +69,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        
+
         auction.open();
         auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
 
@@ -111,7 +111,16 @@ public class AuctionService {
     @Transactional(readOnly = true)
     public Page<AuctionListItem> findAll(PageCond cond) {
         Pageable pageable = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
-        return auctionRepository.findAllOpenByCond(pageable);
+        Page<AuctionListItem> allOpenByCond = auctionRepository.findAllOpenByCond(pageable);
+
+        // 캐시에 존재하는 경매 정보 업데이트
+        allOpenByCond.forEach(a -> {
+            Long currentPrice = auctionCacheService.findCurrentPrice(a.getAuctionSeq());
+            Long bidCount = auctionCacheService.findBidCount(a.getAuctionSeq());
+            a.updateBidInfo(currentPrice, bidCount);
+        });
+
+        return allOpenByCond;
     }
 
     @Transactional(readOnly = true)
@@ -120,7 +129,15 @@ public class AuctionService {
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
-        return AuctionDetail.fromAuction(findAuction, marketPrice);
+
+        AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
+
+        // 캐시에 존재하는 경매 정보 업데이트
+        Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());
+        Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
+        detail.updateBidInfo(currentPrice, bidCount);
+
+        return detail;
     }
 
     @Transactional
