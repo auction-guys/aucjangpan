@@ -39,9 +39,8 @@ public class AuctionService {
 
     @Transactional
     public String create(AuctionCreateRequest req, Long userId) {
-        // TODO: 에러코드 변경
         Product product = productRepository.findByIdWithSeller(req.getProductId())
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 자신이 생성한 물품인지 확인
         if (!product.getSeller().getId().equals(userId)) {
