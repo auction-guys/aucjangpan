@@ -16,7 +16,7 @@ public class OrderInfoResponse {
 
     public static OrderInfoResponse from(Order order){
         return new OrderInfoResponse(
-                order.getId().toString(),
+                order.getId(),
                 order.getAuction().getProduct().getName(),
                 order.getAuction().getProduct().getSeller().getEmail(),
                 order.getAuction().getProduct().getSeller().getName(),

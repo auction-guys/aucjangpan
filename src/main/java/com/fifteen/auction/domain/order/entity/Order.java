@@ -21,8 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "orders")
 public class Order extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 이후 아이디 문자열로 바꿀 예정 관련해서 레디스 활용 (고도화 때 할 예정)
-    private Long id;
+    private String id;
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
 
@@ -35,6 +34,7 @@ public class Order extends BaseEntity {
     private User user;
 
     public Order(Auction auction, User user) {
+        this.id = auction.getAuctionSeq();
         this.auction = auction;
         this.user = user;
     }

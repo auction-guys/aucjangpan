@@ -40,7 +40,7 @@ public class OrderService {
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
-    public OrderInfoResponse getOrderInfo(Long orderId) {
+    public OrderInfoResponse getOrderInfo(String orderId) {
 
         // TODO 나중에 여기에도 회원인증 필요할듯 나중에 다시 생각
         Order order = orderRepository.findByOrderId(orderId)
@@ -93,14 +93,14 @@ public class OrderService {
 
         // TODO: 이거 에러 메시지 뭘로할지 아니면 그냥 엔티티로 받아서 검증을 한번 할지
 
-        return orderRepository.findByOrderIdAndUserId(Long.parseLong(orderId), currentUserId)
+        return orderRepository.findByOrderIdAndUserId(orderId, currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
     }
 
     // 주문 취소
     @Transactional
     public void cancelOrder(Long currentUserId, String orderId) {
-        Order order = orderRepository.findById(Long.parseLong(orderId))
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         // TODO 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
@@ -111,10 +111,7 @@ public class OrderService {
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
 
-
-
-
-        Order order = orderRepository.findById(Long.parseLong(orderId))
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         order.confirm(currentUserId);

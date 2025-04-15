@@ -5,7 +5,6 @@ import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.json.simple.JSONObject;
@@ -32,18 +31,6 @@ public class Payment {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
-
-    @Builder
-    public Payment(String mid, String paymentKey, String paymentMethod, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
-        this.mid = mid;
-        this.paymentKey = paymentKey;
-        this.paymentMethod = paymentMethod;
-        this.amount = amount;
-        this.status = status;
-        this.requestedAt = requestedAt;
-        this.approvedAt = approvedAt;
-        this.order = order;
-    }
 
     public Payment(JSONObject jsonObject, Order order) {
         this.mid = jsonObject.get("mId").toString();

@@ -30,7 +30,7 @@ public class FindPaymentResponse {
     public static FindPaymentResponse from(Payment payment) {
         return new FindPaymentResponse(
             payment.getPaymentKey(),
-            payment.getOrder().getId().toString(),
+            payment.getOrder().getId(),
             payment.getOrder().getAuction().getProduct().getName(),
             payment.getStatus().toString(),
             payment.getRequestedAt().toString(),

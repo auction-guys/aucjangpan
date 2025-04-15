@@ -11,5 +11,5 @@ public interface OrderRepositoryCustom {
 
     Page<OrdersResponse> findAllByUserId(Long currentUserId, Pageable pageable);
 
-    Optional<OrderResponse> findByOrderIdAndUserId(Long orderId, Long currentUserId);
+    Optional<OrderResponse> findByOrderIdAndUserId(String orderId, Long currentUserId);
 }

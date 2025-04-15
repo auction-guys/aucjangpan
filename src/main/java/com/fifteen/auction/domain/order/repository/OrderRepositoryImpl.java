@@ -33,8 +33,8 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
         List<OrdersResponse> query = queryFactory
                 .select(Projections.constructor(
                         OrdersResponse.class,
-                        order.id.stringValue(),
-                        product.name.stringValue(),
+                        order.id,
+                        product.name,
                         auction.winPrice.stringValue(),
                         order.status.stringValue(),
                         order.createdAt.stringValue()
@@ -57,15 +57,15 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
     }
 
     @Override
-    public Optional<OrderResponse> findByOrderIdAndUserId(Long orderId, Long currentUserId) {
+    public Optional<OrderResponse> findByOrderIdAndUserId(String orderId, Long currentUserId) {
 
         OrderResponse query = queryFactory
                 .select(Projections.constructor(
                         OrderResponse.class,
-                        user.name.stringValue(),
-                        order.id.stringValue(),
-                        user.address.stringValue(),
-                        product.name.stringValue(),
+                        user.name,
+                        order.id,
+                        user.address,
+                        product.name,
                         auction.winPrice.stringValue(),
                         order.status.stringValue(),
                         order.createdAt

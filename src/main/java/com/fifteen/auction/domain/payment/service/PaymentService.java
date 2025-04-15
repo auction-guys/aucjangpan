@@ -34,9 +34,9 @@ public class PaymentService {
     private final HttpRequestWriter requestWriter;
     private final HttpResponseReader responseReader;
 
-    public PaymentResponse confirm(PaymentRequest request, Long currentUserId) throws IOException, ParseException {
+    public PaymentResponse confirm(PaymentRequest request, Long currentUserId) throws IOException {
 
-        Order order = orderRepository.findById(Long.parseLong(request.getOrderId()))
+        Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         // orderId, amount 변조 검증
@@ -88,7 +88,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
         // 권한 검증
         payment.validateOwner(currentUserId);
-        System.out.println("444");
+
         cancelPayment(paymentKey, dto);
 
         // TODO: 현재는 그냥 취소인데 취소가 주문 취소 까지 가는지
@@ -102,17 +102,16 @@ public class PaymentService {
     }
 
     // 결제 취소 공통 로직
-    public void cancelPayment(String paymentKey, CancelPaymentRequest dto) throws IOException, ParseException {
+    public void cancelPayment(String paymentKey, CancelPaymentRequest dto) throws IOException {
 
         // 결제 취소 요청 작성
         HttpURLConnection connection = tossConnectionProvider.createCanclePaymentConnection(paymentKey);
-        System.out.println("1");
+
         // 전송
         requestWriter.writeJson(connection.getOutputStream(), dto);
-        System.out.println("2");
+
         // 응답
         responseReader.parseJson(connection);
-        System.out.println("3");
     }
 
     @Transactional(readOnly = true)

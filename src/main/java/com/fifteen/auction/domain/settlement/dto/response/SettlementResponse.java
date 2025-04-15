@@ -22,7 +22,7 @@ public class SettlementResponse implements RowMapper {
         return new SettlementResponse(
                 settlement.getSettlementAmount().toString(),
                 settlement.getOrder().getAuction().getProduct().getSeller().getId().toString(),
-                settlement.getOrder().getId().toString(),
+                settlement.getOrder().getId(),
                 settlement.getOrder().getAuction().getWinPrice().toString(),
                 settlement.getCharge().toString(),
                 settlement.getSettlementAmount().toString(),
@@ -34,15 +34,15 @@ public class SettlementResponse implements RowMapper {
     @Override
     public String[] toCsvRow() {
         return new String[] {
-                String.valueOf(this.getSettlementId()),
-                String.valueOf(this.getSellerId()),
-                String.valueOf(this.getOrderId()),
-                String.valueOf(this.getAmount()),
-                String.valueOf(this.getCharge()),
-                String.valueOf(this.getSettlementAmount()),
-                String.valueOf(this.getSettlementDate()),
-                String.valueOf(this.getCreatedAt()),
-                String.valueOf(this.getBankAccount())
+                this.getSettlementId(),
+                this.getSellerId(),
+                this.getOrderId(),
+                this.getAmount(),
+                this.getCharge(),
+                this.getSettlementAmount(),
+                this.getSettlementDate(),
+                this.getCreatedAt(),
+                this.getBankAccount()
         };
     }
 }

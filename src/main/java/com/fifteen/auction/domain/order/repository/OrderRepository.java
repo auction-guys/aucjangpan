@@ -11,12 +11,12 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 
-public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom {
+public interface OrderRepository extends JpaRepository<Order, String>, OrderRepositoryCustom {
 
     @Query("select o from Order o " +
             "join fetch o.auction a " +
             "join fetch a.product p " +
             "join fetch p.seller u " +
             "where o.id = :orderId")
-    Optional<Order> findByOrderId(@Param("orderId") Long orderId);
+    Optional<Order> findByOrderId(@Param("orderId") String orderId);
 }

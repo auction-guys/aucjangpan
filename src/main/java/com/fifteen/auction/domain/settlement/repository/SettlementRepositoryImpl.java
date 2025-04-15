@@ -50,7 +50,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                         SettlementResponse.class,
                         settlement.id.stringValue(),
                         user.id.stringValue(),
-                        order.id.stringValue(),
+                        order.id,
                         auction.winPrice.stringValue(),
                         settlement.charge.stringValue(),
                         settlement.settlementAmount.stringValue(),

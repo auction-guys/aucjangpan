@@ -23,7 +23,7 @@ public class OrderController {
 
     @GetMapping("/api/v1/orders/{orderId}/payment")
     public ResponseEntity<OrderInfoResponse> getOrderInfo(
-            @PathVariable Long orderId) {
+            @PathVariable String orderId) {
         return ResponseEntity.ok(orderService.getOrderInfo(orderId));
     }
 
