@@ -68,7 +68,7 @@ public class BidService {
             throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
         }
 
-        findAuction.buyNow(userId, buyAt);
+        findAuction.finalize(userId, findAuction.getBuyNowPrice(), buyAt);
         bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
     }
 

@@ -19,18 +19,18 @@ public class AuctionCacheService {
     private static final String TOP_BIDS_KEY_FORMAT = "auctions:%s:top-bids";
 
     public boolean isBidUnderPrice(String auctionSeq, Long bidPrice, int bidUnit) {
-        Long currentPrice = getCurrentPrice(auctionSeq);
+        Long currentPrice = findCurrentPrice(auctionSeq);
 
         return bidPrice < currentPrice + bidUnit;
     }
 
-    public Long getCurrentPrice(String auctionSeq) {
+    public Long findCurrentPrice(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
 
         Set<ZSetOperations.TypedTuple<Object>> response = redisTemplate
                 .opsForZSet()
                 .reverseRangeWithScores(key, 0, 0);
-        
+
         return response.stream().findFirst()
                 .map(o ->
                         o.getScore().longValue()).orElse(0L);
@@ -58,12 +58,17 @@ public class AuctionCacheService {
                 .stream()
                 .map(o -> {
                     String[] splitValue = ((String) o).split("_");
-                    return splitValue[1];
+                    return splitValue[0]; // id_timestamp 형식에서 id를 추출
                 })
                 .collect(Collectors.toCollection(LinkedHashSet::new))
                 .stream()
                 .map(Long::parseLong)
+                .filter(aLong -> !aLong.equals(-1L)) // -1은 경매 시작가에 해당하는 value
                 .toList();
     }
 
+    public void flushTopBidCache(String auctionSeq) {
+        String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
+        redisTemplate.delete(key);
+    }
 }

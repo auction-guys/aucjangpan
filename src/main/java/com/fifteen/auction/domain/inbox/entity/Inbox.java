@@ -25,4 +25,10 @@ public class Inbox extends BaseEntity {
     private MessageType type;
 
     private String message;
+
+    public Inbox(User user, MessageType type, String message) {
+        this.user = user;
+        this.type = type;
+        this.message = message;
+    }
 }
