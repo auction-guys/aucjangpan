@@ -7,6 +7,7 @@ import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -34,8 +35,8 @@ public class Settlement {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    public Settlement(Order order) {
-        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * 0.1)); // 수수료는 나중에 환경변수 같은걸로 설정
+    public Settlement(Order order, double proportion) {
+        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * proportion));
         this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
         this.order = order;
     }
@@ -51,9 +52,9 @@ public class Settlement {
         this.settledAt = LocalDate.now().atStartOfDay();
     }
 
-    public void settleNow(Long userId) {
+    public void settleNow(Long userId, double proportion) {
         validateOwner(userId);
-        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice() * 0.2)); // 수수료는 나중에 환경변수 같은걸로 설정
+        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice() * proportion));
         this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();

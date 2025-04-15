@@ -17,6 +17,7 @@ import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,10 @@ public class OrderService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final SettlementRepository settlementRepository;
+
+    // TODO: 이후 정산 이벤트 처리시 옮기거나 테이블 분리해서 구현 예정
+    @Value("${settlement.charge.scheduler}")
+    private double scheduler;
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
@@ -105,13 +110,17 @@ public class OrderService {
     // 구매 확정
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
+
+
+
+
         Order order = orderRepository.findById(Long.parseLong(orderId))
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         order.confirm(currentUserId);
 
         // TODO 이벤트로 처리 - 고도화
-        Settlement settlement = new Settlement(order);
+        Settlement settlement = new Settlement(order, scheduler);
         settlementRepository.save(settlement);
     }
 }
