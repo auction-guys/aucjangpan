@@ -1,13 +1,13 @@
 package com.fifteen.auction.domain.payment.entity;
 
 import com.fifteen.auction.domain.order.entity.Order;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.json.simple.JSONObject;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +19,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String mid;
+    private String mId;
     private String paymentKey;
     private String paymentMethod = "Pending";
     private Long amount;
@@ -32,15 +32,14 @@ public class Payment {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    public Payment(JSONObject jsonObject, Order order) {
-        this.mid = jsonObject.get("mId").toString();
-        this.paymentKey = jsonObject.get("paymentKey").toString();
-        this.paymentMethod = jsonObject.get("method").toString();
-        JSONObject card = (JSONObject) jsonObject.get("card");
-        this.amount = Long.parseLong(card.get("amount").toString());
-        this.status = PaymentStatus.valueOf(jsonObject.get("status").toString());
-        this.requestedAt = LocalDateTime.parse(jsonObject.get("requestedAt").toString().substring(0, 19));
-        this.approvedAt = LocalDateTime.parse(jsonObject.get("approvedAt").toString().substring(0, 19));
+    public Payment(PaymentResponse response, Order order) {
+        this.mId = response.getMId();
+        this.paymentKey = response.getPaymentKey();
+        this.paymentMethod = response.getMethod();
+        this.amount = response.getCard().getAmount();
+        this.status = response.getStatus();
+        this.requestedAt = response.getRequestedAt();
+        this.approvedAt = response.getApprovedAt();
         this.order = order;
     }
 

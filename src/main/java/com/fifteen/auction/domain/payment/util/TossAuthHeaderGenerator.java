@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.payment.provider;
+package com.fifteen.auction.domain.payment.util;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Component
-public class TossAuthorizationProvider {
+public class TossAuthHeaderGenerator {
 
     @Value("${toss.secret-key}")
     private String secretKey;

@@ -4,25 +4,20 @@ import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
 import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;
-import com.fifteen.auction.domain.payment.dto.request.PaymentResponse;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.entity.Payment;
-import com.fifteen.auction.domain.payment.provider.TossConnectionProvider;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
-import com.fifteen.auction.domain.payment.util.HttpRequestWriter;
-import com.fifteen.auction.domain.payment.util.HttpResponseReader;
+import com.fifteen.auction.domain.payment.util.IdempotencyKeyGenerator;
+import com.fifteen.auction.domain.payment.util.TossFeignClient;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
+import com.fifteen.auction.global.dto.exception.PaymentFailException;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.*;
-import java.net.HttpURLConnection;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +25,10 @@ public class PaymentService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final TossConnectionProvider tossConnectionProvider;
-    private final HttpRequestWriter requestWriter;
-    private final HttpResponseReader responseReader;
+    private final IdempotencyKeyGenerator idempotencyKeyGenerator;
+    private final TossFeignClient tossFeignClient;
 
-    public PaymentResponse confirm(PaymentRequest request, Long currentUserId) throws IOException {
+    public ConfirmResponse confirm(PaymentRequest request, Long currentUserId) {
 
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
@@ -42,48 +36,40 @@ public class PaymentService {
         // orderId, amount 변조 검증
         order.validatePaymentInfo(currentUserId, request.getAmount());
 
-        // HTTP POST 요청 작성
-        HttpURLConnection connection = tossConnectionProvider.createConfirmConnection();
+        // TODO: 이후 로그 생성때 로깅할 예정
+        // 멱등키 생성
+        String idempotencyKey = idempotencyKeyGenerator.generate();
 
-        // 데이터 전송
-        requestWriter.writeJson(connection.getOutputStream(), request);
-
-        // 응답 수신
-        JSONObject jsonObject = responseReader.parseJson(connection);
-
-        // 결제 정보 반환
-        return new PaymentResponse(jsonObject, order);
-    }
-
-    // 결제 정보 저장
-    @Transactional
-    public ConfirmResponse savePayment(PaymentResponse dto) throws IOException, ParseException {
-        // 결제 정보 검증
+        PaymentResponse response;
+        // 승인 요청
         try {
-            dto.getOrder().validatePaymentInfo(Long.parseLong(dto.getOrder().getUser().getId().toString()), dto.getAmount());
-        } catch (Exception e) {
-            // 결제 정보 오류 시 결제 취소
-            cancelInvalidPayment(String.valueOf(dto.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
-            throw e;
+            // 결제 정보 반
+            response = tossFeignClient.confirmPayment(request, idempotencyKey);
+        } catch (FeignException e) {
+            // TODO: 추후 로깅
+            System.out.println("요청 실패: " + e.status()); // HTTP 상태 코드
+            System.out.println("응답 메시지: " + e.contentUTF8()); // 응답 body
+            throw new PaymentFailException(e.status(), e.contentUTF8());
         }
+
         // 결제 정보 저장
         try {
-            paymentRepository.save(new Payment(dto.getJsonObject(), dto.getOrder()));
+            paymentRepository.save(new Payment(response, order));
             // 주문 상태 변환
-            dto.getOrder().paid();
+            order.paid();
         } catch (Exception e) {
             // 결제 정보 저장 중 오류 - 현재는 결제 취소를 하지만 고도화 때 결제 취소 => 취소 X 로그 남김으로 변경 예정
-            cancelInvalidPayment(String.valueOf(dto.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
+            cancelInvalidPayment(String.valueOf(response.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
             throw e;
         }
         // 주문 성공, 데이터 저장 성공
-        return new ConfirmResponse(dto.getJsonObject());
+        return new ConfirmResponse(response);
     }
 
 
     // 결제 취소 검증 - 구매자 결제 취소
     @Transactional
-    public void cancelPaymentByUser(String paymentKey, CancelPaymentRequest dto, Long currentUserId) throws IOException, ParseException {
+    public void cancelPaymentByUser(String paymentKey, CancelPaymentRequest dto, Long currentUserId) {
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
                 .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
         // 권한 검증
@@ -96,22 +82,16 @@ public class PaymentService {
     }
 
     // 결제 취소 검증 - 결제 중 오류로 결제 취소
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void cancelInvalidPayment(String paymentKey, CancelPaymentRequest dto) throws IOException, ParseException {
+    public void cancelInvalidPayment(String paymentKey, CancelPaymentRequest dto) {
         cancelPayment(paymentKey, dto);
     }
 
     // 결제 취소 공통 로직
-    public void cancelPayment(String paymentKey, CancelPaymentRequest dto) throws IOException {
+    public void cancelPayment(String paymentKey, CancelPaymentRequest dto) {
 
-        // 결제 취소 요청 작성
-        HttpURLConnection connection = tossConnectionProvider.createCanclePaymentConnection(paymentKey);
+        String idempotencyKey = idempotencyKeyGenerator.generate();
 
-        // 전송
-        requestWriter.writeJson(connection.getOutputStream(), dto);
-
-        // 응답
-        responseReader.parseJson(connection);
+        tossFeignClient.cancelPayment(paymentKey, dto, idempotencyKey);
     }
 
     @Transactional(readOnly = true)

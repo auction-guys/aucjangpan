@@ -2,16 +2,14 @@ package com.fifteen.auction.domain.payment.controller;
 
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
 import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;
-import com.fifteen.auction.domain.payment.dto.request.PaymentResponse;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
-import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.parser.ParseException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -39,21 +37,17 @@ public class PaymentController {
     @GetMapping("/api/v1/payments/confirm")
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
 //            @AuthenticationPrincipal AuthUser authUser,
-            @ModelAttribute PaymentRequest paymentRequest) throws Exception {
+            @ModelAttribute PaymentRequest paymentRequest) {
         Long currentUserId = 2L;// 테스트용
 
-        PaymentResponse dto = paymentService.confirm(paymentRequest, currentUserId);
-
-        ConfirmResponse confirmResponse = paymentService.savePayment(dto);
-
-        return ResponseEntity.ok(Response.of(confirmResponse));
+        return ResponseEntity.ok(Response.of(paymentService.confirm(paymentRequest, currentUserId)));
     }
 
     @PostMapping("/api/v1/payments/{paymentKey}/cancel")
     public ResponseEntity<Void> cancelPayment(
 //            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String paymentKey,
-            @RequestBody CancelPaymentRequest dto) throws IOException, ParseException {
+            @RequestBody CancelPaymentRequest dto) {
 
         Long currentUserId = 2L;
         paymentService.cancelPaymentByUser(paymentKey, dto, currentUserId);

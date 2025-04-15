@@ -1,26 +1,24 @@
 package com.fifteen.auction.domain.payment.dto.response;
 
 import lombok.Getter;
-import org.json.simple.JSONObject;
 
 import java.time.LocalDateTime;
 
 @Getter
 public class ConfirmResponse {
-    private String mid;
+    private String mId;
     private String paymentKey;
     private String paymentMethod;
     private Long amount;
     private LocalDateTime requestedAt;
     private LocalDateTime approvedAt;
 
-    public ConfirmResponse(JSONObject jsonObject) {
-        this.mid = jsonObject.get("mId").toString();
-        this.paymentKey = jsonObject.get("paymentKey").toString();
-        this.paymentMethod = jsonObject.get("method").toString();
-        JSONObject card = (JSONObject) jsonObject.get("card");
-        this.amount = Long.parseLong(card.get("amount").toString());
-        this.requestedAt = LocalDateTime.parse(jsonObject.get("requestedAt").toString().substring(0, 19));
-        this.approvedAt = LocalDateTime.parse(jsonObject.get("approvedAt").toString().substring(0, 19));
+    public ConfirmResponse(PaymentResponse response) {
+        this.mId = response.getMId();
+        this.paymentKey = response.getPaymentKey();
+        this.paymentMethod = response.getMethod();
+        this.amount = response.getCard().getAmount();
+        this.requestedAt = response.getRequestedAt();
+        this.approvedAt = response.getApprovedAt();
     }
 }
