@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,8 +134,10 @@ public class Auction extends BaseEntity {
         this.doneAt = this.expiresAt;
     }
 
-    public void extendExpireTime() {
-        this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
+    public void extendExpireTime(LocalDateTime bidAt) {
+        if (this.isAutoExtensible && is1mBeforeExpiration(bidAt)) {
+            this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
+        }
     }
 
     public void updateInfo(
@@ -149,6 +152,11 @@ public class Auction extends BaseEntity {
         this.bidUnit = useIfNotNull(bidUnit, this.bidUnit);
         this.isBuyNowSet = useIfNotNull(isBuyNowSet, this.isBuyNowSet);
         this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
+    }
+
+    private boolean is1mBeforeExpiration(LocalDateTime bidAt) {
+        Duration between = Duration.between(bidAt, this.expiresAt).abs();
+        return between.toMinutes() == 0 && between.getSeconds() <= 60;
     }
 
     private <T> T useIfNotNull(T input, T existing) {
