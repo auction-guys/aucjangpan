@@ -7,8 +7,7 @@ import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
-import com.fifteen.auction.domain.settlement.entity.Settlement;
-import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
+import com.fifteen.auction.domain.order.util.OrderConfirmedEvent;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
@@ -17,7 +16,7 @@ import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,11 +31,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
-    private final SettlementRepository settlementRepository;
-
-    // TODO: 이후 정산 이벤트 처리시 옮기거나 테이블 분리해서 구현 예정
-    @Value("${settlement.charge.scheduler}")
-    private double scheduler;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
@@ -91,8 +86,6 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse findOrder(Long currentUserId, String orderId) {
 
-        // TODO: 이거 에러 메시지 뭘로할지 아니면 그냥 엔티티로 받아서 검증을 한번 할지
-
         return orderRepository.findByOrderIdAndUserId(orderId, currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
     }
@@ -117,7 +110,6 @@ public class OrderService {
         order.confirm(currentUserId);
 
         // TODO 이벤트로 처리 - 고도화
-        Settlement settlement = new Settlement(order, scheduler);
-        settlementRepository.save(settlement);
+        applicationEventPublisher.publishEvent(new OrderConfirmedEvent(order));
     }
 }

@@ -32,10 +32,7 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
-
-    // TODO: 이후 정산 이벤트 처리시 옮기거나 테이블 분리해서 구현 예정
-    @Value("${settlement.charge.immediately}")
-    private double immediately;
+    private final ChargeService chargeService;
 
     // csv 파일 저장 위치, 생성
     String filePath = System.getProperty("java.io.tmpdir") + "settlement_" + LocalDate.now() + ".csv"; // 이건 이후 S3 연결 후 환경변수
@@ -73,7 +70,7 @@ public class SettlementService {
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         // 정산 처리
-        settlement.settleNow(currentUserId, immediately);
+        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
 
         // csv 파일에 받은 데이터 정리
         SettlementResponse dto = SettlementResponse.from(settlement);

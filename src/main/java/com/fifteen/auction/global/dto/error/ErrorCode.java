@@ -28,7 +28,10 @@ public enum ErrorCode {
 
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
-    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-1", "정산 데이터 출력 중 오류가 생겼습니다."),
+    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
+
+    // Charge Exceptions
+    CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND,"CHARGE-1", "해당 수수료가 존재하지 않습니다."),
 
     //User 에러 코드
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "해당 유저를 찾을 수 없습니다."),

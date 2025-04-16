@@ -11,13 +11,14 @@ import com.fifteen.auction.global.entity.BaseEntity;
 import java.util.UUID;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "orders")
 public class Order extends BaseEntity {
     @Id
@@ -52,7 +53,7 @@ public class Order extends BaseEntity {
     }
 
     private void validateConfirmable() {
-        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED) {
+        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED || this.status == OrderStatus.CONFIRMED) {
             throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
         }
     }
