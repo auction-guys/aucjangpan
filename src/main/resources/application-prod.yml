@@ -53,3 +53,14 @@ cloud:
       bucket: aucjangpan-api-images
     stack:
       auto: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+
+metrics:
+  export:
+    prometheus:
+      enabled: true
