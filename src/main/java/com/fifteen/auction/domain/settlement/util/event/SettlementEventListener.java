@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.settlement.util;
+package com.fifteen.auction.domain.settlement.util.event;
 
 import com.fifteen.auction.domain.order.util.OrderConfirmedEvent;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
