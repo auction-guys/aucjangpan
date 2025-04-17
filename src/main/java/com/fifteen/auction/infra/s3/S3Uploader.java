@@ -3,7 +3,6 @@ package com.fifteen.auction.infra.s3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fifteen.auction.global.dto.error.ErrorCode;
-
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +36,7 @@ public class S3Uploader {
             return amazonS3.getUrl(bucket, key).toString();
 
         } catch (IOException e) {
-            throw new ServerException(ErrorCode.S3_UPLOAD_FAIL, e);
+            throw new ServerException(ErrorCode.UPLOAD_FAIL);
         }
     }
 
@@ -46,13 +45,13 @@ public class S3Uploader {
             String key = extractKeyFromUrl(fileUrl);
             amazonS3.deleteObject(bucket, key);
         } catch (Exception e) {
-            throw new ServerException(ErrorCode.S3_DELETE_FAIL, e);
+            throw new ServerException(ErrorCode.DELETE_FAIL);
         }
     }
 
     private String getFileExtension(String filename) {
         if (filename == null || !filename.contains(".")) {
-            throw new ServerException(ErrorCode.S3_INVALID_EXTENSION);
+            throw new ServerException(ErrorCode.INVALID_EXTENSION);
         }
         return filename.substring(filename.lastIndexOf("."));
     }
@@ -60,7 +59,7 @@ public class S3Uploader {
     private String extractKeyFromUrl(String fileUrl) {
         int index = fileUrl.indexOf("products/");
         if (index == -1) {
-            throw new ServerException(ErrorCode.S3_KEY_EXTRACTION_FAIL);
+            throw new ServerException(ErrorCode.KEY_EXTRACTION_FAIL);
         }
         return fileUrl.substring(index);
     }

@@ -97,4 +97,15 @@ public class AuctionService {
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
         return AuctionDetail.fromAuction(findAuction);
     }
+
+    @Transactional
+    public AuctionDetail getAuctionDetailAndIncreaseView(Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        auction.increaseViews();  // views += 1
+
+        return AuctionDetail.fromAuction(auction);
+    }
+
 }

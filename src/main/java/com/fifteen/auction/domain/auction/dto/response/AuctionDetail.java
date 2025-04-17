@@ -29,6 +29,11 @@ public class AuctionDetail {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     private LocalDateTime expiresAt;
 
+    // 조회수 필드 추가
+    private Integer views;
+
+
+    //조회수 views 추가
     public static AuctionDetail fromAuction(Auction auction) {
         return new AuctionDetail(
                 auction.getProduct().getName(),
@@ -37,7 +42,8 @@ public class AuctionDetail {
                 auction.getBuyNowPrice(),
                 auction.isBuyNowSet(),
                 auction.isAutoExtensible(),
-                auction.getExpiresAt()
+                auction.getExpiresAt(),
+                auction.getViews()
         );
     }
 }

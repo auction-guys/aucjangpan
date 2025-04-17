@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
+
+    Optional<ProductCategory> findByIdAndDeletedAtIsNull(Long id);
+
+    List<ProductCategory> findAllByParentIsNullAndDeletedAtIsNull();
+
     List<ProductCategory> findAllByParentId(Long parentId);
 
-    Optional<ProductCategory> findByName(String name);
+    List<ProductCategory> findAllByDeletedAtIsNull();
 
-    Optional<ProductCategory> findByIdAndDeletedFalse(Long id);
-
-    List<ProductCategory> findAllByDeletedFalse();
-
-    List<ProductCategory> findAllByParentAndDeletedFalse(ProductCategory parent);
-
-    List<ProductCategory> findAllByParentIsNullAndDeletedFalse();
+    // 보류 상태
+    // Optional<ProductCategory> findByName(String name);
 }

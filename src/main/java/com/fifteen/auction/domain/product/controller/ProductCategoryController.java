@@ -1,8 +1,7 @@
 package com.fifteen.auction.domain.product.controller;
 
-import com.fifteen.auction.domain.product.dto.request.ProductCategoryCreateRequest;
-import com.fifteen.auction.domain.product.dto.request.ProductCategoryTreeResponse;
-import com.fifteen.auction.domain.product.dto.request.ProductCategoryUpdateRequest;
+import com.fifteen.auction.domain.product.dto.request.ProductCategorySaveRequest;
+import com.fifteen.auction.domain.product.dto.response.ProductCategoryTreeResponse;
 import com.fifteen.auction.domain.product.dto.response.ProductCategoryResponse;
 import com.fifteen.auction.domain.product.service.ProductCategoryService;
 import com.fifteen.auction.global.dto.Response;
@@ -21,7 +20,7 @@ public class ProductCategoryController {
     private final ProductCategoryService categoryService;
 
     @PostMapping
-    public ResponseEntity<Response<Long>> createCategory(@RequestBody @Valid ProductCategoryCreateRequest request) {
+    public ResponseEntity<Response<Long>> createCategory(@RequestBody @Valid ProductCategorySaveRequest request) {
         Long id = categoryService.createCategory(request);
         return ResponseEntity.ok(Response.of(id));
     }
@@ -44,7 +43,7 @@ public class ProductCategoryController {
     @PutMapping("/{categoryId}")
     public ResponseEntity<Void> updateCategory(
             @PathVariable Long categoryId,
-            @RequestBody @Valid ProductCategoryUpdateRequest request
+            @RequestBody @Valid ProductCategorySaveRequest request
     ) {
         categoryService.updateCategory(categoryId, request);
         return ResponseEntity.noContent().build();

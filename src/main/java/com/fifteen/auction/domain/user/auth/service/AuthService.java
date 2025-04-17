@@ -1,5 +1,12 @@
 package com.fifteen.auction.domain.user.auth.service;
 
+import com.fifteen.auction.domain.recommend.dto.response.RecommendationResponse;
+import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
+import com.fifteen.auction.domain.recommend.enums.AgeGroup;
+import com.fifteen.auction.domain.recommend.enums.Gender;
+import com.fifteen.auction.domain.recommend.enums.Region;
+import com.fifteen.auction.domain.recommend.service.RecommendGroupService;
+import com.fifteen.auction.domain.recommend.service.RecommendService;
 import com.fifteen.auction.domain.user.auth.dto.request.SigninRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.SignupRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.WithdrawRequest;
@@ -16,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -27,32 +35,40 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
+    private final RecommendGroupService recommendGroupService;
+    private final RecommendService recommendService;
+
     @Transactional
     public void signup(SignupRequest signupRequest) {
-
         if (userRepository.existsByEmailAndDeletedFalse(signupRequest.getEmail())) {
             throw new ClientException(ErrorCode.DUPLICATE_EMAIL);
         }
-
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
 
-        User user = new User(signupRequest.getEmail(),
-                             signupRequest.getNickname(),
-                             signupRequest.getName(),
-                             signupRequest.getGender(),
-                             signupRequest.getAgeGroup(),
-                             encodedPassword,
-                             signupRequest.getAddress(),
-                             signupRequest.getContactNumber(),
-                             signupRequest.getPreferCategory(),
-                             signupRequest.getAccountNumber());
+        // 추천 그룹 찾기 또는 생성
+        RecommendGroup group = recommendGroupService.findOrCreate(
+                Gender.from(signupRequest.getGender()),
+                AgeGroup.from(signupRequest.getAgeGroup()),
+                Region.from(signupRequest.getAddress())
+        );
 
+        User user = new User(signupRequest.getEmail(),
+                signupRequest.getNickname(),
+                signupRequest.getName(),
+                signupRequest.getGender(),
+                signupRequest.getAgeGroup(),
+                encodedPassword,
+                signupRequest.getAddress(),
+                signupRequest.getContactNumber(),
+                signupRequest.getPreferCategory(),
+                signupRequest.getAccountNumber(),
+                group);
         userRepository.save(user);
+        recommendService.generateRecommendationsForGroup(group);
     }
 
     @Transactional
     public SigninResponse login(SigninRequest signinRequest) {
-
         User user = userRepository.findByEmailAndDeletedFalse(signinRequest.getEmail()).orElseThrow(
                 () -> new ClientException(ErrorCode.USER_NOT_FOUND)
         );
