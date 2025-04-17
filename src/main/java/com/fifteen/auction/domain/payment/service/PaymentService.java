@@ -16,9 +16,11 @@ import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.PaymentFailException;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -36,9 +38,10 @@ public class PaymentService {
         // orderId, amount 변조 검증
         order.validatePaymentInfo(currentUserId, request.getAmount());
 
-        // TODO: 이후 로그 생성때 로깅할 예정
+        // TODO: 로그 컨벤션 얘기해보기
         // 멱등키 생성
         String idempotencyKey = idempotencyKeyGenerator.generate();
+        log.info("멱등키 생성! {}", idempotencyKey);
 
         PaymentResponse response;
         // 승인 요청
@@ -46,9 +49,7 @@ public class PaymentService {
             // 결제 정보 반
             response = tossFeignClient.confirmPayment(request, idempotencyKey);
         } catch (FeignException e) {
-            // TODO: 추후 로깅
-            System.out.println("요청 실패: " + e.status()); // HTTP 상태 코드
-            System.out.println("응답 메시지: " + e.contentUTF8()); // 응답 body
+            log.error("결제 실패", e);
             throw new PaymentFailException(e.status(), e.contentUTF8());
         }
 
@@ -58,7 +59,7 @@ public class PaymentService {
             // 주문 상태 변환
             order.paid();
         } catch (Exception e) {
-            // 결제 정보 저장 중 오류 - 현재는 결제 취소를 하지만 고도화 때 결제 취소 => 취소 X 로그 남김으로 변경 예정
+            log.error("결제 정보 저장 실패", e);
             cancelInvalidPayment(String.valueOf(response.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
             throw e;
         }

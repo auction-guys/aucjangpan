@@ -8,12 +8,14 @@ import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class PaymentController {
@@ -26,10 +28,7 @@ public class PaymentController {
             @RequestParam String message,
             @RequestParam String orderId) {
 
-        System.out.println("결제 실패 코드: " + code);
-        System.out.println("메시지: " + message);
-        System.out.println("주문 ID: " + orderId);
-        // TODO: 나중에 로그 기록 남겨도 좋으듯
+        log.info("결제 실패 코드 : {}, 메시지 : {}, 주문 Id : {}", code, message, orderId);
 
         return ResponseEntity.noContent().build();
     }

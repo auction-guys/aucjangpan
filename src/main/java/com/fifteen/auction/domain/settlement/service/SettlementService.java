@@ -28,7 +28,7 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
     private final ChargeService chargeService;
 
-    // 정산 - 스케줄러 등록은 crud 끝나고나 고도화 때
+    //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
     @Transactional
     public String settle() {
 
@@ -104,5 +104,5 @@ public class SettlementService {
         return SettlementResponse.from(settlement);
     }
 
-    //TODO: 올린 파일 삭제가 필요할까?ㄴㅁ
+    //TODO: 올린 파일 삭제가 필요할까?
 }
