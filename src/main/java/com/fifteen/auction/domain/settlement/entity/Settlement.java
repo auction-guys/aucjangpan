@@ -29,13 +29,14 @@ public class Settlement {
     private SettlementStatus status = SettlementStatus.PENDING;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime settledAt = null;
+    private String url;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
 
-    public Settlement(Order order, double proportion) {
-        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * proportion));
+    public Settlement(Order order, BigDecimal proportion) {
+        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
         this.order = order;
     }
@@ -46,14 +47,16 @@ public class Settlement {
         }
     }
 
-    public void settled() {
+    public void settled(String url) {
+        this.url = url;
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();
     }
 
-    public void settleNow(Long userId, double proportion) {
+    public void settleNow(Long userId, BigDecimal proportion, String url) {
         validateOwner(userId);
-        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice() * proportion));
+        this.url = url;
+        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();

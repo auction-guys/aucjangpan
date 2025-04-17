@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class ChargeService {
@@ -16,7 +18,7 @@ public class ChargeService {
     private final ChargeRepository chargeRepository;
 
     @Transactional
-    public void updateCharge(String chargeId, double proportion){
+    public void updateCharge(String chargeId, BigDecimal proportion){
 
         Charge charge = chargeRepository.findById(chargeId)
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND));
@@ -24,13 +26,13 @@ public class ChargeService {
         charge.updateProportion(proportion);
     }
 
-    public double getAutoCharge() {
+    public BigDecimal getAutoCharge() {
         return chargeRepository.findById(ChargeType.AUTO.toString())
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND))
                 .getProportion();
     }
 
-    public double getImmediatelyCharge() {
+    public BigDecimal getImmediatelyCharge() {
         return chargeRepository.findById(ChargeType.IMMEDIATELY.toString())
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND))
                 .getProportion();

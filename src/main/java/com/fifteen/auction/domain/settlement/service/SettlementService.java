@@ -32,6 +32,7 @@ public class SettlementService {
     @Transactional
     public String settle() {
 
+        // 수정 findAll
         List<Settlement> settlements = settlementRepository.findByStatus(SettlementStatus.PENDING);
 
         // 정산 가능 데이터 존재 여부
@@ -39,18 +40,21 @@ public class SettlementService {
             throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
         }
 
-        // 정산 처리
-        for (Settlement s : settlements) {
-            s.settled();
-        }
-
         // csv 파일에 받은 데이터 정리
         List<SettlementResponse> list = settlements.stream()
                 .map(SettlementResponse::from).toList();
 
         // TODO: 비동기화
+        // 구글 스프레드 시트?
         // 파일 작성 후 S3에 저장 url 반환
-        return CsvUtil.writeToCsv(list);
+        String url = CsvUtil.writeToCsv(list);
+
+        // 정산 처리
+        for (Settlement s : settlements) {
+            s.settled(url);
+        }
+
+        return url;
     }
 
     @Transactional
@@ -59,15 +63,17 @@ public class SettlementService {
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        // 정산 처리
-        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
-
         // csv 파일에 받은 데이터 정리
         SettlementResponse dto = SettlementResponse.from(settlement);
 
         // TODO: 비동기화
         // 파일 작성 후 S3에 저장 url 반환
-        return CsvUtil.writeToCsv(dto);
+        String url = CsvUtil.writeToCsv(dto);
+
+        // 정산 처리
+        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge(), url);
+
+        return url;
     }
 
     @Transactional(readOnly = true)
@@ -97,4 +103,6 @@ public class SettlementService {
 
         return SettlementResponse.from(settlement);
     }
+
+    //TODO: 올린 파일 삭제가 필요할까?ㄴㅁ
 }
