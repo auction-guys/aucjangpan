@@ -32,9 +32,6 @@ public class ProductCategory extends BaseEntity {
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     private List<ProductCategory> children = new ArrayList<>();
 
-    @Column(nullable = false)
-    private boolean deleted = false;
-
     private LocalDateTime deletedAt;
 
     private ProductCategory(String name, ProductCategory parent) {
@@ -52,7 +49,6 @@ public class ProductCategory extends BaseEntity {
     }
 
     public void softDelete() {
-        this.deleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 }

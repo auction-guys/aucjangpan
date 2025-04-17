@@ -53,7 +53,6 @@ public class Product extends BaseEntity {
         this.category = category;
         this.name = name;
         this.description = description;
-        this.deleted = false;
     }
 
     public static Product create(User seller, ProductCategory category, String name, String description) {
@@ -71,7 +70,6 @@ public class Product extends BaseEntity {
     }
 
     public void softDelete() {
-        this.deleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 

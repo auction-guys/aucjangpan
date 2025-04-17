@@ -6,19 +6,19 @@ import java.time.LocalDateTime;
 
 @Getter
 public class ConfirmResponse {
-    private String mid;
+    private String mId;
     private String paymentKey;
     private String paymentMethod;
     private Long amount;
     private LocalDateTime requestedAt;
     private LocalDateTime approvedAt;
 
-    public ConfirmResponse(String mid, String paymentKey, String paymentMethod, Long amount, LocalDateTime requestedAt, LocalDateTime approvedAt) {
-        this.mid = mid;
-        this.paymentKey = paymentKey;
-        this.paymentMethod = paymentMethod;
-        this.amount = amount;
-        this.requestedAt = requestedAt;
-        this.approvedAt = approvedAt;
+    public ConfirmResponse(PaymentResponse response) {
+        this.mId = response.getMId();
+        this.paymentKey = response.getPaymentKey();
+        this.paymentMethod = response.getMethod();
+        this.amount = response.getCard().getAmount();
+        this.requestedAt = response.getRequestedAt();
+        this.approvedAt = response.getApprovedAt();
     }
 }

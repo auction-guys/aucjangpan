@@ -1,9 +1,12 @@
 package com.fifteen.auction.domain.payment.entity;
 
 import com.fifteen.auction.domain.order.entity.Order;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
 import jakarta.persistence.*;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,16 +14,15 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "payments")
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String mid;
+    private String mId;
     private String paymentKey;
-    private String paymentMethod;
-    private String cardNumber;
+    private String paymentMethod = "Pending";
     private Long amount;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status = PaymentStatus.READY;
@@ -31,17 +33,22 @@ public class Payment {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @Builder
-    public Payment(String mid, String paymentKey, String paymentMethod, String cardNumber, Long amount, PaymentStatus status, LocalDateTime requestedAt, LocalDateTime approvedAt, Order order) {
-        this.mid = mid;
-        this.paymentKey = paymentKey;
-        this.paymentMethod = paymentMethod;
-        this.cardNumber = cardNumber;
-        this.amount = amount;
-        this.status = status;
-        this.requestedAt = requestedAt;
-        this.approvedAt = approvedAt;
+    public Payment(PaymentResponse response, Order order) {
+        this.mId = response.getMId();
+        this.paymentKey = response.getPaymentKey();
+        this.paymentMethod = response.getMethod();
+        this.amount = response.getCard().getAmount();
+        this.status = response.getStatus();
+        this.requestedAt = response.getRequestedAt();
+        this.approvedAt = response.getApprovedAt();
         this.order = order;
+    }
+
+
+    public void validateOwner(Long userId) {
+        if (!this.order.getUser().getId().equals(userId)) {
+            throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
+        }
     }
 
     public void cancel() {

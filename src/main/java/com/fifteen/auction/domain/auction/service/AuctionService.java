@@ -1,11 +1,13 @@
 package com.fifteen.auction.domain.auction.service;
 
+import com.fifteen.auction.domain.auction.dto.event.AuctionOpenEvent;
 import com.fifteen.auction.domain.auction.dto.request.AuctionCreateRequest;
 import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
 import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
+import com.fifteen.auction.domain.auction.entity.AuctionStatus;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
@@ -15,6 +17,7 @@ import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,12 +34,19 @@ public class AuctionService {
     private final ProductRepository productRepository;
     private final AuctionSeqGenerator auctionSeqGenerator;
     private final MarketPriceService marketPriceService;
+    private final AuctionCacheService auctionCacheService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public String create(AuctionCreateRequest req) {
+    public String create(AuctionCreateRequest req, Long userId) {
         // TODO: 에러코드 변경
-        Product product = productRepository.findById(req.getProductId())
+        Product product = productRepository.findByIdWithSeller(req.getProductId())
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+
+        // 자신이 생성한 물품인지 확인
+        if (!product.getSeller().getId().equals(userId)) {
+            throw new ClientException(ErrorCode.NOT_OWNING_PRODUCT);
+        }
 
         String auctionSeq = auctionSeqGenerator.generate(LocalDate.now());
 
@@ -61,7 +71,16 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        if (auction.getStatus() == AuctionStatus.OPEN) {
+            throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
+        }
+
         auction.open();
+        auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
+
+        // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
+        applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
     }
 
     @Transactional
@@ -69,7 +88,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        
+
         auction.updateInfo(
                 req.getStartPrice(),
                 req.getBuyNowPrice(),
@@ -77,6 +96,23 @@ public class AuctionService {
                 req.getIsBuyNowSet(),
                 req.getIsAutoExtensible()
         );
+    }
+
+    @Transactional
+    public void miscarry(Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+        auction.misCarry();
+    }
+
+    @Transactional
+    public void processWinning(String auctionSeq, Long winnerId, Long winPrice) {
+        Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        if (auction.getDoneAt() == null) {
+            auction.finalize(winnerId, winPrice, auction.getExpiresAt());
+        }
     }
 
 
@@ -94,4 +130,15 @@ public class AuctionService {
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
         return AuctionDetail.fromAuction(findAuction, marketPrice);
     }
+
+    @Transactional
+    public AuctionDetail getAuctionDetailAndIncreaseView(Long auctionId) {
+        Auction findAuction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        findAuction.increaseViews();  // views += 1
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
+        return AuctionDetail.fromAuction(findAuction, marketPrice);
+    }
+
 }

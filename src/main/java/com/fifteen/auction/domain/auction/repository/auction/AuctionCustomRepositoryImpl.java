@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.auction.repository;
+package com.fifteen.auction.domain.auction.repository.auction;
 
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -53,18 +53,6 @@ public class AuctionCustomRepositoryImpl implements AuctionCustomRepository {
                 .selectFrom(auction)
                 .join(auction.product, product).fetchJoin()
                 .where(auctionSeqEquals(auctionSeq), statusIsOpen())
-                .fetchOne();
-        return Optional.ofNullable(result);
-    }
-
-
-    @Override
-    public Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId) {
-        Auction result = queryFactory
-                .selectFrom(auction)
-                .join(auction.product, product).fetchJoin()
-                .join(product.seller, user).fetchJoin()
-                .where(auctionSeqEquals(auctionSeq), sellerIdEquals(sellerId))
                 .fetchOne();
         return Optional.ofNullable(result);
     }

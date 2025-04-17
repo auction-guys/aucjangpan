@@ -1,18 +1,13 @@
 package com.fifteen.auction.domain.order.service;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.repository.AuctionRepository;
-import com.fifteen.auction.domain.order.dto.request.CreateOrderRequest;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.order.dto.response.OrderInfoResponse;
 import com.fifteen.auction.domain.order.dto.response.OrderResponse;
 import com.fifteen.auction.domain.order.dto.response.OrdersResponse;
 import com.fifteen.auction.domain.order.entity.Order;
-import com.fifteen.auction.domain.order.enums.OrderStatus;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
-import com.fifteen.auction.domain.payment.entity.Payment;
-import com.fifteen.auction.domain.payment.repository.PaymentRepository;
-import com.fifteen.auction.domain.settlement.entity.Settlement;
-import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
+import com.fifteen.auction.domain.order.util.OrderConfirmedEvent;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
@@ -21,6 +16,7 @@ import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,36 +31,33 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
-    private final SettlementRepository settlementRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // 주문 정보 불러오기
     @Transactional(readOnly = true)
-    public OrderInfoResponse getOrderInfo(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+    public OrderInfoResponse getOrderInfo(String orderId) {
+
+        // TODO 나중에 여기에도 회원인증 필요할듯 나중에 다시 생각
+        Order order = orderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
-        // 쿼리 dsl이나 @Query 활용해서 dto로 바로 받기
-        return new OrderInfoResponse(
-                orderId.toString(),
-                order.getAuction().getProduct().getName(),
-                order.getAuction().getProduct().getSeller().getEmail(),
-                order.getAuction().getProduct().getSeller().getName(),
-                order.getAuction().getWinPrice().toString()
-        );
+        return OrderInfoResponse.from(order);
     }
 
     // 주문 생성
     @Transactional
-    public void createOrder(Long currentUserId, CreateOrderRequest dto) {
-        Auction auction = auctionRepository.findById(dto.getAuctionId())
+    public void createOrder(Long currentUserId, Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
+        // TODO 여기도 책임분산 되려나? 나중에 질문하기
+        // 유저 검증
         if (!auction.getWinnerId().equals(currentUserId)) {
             throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
         }
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
         Order order = new Order(auction, user);
         orderRepository.save(order);
@@ -73,88 +66,50 @@ public class OrderService {
     // 주문 목록 조회
     @Transactional(readOnly = true)
     public Response<Page<OrdersResponse>> findOrders(Long currentUserId, PageCond pageCond) {
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
+
         Pageable pageable = PageRequest.of(pageCond.getPageNum() - 1, pageCond.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Order> pages = orderRepository.findByUser(user, pageable);
+        Page<OrdersResponse> pages = orderRepository.findAllByUserId(currentUserId, pageable);
 
-        // 쿼리 dsl이나 @Query 활용해서 dto로 바로 받기
-        Page<OrdersResponse> result = pages.map(order -> OrdersResponse.builder()
-                .orderId(order.toString())
-                .productName(order.getAuction().getProduct().getName())
-                .amount(order.getAuction().getWinPrice().toString())
-                .status(order.getStatus())
-                .orderedDate(order.getCreatedAt().toLocalDate())
-                .build()
-        );
-
+        // TODO 이거는 같이 쓰는거라 내가 해도 될지 일단 후순위
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pageCond.getPageNum())
                 .pageSize(pageCond.getPageSize())
-                .totalPage(result.getTotalPages())
-                .totalElement(result.getTotalElements())
+                .totalPage(pages.getTotalPages())
+                .totalElement(pages.getTotalElements())
                 .build();
 
-        return Response.of(result, pageInfo);
+        return Response.of(pages, pageInfo);
 
     }
 
     // 주문 내역 상세 조회
     @Transactional(readOnly = true)
     public OrderResponse findOrder(Long currentUserId, String orderId) {
-        Order order = orderRepository.findById(Long.parseLong(orderId))
+
+        return orderRepository.findByOrderIdAndUserId(orderId, currentUserId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
-
-        // 결제 내역 없을 경우로 분리해서 하나 만들기
-        Payment payment = paymentRepository.findByOrderId(Long.parseLong(orderId))
-                .orElseThrow(() -> new ClientException(ErrorCode.PAYMENT_NOT_FOUND));
-
-        if (!order.getUser().getId().equals(currentUserId)) {
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
-        }
-
-        return OrderResponse.builder()
-                .name(order.getUser().getName())
-                .orderId(orderId)
-                .address(order.getUser().getAddress())
-                .paymentType(payment.getPaymentMethod())
-                .productName(order.getAuction().getProduct().getName())
-                .amount(order.getAuction().getWinPrice().toString())
-                .status(order.getStatus())
-                .orderedDate(order.getCreatedAt().toLocalDate())
-                .build();
     }
 
+    // 주문 취소
     @Transactional
     public void cancelOrder(Long currentUserId, String orderId) {
-        Order order = orderRepository.findById(Long.parseLong(orderId))
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (!order.getUser().getId().equals(currentUserId)) {
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
-        }
-
-        // 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
-        order.cancel();
+        // TODO 여기에 취소시 회원데이터에 경고 카운트가 올라가거나 하는거 있음 좋을듯
+        order.cancel(currentUserId);
     }
 
     // 구매 확정
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
-        Order order = orderRepository.findById(Long.parseLong(orderId))
+
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (!order.getUser().getId().equals(currentUserId)) {
-            throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
-        }
-        if (!order.getStatus().equals(OrderStatus.PAID)) {
-            throw new ClientException(ErrorCode.ORDER_ALREADY_PROCESSED);
-        }
+        order.confirm(currentUserId);
 
-        order.confirm();
-
-        // 정산 데이터 생성
-        Settlement settlement = new Settlement(order);
-        settlementRepository.save(settlement);
+        // TODO 이벤트로 처리 - 고도화
+        applicationEventPublisher.publishEvent(new OrderConfirmedEvent(order));
     }
 }

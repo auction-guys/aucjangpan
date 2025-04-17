@@ -29,6 +29,9 @@ public class AuctionDetail {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     private LocalDateTime expiresAt;
+
+    private Integer views;
+
     private MarketPriceFullResponse marketPrice;
 
     public static AuctionDetail fromAuction(Auction auction, MarketPriceFullResponse marketPrice) {
@@ -40,6 +43,7 @@ public class AuctionDetail {
                 auction.isBuyNowSet(),
                 auction.isAutoExtensible(),
                 auction.getExpiresAt(),
+                auction.getViews(),
                 marketPrice
         );
     }

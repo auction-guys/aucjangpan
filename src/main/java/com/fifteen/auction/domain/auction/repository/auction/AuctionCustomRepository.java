@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.auction.repository;
+package com.fifteen.auction.domain.auction.repository.auction;
 
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -12,7 +12,4 @@ public interface AuctionCustomRepository {
     Page<AuctionListItem> findAllOpenByCond(Pageable pageable);
 
     Optional<Auction> findOpenOneByAuctionSeq(String auctionSeq);
-
-    Optional<Auction> findOneBySeqAndSellerId(String auctionSeq, Long sellerId);
-
 }

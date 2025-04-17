@@ -17,16 +17,21 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
     ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
-    ORDER_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문 정보가 일치하지 않습니다."),
+    ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문을 취소할 수 없습니다."),
 
     // Payment Exceptions
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
     PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT-2", "사용자의 결제 정보가 아닙니다."),
     PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
+    PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-4", "주문 정보가 일치하지 않습니다."),
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-5", "결제 승인 요청을 실패했습니다."),
 
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
-    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-1", "정산 데이터 출력 중 오류가 생겼습니다."),
+    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
+
+    // Charge Exceptions
+    CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND,"CHARGE-1", "해당 수수료가 존재하지 않습니다."),
 
     //User 에러 코드
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "해당 유저를 찾을 수 없습니다."),
@@ -39,10 +44,18 @@ public enum ErrorCode {
     PASSWORD_NOT_CHANGED(HttpStatus.BAD_REQUEST, "USER-8", "기존의 비밀번호와 다르게 입력해 주세요."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "USER-9", "잘못된 토큰입니다."),
     ALREADY_LOGOUT(HttpStatus.BAD_REQUEST, "USER-10", "이미 로그아웃 되었습니다."),
+    USER_NOT_PASSWORD_BASED(HttpStatus.BAD_REQUEST, "USER-11", "비밀번호 로그인 대상 사용자가 아닙니다."),
+    PASSWORDS_DO_NOT_MATCH(HttpStatus.BAD_REQUEST, "USER-12", "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
+    PASSWORD_ALREADY_SET(HttpStatus.BAD_REQUEST, "USER-13", "이미 비밀번호가 설정된 사용자입니다."),
 
     // Auction Exceptions
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
-    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-2", "해당 경매에 접근할 수 없습니다."),
+    NOT_OWNING_PRODUCT(HttpStatus.BAD_REQUEST, "AUCTION-2", "자신의 상품만 경매에 등록할 수 있습니다."),
+    INVALID_BID_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-3", "입찰할 수 없는 경매입니다."),
+    LOW_BID_PRICE(HttpStatus.BAD_REQUEST, "AUCTION-4", "현재가보다 높은 가격으로 입찰해 주세요."),
+    INVALID_BUY_NOW_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-5", "즉시 구매가 불가한 경매입니다."),
+    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-6", "해당 경매에 접근할 수 없습니다."),
+    AUCTION_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-7", "이미 공개된 경매입니다."),
 
     // Product Custom Exception
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
@@ -53,15 +66,26 @@ public enum ErrorCode {
     // Market Price Exceptions
     MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다."),
 
-    // Favorite Exception
-    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-1", "찜 내역이 존재하지 않습니다."),
+    // FAVORITE 에러 코드
+    DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE-1", "이미 찜한 경매입니다."),
+    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-2", "찜 내역이 존재하지 않습니다."),
 
-    // S3 Exception
-    S3_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "S3-1", "이미지 업로드에 실패했습니다."),
-    S3_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "S3-2", "이미지 삭제에 실패했습니다."),
-    S3_KEY_EXTRACTION_FAIL(HttpStatus.BAD_REQUEST, "S3-3", "키 추출에 실패했습니다."),
-    S3_INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "S3-4", "파일 확장자를 찾을 수 없습니다."),
+    // Image Exception 에러 코드
+    UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-1", "이미지 업로드에 실패했습니다."),
+    DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-2", "이미지 삭제에 실패했습니다."),
+    KEY_EXTRACTION_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-3", "키 추출에 실패했습니다."),
+    INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "IMAGE-4", "파일 확장자를 찾을 수 없습니다."),
 
+    // Tag 에러 코드
+    TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "Tag-1", "존재하지 않는 태그입니다."),
+    DELETE_TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "Tag-2", "태그 삭제에 실패했습니다."),
+    DUPLICATE_TAG(HttpStatus.CONFLICT, "TAG-3", "중복된 태그가 존재합니다."),
+
+    // Recommend 에러 코드
+    RECOMMEND_NOT_FOUND(HttpStatus.NOT_FOUND, "Recommend-1", "추천할 수 없습니다."),
+
+    // Inbox Exception
+    INBOX_MSG_NOT_FOUND(HttpStatus.NOT_FOUND, "MSG-1", "해당 알림이 존재하지 않습니다."),
 
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
