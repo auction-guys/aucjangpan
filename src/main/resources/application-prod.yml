@@ -64,5 +64,9 @@ metrics:
   export:
     prometheus:
       enabled: true
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+
 api:
   host: ${EC2_HOST}
