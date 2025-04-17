@@ -1,10 +1,13 @@
 package com.fifteen.auction.domain.settlement.dto.response;
 
-import lombok.Builder;
+import com.fifteen.auction.domain.settlement.entity.Settlement;
+import com.fifteen.auction.domain.settlement.util.RowMapper;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-public class SettlementResponse {
+@AllArgsConstructor
+public class SettlementResponse implements RowMapper {
     private String settlementId;
     private String sellerId;
     private String orderId;
@@ -15,16 +18,31 @@ public class SettlementResponse {
     private String createdAt;
     private String bankAccount;
 
-    @Builder
-    public SettlementResponse(String settlementId, String sellerId, String orderId, String amount, String charge, String settlementAmount, String settlementDate, String createdAt, String bankAccount) {
-        this.settlementId = settlementId;
-        this.sellerId = sellerId;
-        this.orderId = orderId;
-        this.amount = amount;
-        this.charge = charge;
-        this.settlementAmount = settlementAmount;
-        this.settlementDate = settlementDate;
-        this.createdAt = createdAt;
-        this.bankAccount = bankAccount;
+    public static SettlementResponse from(Settlement settlement) {
+        return new SettlementResponse(
+                settlement.getSettlementAmount().toString(),
+                settlement.getOrder().getAuction().getProduct().getSeller().getId().toString(),
+                settlement.getOrder().getId(),
+                settlement.getOrder().getAuction().getWinPrice().toString(),
+                settlement.getCharge().toString(),
+                settlement.getSettlementAmount().toString(),
+                settlement.getSettledAt().toString(),
+                settlement.getCreatedAt().toString(),
+                settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber());
+    }
+
+    @Override
+    public String[] toCsvRow() {
+        return new String[] {
+                this.getSettlementId(),
+                this.getSellerId(),
+                this.getOrderId(),
+                this.getAmount(),
+                this.getCharge(),
+                this.getSettlementAmount(),
+                this.getSettlementDate(),
+                this.getCreatedAt(),
+                this.getBankAccount()
+        };
     }
 }

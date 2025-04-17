@@ -1,15 +1,19 @@
 package com.fifteen.auction.domain.settlement.repository;
 
 import com.fifteen.auction.domain.settlement.entity.Settlement;
-import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface SettlementRepository extends JpaRepository<Settlement, Long> {
-    List<Settlement> findByStatus(SettlementStatus settlementStatus);
+public interface SettlementRepository extends JpaRepository<Settlement, Long>, SettlementRepositoryCustom {
 
-    Page<Settlement> findBySellerId(Long currentUserId, Pageable pageable);
+    @Query("select s from Settlement s " +
+            "join fetch s.order o " +
+            "join fetch o.auction a " +
+            "join fetch a.product p " +
+            "join fetch p.seller u " +
+            "where s.id = :settlementId")
+    Optional<Settlement> findByIdSettlementId(@Param("settlementId") Long settlementId);
 }

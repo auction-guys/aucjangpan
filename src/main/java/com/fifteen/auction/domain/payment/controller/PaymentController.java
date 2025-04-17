@@ -1,7 +1,8 @@
 package com.fifteen.auction.domain.payment.controller;
 
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
-import com.fifteen.auction.domain.payment.dto.request.SavePaymentRequset;
+import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
@@ -28,37 +29,34 @@ public class PaymentController {
         System.out.println("결제 실패 코드: " + code);
         System.out.println("메시지: " + message);
         System.out.println("주문 ID: " + orderId);
-        // 나중에 로그 기록 남겨도 좋으듯
+        // TODO: 나중에 로그 기록 남겨도 좋으듯
 
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/api/v1/payments/confirm")
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
-            @RequestParam String orderId,
-            @RequestParam String amount,
-            @RequestParam String paymentKey) throws Exception {
+//            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute PaymentRequest paymentRequest) {
         Long currentUserId = 2L;// 테스트용
 
-        SavePaymentRequset dto = paymentService.confirm(orderId, amount, paymentKey, currentUserId);
-
-        ConfirmResponse confirmResponse = paymentService.savePayment(dto);
-
-        return ResponseEntity.ok(Response.of(confirmResponse));
+        return ResponseEntity.ok(Response.of(paymentService.confirm(paymentRequest, currentUserId)));
     }
 
     @PostMapping("/api/v1/payments/{paymentKey}/cancel")
     public ResponseEntity<Void> cancelPayment(
+//            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String paymentKey,
-            @RequestBody CancelPaymentRequest dto) throws IOException, ParseException {
+            @RequestBody CancelPaymentRequest dto) {
 
         Long currentUserId = 2L;
-        paymentService.cancelPaymentByUser(paymentKey, dto.getReason(), currentUserId);
+        paymentService.cancelPaymentByUser(paymentKey, dto, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/api/v1/payments/{paymentKey}")
     public ResponseEntity<Response<FindPaymentResponse>> findPayment(
+//            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String paymentKey) {
 
         Long currentUserId = 2L;

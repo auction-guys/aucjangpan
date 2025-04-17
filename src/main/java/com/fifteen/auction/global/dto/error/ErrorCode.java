@@ -17,16 +17,21 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
     ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
-    ORDER_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "주문 정보가 일치하지 않습니다."),
+    ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문을 취소할 수 없습니다."),
 
     // Payment Exceptions
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
     PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT-2", "사용자의 결제 정보가 아닙니다."),
     PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
+    PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-4", "주문 정보가 일치하지 않습니다."),
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-5", "결제 승인 요청을 실패했습니다."),
 
     // Settlement Exceptions
-    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
-    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SETTLEMENT-1", "정산 데이터 출력 중 오류가 생겼습니다."),
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
+    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
+
+    // Charge Exceptions
+    CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND,"CHARGE-1", "해당 수수료가 존재하지 않습니다."),
 
     //User 에러 코드
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "해당 유저를 찾을 수 없습니다."),
