@@ -21,4 +21,10 @@ public class ChatMessage extends BaseEntity {
     private Long senderId;
 
     private String content;
+
+    public ChatMessage(ChatRoom chatRoom, Long senderId, String content) {
+        this.chatRoom = chatRoom;
+        this.senderId = senderId;
+        this.content = content;
+    }
 }

@@ -64,3 +64,5 @@ metrics:
   export:
     prometheus:
       enabled: true
+api:
+  host: ${EC2_HOST}

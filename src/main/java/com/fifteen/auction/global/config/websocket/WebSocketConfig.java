@@ -1,6 +1,7 @@
-package com.fifteen.auction.global.config;
+package com.fifteen.auction.global.config.websocket;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -10,11 +11,19 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private final StompHandler jwtChannelInterceptor;
+
+    public WebSocketConfig(StompHandler jwtChannelInterceptor) {
+        this.jwtChannelInterceptor = jwtChannelInterceptor;
+    }
+
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
 
-        registry.addEndpoint("/chat/inbox") // WebSocket 핸드셰이크를 위해 연결할 endpoint
-                .setAllowedOriginPatterns("*") // CORS 허용
+        registry.addEndpoint("/chat/inbox")
+//                .addInterceptors(jwtHandshakeInterceptor)
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 
@@ -22,5 +31,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/sub");
         registry.setApplicationDestinationPrefixes("/pub");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(jwtChannelInterceptor);
     }
 }
