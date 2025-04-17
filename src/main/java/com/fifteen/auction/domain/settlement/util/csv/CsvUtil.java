@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class CsvUtil {
-
+    //TODO: 파일 이름이랑 밑에 static빠진거 나중에 다시 확인
     private final S3Uploader s3Uploader;
 
     private final static String[] headers = CsvConstants.SETTLEMENT_HEADERS;
