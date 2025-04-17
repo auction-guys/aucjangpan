@@ -54,7 +54,8 @@ public enum ErrorCode {
     INVALID_BID_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-3", "입찰할 수 없는 경매입니다."),
     LOW_BID_PRICE(HttpStatus.BAD_REQUEST, "AUCTION-4", "현재가보다 높은 가격으로 입찰해 주세요."),
     INVALID_BUY_NOW_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-5", "즉시 구매가 불가한 경매입니다."),
-    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-2", "해당 경매에 접근할 수 없습니다."),
+    AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-6", "해당 경매에 접근할 수 없습니다."),
+    AUCTION_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-7", "이미 공개된 경매입니다."),
 
     // Product Custom Exception 에러 코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),

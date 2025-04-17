@@ -1,8 +1,11 @@
 package com.fifteen.auction.domain.inbox.service;
 
+import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.dto.MessageInfo;
 import com.fifteen.auction.domain.inbox.entity.Inbox;
 import com.fifteen.auction.domain.inbox.repository.InboxRepository;
+import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -19,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InboxService {
     private final InboxRepository inboxRepository;
+    private final UserRepository userRepository;
 
     public Page<MessageInfo> allMessages(Long userId, PageCond pageCond) {
         Pageable pageable = PageRequest.of(pageCond.getPageNum() - 1, pageCond.getPageSize());
@@ -32,6 +36,19 @@ public class InboxService {
 
         return new PageImpl<>(messageInfos, pageable, allMessages.getTotalElements());
     }
+
+    public void addSingleMessage(CreateMessageRequest request) {
+        User user = userRepository.findByIdAndDeletedFalse(request.getDestUserId())
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
+        Inbox inbox = new Inbox(user, request.getType(), request.getMessage());
+        inboxRepository.save(inbox);
+    }
+
+    public void addMultipleMessages(List<CreateMessageRequest> requests) {
+        inboxRepository.flush();
+        inboxRepository.sendAllMessages(requests);
+    }
+
 
     public void deleteMessage(Long userId, Long messageId) {
         Inbox findMessage = inboxRepository.findOneByMsgIdAndUserId(messageId, userId)

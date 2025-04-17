@@ -123,13 +123,6 @@ public class Auction extends BaseEntity {
         this.status = AuctionStatus.DONE;
     }
 
-    public void buyNow(Long winnerId, LocalDateTime doneAt) {
-        this.winnerId = winnerId;
-        this.winPrice = this.buyNowPrice;
-        this.doneAt = doneAt;
-        this.status = AuctionStatus.DONE;
-    }
-
     public void misCarry() {
         this.status = AuctionStatus.MISCARRY;
         this.doneAt = this.expiresAt;

@@ -17,7 +17,8 @@ public class InboxBulkRepositoryImpl implements InboxBulkRepository {
     @Override
     public void sendAllMessages(List<CreateMessageRequest> messages) {
         jdbcTemplate.batchUpdate(
-                "INSERT INTO inbox(user_id, type, message) VALUES (?, ?, ?)",
+                "INSERT INTO inbox(user_id, type, message, deleted, created_at, updated_at)" +
+                        " VALUES (?, ?, ?, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                 new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
