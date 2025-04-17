@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.user.controller;
 
 import com.fifteen.auction.domain.user.auth.entity.AuthUser;
+import com.fifteen.auction.domain.user.dto.request.SetPasswordRequest;
 import com.fifteen.auction.domain.user.dto.request.UserUpdatePasswordRequest;
 import com.fifteen.auction.domain.user.dto.request.UserUpdateRequest;
 import com.fifteen.auction.domain.user.dto.response.UserResponse;
@@ -40,5 +41,14 @@ public class UserController {
             @RequestBody @Valid UserUpdatePasswordRequest request
     ) {
         userService.updatePassword(authUser, request);
+    }
+
+    @PostMapping("/password/set")
+    public ResponseEntity<Void> setPassword(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestBody @Valid SetPasswordRequest request
+    ) {
+        userService.setPassword(authUser.getId(), request);
+        return ResponseEntity.ok().build();
     }
 }

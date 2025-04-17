@@ -39,6 +39,9 @@ public enum ErrorCode {
     PASSWORD_NOT_CHANGED(HttpStatus.BAD_REQUEST, "USER-8", "기존의 비밀번호와 다르게 입력해 주세요."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "USER-9", "잘못된 토큰입니다."),
     ALREADY_LOGOUT(HttpStatus.BAD_REQUEST, "USER-10", "이미 로그아웃 되었습니다."),
+    USER_NOT_PASSWORD_BASED(HttpStatus.BAD_REQUEST, "USER-11", "비밀번호 로그인 대상 사용자가 아닙니다."),
+    PASSWORDS_DO_NOT_MATCH(HttpStatus.BAD_REQUEST, "USER-12", "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
+    PASSWORD_ALREADY_SET(HttpStatus.BAD_REQUEST, "USER-13", "이미 비밀번호가 설정된 사용자입니다."),
 
     // Auction Exceptions 에러 코드
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),

@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.user.service;
 
 import com.fifteen.auction.domain.user.auth.entity.AuthUser;
+import com.fifteen.auction.domain.user.dto.request.SetPasswordRequest;
 import com.fifteen.auction.domain.user.dto.request.UserUpdatePasswordRequest;
 import com.fifteen.auction.domain.user.dto.request.UserUpdateRequest;
 import com.fifteen.auction.domain.user.dto.response.UserResponse;
@@ -77,4 +78,30 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());  //비밀번호 변경 후, 인코딩!!
         user.updatePassword(encodedPassword);
     }
+
+    @Transactional
+    public void setPassword(Long userId, SetPasswordRequest request) {
+
+        // 1. 비밀번호, 비밀번호 확인이 일치하는지 검증
+        if (!request.getPassword().equals(request.getPasswordCheck())) {
+            throw new ClientException(ErrorCode.PASSWORDS_DO_NOT_MATCH);
+        }
+
+        // 2. 사용자 조회
+        User user = userRepository.findByIdAndDeletedFalse(userId).orElseThrow(
+                () -> new ClientException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        System.out.println("현재 비밀번호 상태: " + user.getPassword());
+
+        // 3. 기존에 비밀번호가 이미 설정되어 있다면 거부 (중복 설정 방지)
+        if (user.getPassword() != null) {
+            throw new ClientException(ErrorCode.PASSWORD_ALREADY_SET);
+        }
+
+        // 4. 비밀번호 인코딩 후 저장
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        user.setPassword(encodedPassword);
+    }
+
 }

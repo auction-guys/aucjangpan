@@ -73,6 +73,10 @@ public class AuthService {
                 () -> new ClientException(ErrorCode.USER_NOT_FOUND)
         );
 
+        if (user.getPassword() == null) {
+            throw new ClientException(ErrorCode.USER_NOT_PASSWORD_BASED);
+        }
+
         if (!passwordEncoder.matches(signinRequest.getPassword(), user.getPassword())) {
             throw new ClientException(ErrorCode.INVALID_PASSWORD);
         }
