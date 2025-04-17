@@ -58,7 +58,7 @@ public class S3Uploader {
 
             return amazonS3.getUrl(bucket, key).toString();
         } catch (Exception e) {
-            throw new ServerException(ErrorCode.S3_UPLOAD_FAIL, e);
+            throw new ServerException(ErrorCode.UPLOAD_FAIL);
         }
     }
 

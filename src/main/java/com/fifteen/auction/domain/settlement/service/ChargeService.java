@@ -20,20 +20,22 @@ public class ChargeService {
     @Transactional
     public void updateCharge(String chargeId, BigDecimal proportion){
 
-        Charge charge = chargeRepository.findById(chargeId)
+        Charge charge = chargeRepository.findById(ChargeType.valueOf(chargeId))
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND));
 
         charge.updateProportion(proportion);
     }
 
+    @Transactional(readOnly = true)
     public BigDecimal getAutoCharge() {
-        return chargeRepository.findById(ChargeType.AUTO.toString())
+        return chargeRepository.findById(ChargeType.AUTO)
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND))
                 .getProportion();
     }
 
+    @Transactional(readOnly = true)
     public BigDecimal getImmediatelyCharge() {
-        return chargeRepository.findById(ChargeType.IMMEDIATELY.toString())
+        return chargeRepository.findById(ChargeType.IMMEDIATELY)
                 .orElseThrow(() -> new ClientException(ErrorCode.CHARGE_NOT_FOUND))
                 .getProportion();
     }

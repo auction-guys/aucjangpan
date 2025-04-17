@@ -26,6 +26,7 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
+    private final CsvUtil csvUtil;
     private final ChargeService chargeService;
 
     //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
@@ -40,6 +41,11 @@ public class SettlementService {
             throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
         }
 
+        // 정산 처리
+        for (Settlement s : settlements) {
+            s.settled();
+        }
+
         // csv 파일에 받은 데이터 정리
         List<SettlementResponse> list = settlements.stream()
                 .map(SettlementResponse::from).toList();
@@ -47,14 +53,8 @@ public class SettlementService {
         // TODO: 비동기화
         // 구글 스프레드 시트?
         // 파일 작성 후 S3에 저장 url 반환
-        String url = CsvUtil.writeToCsv(list);
 
-        // 정산 처리
-        for (Settlement s : settlements) {
-            s.settled(url);
-        }
-
-        return url;
+        return csvUtil.writeToCsv(list);
     }
 
     @Transactional
@@ -66,14 +66,12 @@ public class SettlementService {
         // csv 파일에 받은 데이터 정리
         SettlementResponse dto = SettlementResponse.from(settlement);
 
+        // 정산 처리
+        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
+
         // TODO: 비동기화
         // 파일 작성 후 S3에 저장 url 반환
-        String url = CsvUtil.writeToCsv(dto);
-
-        // 정산 처리
-        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge(), url);
-
-        return url;
+        return csvUtil.writeToCsv(dto);
     }
 
     @Transactional(readOnly = true)

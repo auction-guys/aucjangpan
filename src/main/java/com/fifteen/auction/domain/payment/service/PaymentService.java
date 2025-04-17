@@ -34,9 +34,10 @@ public class PaymentService {
 
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
+        System.out.println(request.getAmount()+request.getOrderId()+request.getPaymentKey());
 
         // orderId, amount 변조 검증
-        order.validatePaymentInfo(currentUserId, request.getAmount());
+        order.validatePaymentInfo(currentUserId, Long.parseLong(request.getAmount()));
 
         // TODO: 로그 컨벤션 얘기해보기
         // 멱등키 생성
@@ -50,6 +51,7 @@ public class PaymentService {
             response = tossFeignClient.confirmPayment(request, idempotencyKey);
         } catch (FeignException e) {
             log.error("결제 실패", e);
+            log.error("응답내용: {}", e.contentUTF8());
             throw new PaymentFailException(e.status(), e.contentUTF8());
         }
 

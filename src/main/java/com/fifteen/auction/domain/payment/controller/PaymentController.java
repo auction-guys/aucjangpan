@@ -2,18 +2,14 @@ package com.fifteen.auction.domain.payment.controller;
 
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
 import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;
-import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.parser.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 @Slf4j
 @RestController

@@ -2,8 +2,10 @@ package com.fifteen.auction.domain.payment.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class CancelPaymentRequest {
     @NotNull
     private String cancelReason;

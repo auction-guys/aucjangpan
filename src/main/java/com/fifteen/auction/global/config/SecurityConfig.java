@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(request -> request.getRequestURI().startsWith("/api/v1/auth")).permitAll()
 //                        .requestMatchers("/test").hasAuthority(UserRole.Authority.ADMIN)
-                        .requestMatchers("/open").permitAll()
+                        .requestMatchers("/open", "/login.html", "/checkout.html", "/payments/**", "/api/v1/payments/confirm/**").permitAll()
                         .requestMatchers("/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
                 )

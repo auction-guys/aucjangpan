@@ -5,22 +5,26 @@ import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.infra.s3.S3Uploader;
 import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
+@Component
 @RequiredArgsConstructor
 public class CsvUtil {
 
-    private static S3Uploader s3Uploader;
+    private final S3Uploader s3Uploader;
 
     private final static String[] headers = CsvConstants.SETTLEMENT_HEADERS;
     private final static String dir = "settlement";
 
 
-    public static <T extends RowMapper> String writeToCsv(List<T> dataList) {
+    public <T extends RowMapper> String writeToCsv(List<T> dataList) {
 
         String fileName = "auto_settlement_" + LocalDate.now();
         File tempFile = null;
@@ -40,6 +44,7 @@ public class CsvUtil {
             return s3Uploader.uploadCsv(tempFile, "text/csv", dir, fileName + ".csv");
 
         } catch (Exception e) {
+            log.error("Settlement save error: ", e);
             throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
         } finally {
             // 임시 파일 삭제
@@ -49,7 +54,7 @@ public class CsvUtil {
         }
     }
 
-    public static <T extends RowMapper> String writeToCsv(T data) {
+    public <T extends RowMapper> String writeToCsv(T data) {
 
         String fileName = "immediately_settlement_" + LocalDate.now();
         File tempFile = null;
@@ -67,6 +72,7 @@ public class CsvUtil {
             return s3Uploader.uploadCsv(tempFile, "text/csv", dir, fileName + ".csv");
 
         } catch (Exception e) {
+            log.error("Settlement save error: ", e);
             throw new ClientException(ErrorCode.SETTLEMENT_SAVE_FAILED);
         } finally {
             // 임시 파일 삭제
