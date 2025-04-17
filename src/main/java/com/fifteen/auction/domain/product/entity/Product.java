@@ -4,9 +4,10 @@ import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
-import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,9 +40,6 @@ public class Product extends BaseEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ProductImage> images = new ArrayList<>();
-
-    @Column(nullable = false)
-    private boolean deleted;
 
     @Column(name = "last_price_updated_at")
     private LocalDate lastPriceUpdatedAt;
