@@ -64,3 +64,13 @@ metrics:
   export:
     prometheus:
       enabled: true
+
+openai:
+  api:
+    key: ${OPENAI_KEY}
+    url: https://api.openai.com/v1/chat/completions
+naver:
+  api:
+    id: ${NAVER_ID}
+    secret: ${NAVER_SECRET}
+    url: https://openapi.naver.com/v1/search/shop.json

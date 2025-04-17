@@ -51,7 +51,7 @@ public class ProductService {
         Product saved = productRepository.save(product);
 
         // GPT 시세 예측 후 저장 (Redis + DB)
-        marketPriceService.predictAndSavePrice(saved);
+        marketPriceService.findMarketPriceFullResponse(saved.getId());
 
         return saved.getId();
     }

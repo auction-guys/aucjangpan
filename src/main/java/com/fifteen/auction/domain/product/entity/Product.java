@@ -41,9 +41,6 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ProductImage> images = new ArrayList<>();
 
-    @Column(name = "last_price_updated_at")
-    private LocalDate lastPriceUpdatedAt;
-
     private LocalDateTime deletedAt;
 
     private Product(User seller, ProductCategory category, String name, String description) {

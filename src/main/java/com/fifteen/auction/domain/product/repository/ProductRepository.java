@@ -34,8 +34,4 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("select p from Product p join fetch p.seller where p.id = :productId and p.deletedAt is null ")
     Optional<Product> findByIdWithSeller(@Param("productId") Long id);
 
-
-    // 오늘 날짜보다 lastPriceUpdatedAt이 이전인 상품만 조회
-    @Query("SELECT p FROM Product p WHERE p.lastPriceUpdatedAt < :today OR p.lastPriceUpdatedAt IS NULL")
-    List<Product> findProductsWithoutTodayPrice(@Param("today") LocalDate today);
 }
