@@ -8,10 +8,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -36,8 +34,8 @@ public class Settlement {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    public Settlement(Order order, double proportion) {
-        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice() * proportion));
+    public Settlement(Order order, BigDecimal proportion) {
+        this.charge = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(String.valueOf(order.getAuction().getWinPrice())).subtract(charge);
         this.order = order;
     }
@@ -53,9 +51,9 @@ public class Settlement {
         this.settledAt = LocalDate.now().atStartOfDay();
     }
 
-    public void settleNow(Long userId, double proportion) {
+    public void settleNow(Long userId, BigDecimal proportion) {
         validateOwner(userId);
-        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice() * proportion));
+        this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
         this.settledAt = LocalDate.now().atStartOfDay();

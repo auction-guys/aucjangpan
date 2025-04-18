@@ -17,7 +17,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
     ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
-    ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문을 취소할 수 없습니다."),
+    ORDER_STATUS_CANNOT_BE_CHANGED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문상태를 변경할 수 없습니다."),
 
     // Payment Exceptions
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),

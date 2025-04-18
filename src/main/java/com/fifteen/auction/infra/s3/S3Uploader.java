@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import com.amazonaws.services.s3.AmazonS3;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -36,6 +37,27 @@ public class S3Uploader {
             return amazonS3.getUrl(bucket, key).toString();
 
         } catch (IOException e) {
+            throw new ServerException(ErrorCode.UPLOAD_FAIL);
+        }
+    }
+
+    // TODO: 나중에 인터페이스로 처리하거나 상속받아서 하는것도 나쁘지 않을듯
+    public String uploadCsv(File file, String contentType, String dir, String fileName) {
+        try {
+            String key = dir + "/" + fileName;
+
+            // 메모리에서 만들면 부하가 심할 것 같아 임시 파일을 작성해 보내는 방식으로 결정
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(file.length());
+            metadata.setContentType(contentType);
+
+            PutObjectRequest putRequest = new PutObjectRequest(bucket, key, file);
+            putRequest.setMetadata(metadata);
+
+            amazonS3.putObject(putRequest);
+
+            return amazonS3.getUrl(bucket, key).toString();
+        } catch (Exception e) {
             throw new ServerException(ErrorCode.UPLOAD_FAIL);
         }
     }

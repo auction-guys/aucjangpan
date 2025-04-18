@@ -8,7 +8,6 @@ import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import com.fifteen.auction.global.entity.BaseEntity;
 
-import java.util.UUID;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -48,13 +47,19 @@ public class Order extends BaseEntity {
 
     private void validateCancelable() {
         if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED) {
-            throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+            throw new ClientException(ErrorCode.ORDER_STATUS_CANNOT_BE_CHANGED);
         }
     }
 
     private void validateConfirmable() {
-        if (this.status == OrderStatus.CANCELED || this.status == OrderStatus.REFUNDED || this.status == OrderStatus.COMPLETED || this.status == OrderStatus.CONFIRMED) {
-            throw new ClientException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+        if (this.status != OrderStatus.PAID) {
+            throw new ClientException(ErrorCode.ORDER_STATUS_CANNOT_BE_CHANGED);
+        }
+    }
+
+    private void validatePaidable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ClientException(ErrorCode.ORDER_STATUS_CANNOT_BE_CHANGED);
         }
     }
 
@@ -71,6 +76,7 @@ public class Order extends BaseEntity {
     }
 
     public void paid() {
+        validatePaidable();
         this.status = OrderStatus.PAID;
     }
 

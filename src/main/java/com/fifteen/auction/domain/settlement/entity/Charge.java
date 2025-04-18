@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -16,9 +18,9 @@ public class Charge {
     @Enumerated(EnumType.STRING)
     private ChargeType id;
 
-    private double proportion;
+    private BigDecimal proportion;
 
-    public void updateProportion(double proportion) {
+    public void updateProportion(BigDecimal proportion) {
         this.proportion = proportion;
     }
 }
