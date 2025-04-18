@@ -67,6 +67,10 @@ jobs:
         OAUTH_SECRET=${{secrets.OAUTH_SECRET}}
         OAUTH_REDIRECT_URI=${{secrets.OAUTH_REDIRECT_URI}}
         TOSS_SECRET_KEY=${{secrets.TOSS_SECRET_KEY}}
+        OPENAI_KEY=${{secrets.OPENAI_KEY}}
+        NAVER_ID=${{secrets.NAVER_ID}}
+        NAVER_SECRET=${{secrets.NAVER_SECRET}}
+        
         EOF
         
     - name: Copy .env to EC2
