@@ -17,7 +17,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
     ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
-    ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문을 취소할 수 없습니다."),
+    ORDER_STATUS_CANNOT_BE_CHANGED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문상태를 변경할 수 없습니다."),
 
     // Payment Exceptions
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
@@ -48,7 +48,7 @@ public enum ErrorCode {
     PASSWORDS_DO_NOT_MATCH(HttpStatus.BAD_REQUEST, "USER-12", "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
     PASSWORD_ALREADY_SET(HttpStatus.BAD_REQUEST, "USER-13", "이미 비밀번호가 설정된 사용자입니다."),
 
-    // Auction Exceptions 에러 코드
+    // Auction Exceptions
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "AUCTION-1", "경매가 존재하지 않습니다."),
     NOT_OWNING_PRODUCT(HttpStatus.BAD_REQUEST, "AUCTION-2", "자신의 상품만 경매에 등록할 수 있습니다."),
     INVALID_BID_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-3", "입찰할 수 없는 경매입니다."),
@@ -57,15 +57,21 @@ public enum ErrorCode {
     AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-6", "해당 경매에 접근할 수 없습니다."),
     AUCTION_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-7", "이미 공개된 경매입니다."),
 
-    // Product Custom Exception 에러 코드
+    // Product Custom Exception
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
     PRODUCT_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-2", "존재하지 않는 카테고리입니다."),
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-3", "대표 이미지가 존재하지 않습니다."),
     UNAUTHORIZED(HttpStatus.FORBIDDEN, "COMMON-1", "접근 권한이 없습니다."),
 
+    // Market Price Exceptions
+    MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다."),
+
+    // Naver API Exceptions
+    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "네이버 오픈 API 호출 중 오류가 발생했습니다."),
+
     // FAVORITE 에러 코드
-    DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE_001", "이미 찜한 경매입니다."),
-    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE_002", "찜 내역이 존재하지 않습니다."),
+    DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE-1", "이미 찜한 경매입니다."),
+    FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-2", "찜 내역이 존재하지 않습니다."),
 
     // Image Exception 에러 코드
     UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-1", "이미지 업로드에 실패했습니다."),
@@ -83,6 +89,9 @@ public enum ErrorCode {
 
     // Inbox Exception
     INBOX_MSG_NOT_FOUND(HttpStatus.NOT_FOUND, "MSG-1", "해당 알림이 존재하지 않습니다."),
+
+    // Chat Exception
+    INVALID_CHAT_REQUEST(HttpStatus.BAD_REQUEST,"CHAT-1","본인과의 채팅은 불가능합니다."),
 
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");

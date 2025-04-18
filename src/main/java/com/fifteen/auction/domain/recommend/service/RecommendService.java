@@ -74,7 +74,7 @@ public class RecommendService {
         List<RecommendRedisRepository.AuctionScore> scores = sorted.stream()
                 .map(e -> new RecommendRedisRepository.AuctionScore(e.getKey(), e.getValue()))
                 .toList();
-
+      
         recommendRedisRepository.saveRecommendations(group.getId(), scores);
     }
 
@@ -92,6 +92,7 @@ public class RecommendService {
     }
 
     private List<RecommendationResponse> mapToRecommendationResponses(Set<ZSetOperations.TypedTuple<String>> results) {
+      
         List<Long> auctionIds = results.stream().map(t -> Long.valueOf(t.getValue())).toList();
         List<Auction> auctions = auctionRepository.findAllById(auctionIds);
         Map<Long, Auction> auctionMap = auctions.stream().collect(Collectors.toMap(Auction::getId, a -> a));

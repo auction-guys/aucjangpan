@@ -109,7 +109,6 @@ public class OrderService {
 
         order.confirm(currentUserId);
 
-        // TODO 이벤트로 처리 - 고도화
         applicationEventPublisher.publishEvent(new OrderConfirmedEvent(order));
     }
 }

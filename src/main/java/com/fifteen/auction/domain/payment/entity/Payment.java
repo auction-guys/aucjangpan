@@ -39,8 +39,8 @@ public class Payment {
         this.paymentMethod = response.getMethod();
         this.amount = response.getCard().getAmount();
         this.status = response.getStatus();
-        this.requestedAt = response.getRequestedAt();
-        this.approvedAt = response.getApprovedAt();
+        this.requestedAt = response.getRequestedAt().toLocalDateTime();
+        this.approvedAt = response.getApprovedAt().toLocalDateTime();
         this.order = order;
     }
 

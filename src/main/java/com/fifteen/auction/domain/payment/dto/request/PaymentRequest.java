@@ -10,10 +10,10 @@ public class PaymentRequest {
     @NotNull
     private String orderId;
     @NotNull
-    private Long amount;
+    private String amount;
 
 
-    public PaymentRequest(String orderId, Long amount, String paymentKey) {
+    public PaymentRequest(String orderId, String amount, String paymentKey) {
         this.orderId = orderId;
         this.amount = amount;
         this.paymentKey = paymentKey;

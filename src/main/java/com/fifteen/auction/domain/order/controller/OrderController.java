@@ -24,7 +24,9 @@ public class OrderController {
     @GetMapping("/api/v1/orders/{orderId}/payment")
     public ResponseEntity<OrderInfoResponse> getOrderInfo(
             @PathVariable String orderId) {
-        return ResponseEntity.ok(orderService.getOrderInfo(orderId));
+
+        OrderInfoResponse orderInfo = orderService.getOrderInfo(orderId);
+        return ResponseEntity.ok(orderInfo);
     }
 
     @PostMapping("api/v1/orders")

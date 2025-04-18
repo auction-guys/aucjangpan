@@ -18,20 +18,19 @@ public class SettlementController {
     private final SettlementService settlementService;
 
     @PostMapping("api/v1/settlements")
-    public ResponseEntity<Void> settle() {
-        // 나중에 시큐리티로 어드민만 가능하게
-        settlementService.settle();
+    public ResponseEntity<Response<String>> settle() {
+        // TODO: 나중에 시큐리티로 어드민만 가능하게
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Response.of(settlementService.settle()));
     }
 
     @PostMapping("api/v1/settlements/{settlementId}")
-    public ResponseEntity<Void> settleImmediately(
+    public ResponseEntity<Response<String>> settleImmediately(
 //            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long settlementId) {
         Long currentUserId = 1L;
-        settlementService.settleImmediately(settlementId, currentUserId);
-        return ResponseEntity.noContent().build();
+
+        return ResponseEntity.ok(Response.of(settlementService.settleImmediately(settlementId, currentUserId)));
     }
 
     @GetMapping("api/v1/settlements")
