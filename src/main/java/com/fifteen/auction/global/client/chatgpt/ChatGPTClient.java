@@ -1,6 +1,5 @@
-package com.fifteen.auction.global.client.chatgpt;
+package com.fifteen.auction.global.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
