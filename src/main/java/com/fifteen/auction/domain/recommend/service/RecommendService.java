@@ -4,15 +4,18 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.recommend.dto.response.RecommendationResponse;
-import com.fifteen.auction.domain.recommend.entity.Recommendation;
 import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
-import com.fifteen.auction.domain.recommend.repository.RecommendationRepository;
+import com.fifteen.auction.domain.recommend.repository.RecommendGroupRepository;
 import com.fifteen.auction.domain.tag.repository.AuctionTagRepository;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ClientException;
+import com.fifteen.auction.infra.redis.repository.RecommendRedisRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,82 +28,80 @@ public class RecommendService {
     private final UserRepository userRepository;
     private final BidRepository bidRepository;
     private final AuctionTagRepository auctionTagRepository;
-    private final RecommendationRepository recommendationRepository;
+    private final RecommendGroupRepository recommendGroupRepository;
+    private final RecommendRedisRepository recommendRedisRepository;
     private final AuctionRepository auctionRepository;
 
-    // 그룹기반 추천 생성
     public void generateRecommendationsForGroup(RecommendGroup group) {
-        // Step 1: 그룹 유저 조회
         List<User> users = userRepository.findByRecommendGroup(group);
         if (users.isEmpty()) return;
 
-        // Step 2: 유저 입찰 기반 경매 ID 수집
-        Set<Long> auctionIds = users.stream()
-                .flatMap(user -> bidRepository.findBidsByUserId(user.getId()).stream())
-                .map(bid -> bid.getAuction().getId())
-                .collect(Collectors.toSet());
-
+        List<Long> userIds = users.stream().map(User::getId).toList();
+        Set<Long> auctionIds = bidRepository.findAuctionIdsByUserIds(userIds);
         if (auctionIds.isEmpty()) return;
 
-        // Step 3: 태그 ID 수집
         List<Long> tagIds = auctionTagRepository.findTagIdsByAuctionIds(auctionIds);
         if (tagIds.isEmpty()) return;
 
-        // Step 4: 태그 빈도 계산
-        Map<Long, Integer> tagFrequencyMap = new HashMap<>();
+        Map<Long, Integer> tagFrequency = new HashMap<>();
         for (Long tagId : tagIds) {
-            tagFrequencyMap.merge(tagId, 1, Integer::sum);
+            tagFrequency.merge(tagId, 1, Integer::sum);
         }
 
-        // Step 5: 상위 10개 태그 선택
-        List<Map.Entry<Long, Integer>> topTags = tagFrequencyMap.entrySet().stream()
+        List<Long> topTagIds = tagFrequency.entrySet().stream()
                 .sorted((a, b) -> b.getValue() - a.getValue())
                 .limit(10)
+                .map(Map.Entry::getKey)
                 .toList();
 
-        // Step 6: 이전 추천 삭제
-        recommendationRepository.deleteAllByRecommendGroup(group);
+        List<Auction> auctions = auctionRepository.findOpenAuctionsByTagIds(topTagIds);
+        Map<Long, Integer> scoreMap = new HashMap<>();
 
-        // Step 7: 태그 → 경매 매핑 & 점수 누적
-        Map<Long, Integer> auctionScoreMap = new HashMap<>();
-        for (Map.Entry<Long, Integer> entry : topTags) {
-            Long tagId = entry.getKey();
-            int tagScore = entry.getValue();
-
-            List<Auction> auctions = auctionRepository.findOpenAuctionsByTag(tagId);
-            for (Auction auction : auctions) {
-                auctionScoreMap.merge(auction.getId(), tagScore, Integer::sum);
+        for (Auction auction : auctions) {
+            Set<Long> auctionTagIds = auction.getTagIds(); // List → Set 변경 권장
+            for (Long tagId : topTagIds) {
+                if (auctionTagIds.contains(tagId)) {
+                    scoreMap.merge(auction.getId(), tagFrequency.get(tagId), Integer::sum);
+                }
             }
         }
 
-        // Step 8: 상위 10개 경매 추출
-        List<Map.Entry<Long, Integer>> sortedAuctions = auctionScoreMap.entrySet().stream()
+        List<Map.Entry<Long, Integer>> sorted = scoreMap.entrySet().stream()
                 .sorted((a, b) -> b.getValue() - a.getValue())
                 .limit(10)
                 .toList();
 
-        // Step 9: 추천 저장
-        Map<Long, Auction> auctionMap = auctionRepository.findAllById(
-                        sortedAuctions.stream().map(Map.Entry::getKey).toList()
-                )
-                .stream()
-                .collect(Collectors.toMap(Auction::getId, a -> a));
+        List<RecommendRedisRepository.AuctionScore> scores = sorted.stream()
+                .map(e -> new RecommendRedisRepository.AuctionScore(e.getKey(), e.getValue()))
+                .toList();
 
-        int ranking = 1;
-        for (Map.Entry<Long, Integer> entry : sortedAuctions) {
-            Long auctionId = entry.getKey();
-            int score = entry.getValue();
-            Auction auction = auctionMap.get(auctionId);
-
-            Recommendation recommendation = Recommendation.create(group, auction, score, ranking++);
-            recommendationRepository.save(recommendation);
-        }
+        recommendRedisRepository.saveRecommendations(group.getId(), scores);
     }
 
-    // 그룹 기반 추천 조회
+    @Transactional(readOnly = true)
     public List<RecommendationResponse> getRecommendationsForGroup(RecommendGroup group) {
-        return recommendationRepository.findAllByRecommendGroupOrderByRankingAsc(group).stream()
-                .map(RecommendationResponse::from)
-                .toList();
+        Set<ZSetOperations.TypedTuple<String>> results = recommendRedisRepository.getTopRecommendations(group.getId(), 10);
+        if (results.isEmpty()) return List.of();
+
+        List<Long> auctionIds = results.stream().map(t -> Long.valueOf(t.getValue())).toList();
+        List<Auction> auctions = auctionRepository.findAllById(auctionIds);
+        Map<Long, Auction> auctionMap = auctions.stream().collect(Collectors.toMap(Auction::getId, a -> a));
+
+        List<RecommendationResponse> response = new ArrayList<>();
+        int ranking = 1;
+        for (ZSetOperations.TypedTuple<String> tuple : results) {
+            Long id = Long.valueOf(tuple.getValue());
+            Auction auction = auctionMap.get(id);
+            if (auction != null) {
+                response.add(RecommendationResponse.of(auction, tuple.getScore().intValue(), ranking++));
+            }
+        }
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public RecommendGroup findGroup(Long groupId) {
+        return recommendGroupRepository.findById(groupId)
+                .orElseThrow(() -> new ClientException(ErrorCode.RECOMMEND_NOT_FOUND));
     }
 }

@@ -3,10 +3,12 @@ package com.fifteen.auction.domain.product.controller;
 import com.fifteen.auction.domain.product.dto.request.ProductCreateRequest;
 import com.fifteen.auction.domain.product.dto.request.ProductUpdateRequest;
 import com.fifteen.auction.domain.product.service.ProductService;
+import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import com.fifteen.auction.global.dto.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,40 +18,31 @@ public class ProductController {
 
     private final ProductService productService;
 
-    /**
-     * 상품 등록
-     */
     @PostMapping
     public ResponseEntity<Response<Long>> createProduct(
-            @RequestHeader("X-USER-ID") Long sellerId,
+            @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid ProductCreateRequest request
     ) {
-        Long productId = productService.createProduct(sellerId, request);
+        Long productId = productService.createProduct(authUser.getId(), request);
         return ResponseEntity.ok(Response.of(productId));
     }
 
-    /**
-     * 상품 수정
-     */
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateProduct(
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long sellerId,
+            @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid ProductUpdateRequest request
     ) {
-        productService.updateProduct(sellerId, id, request);
+        productService.updateProduct(authUser.getId(), id, request);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 상품 삭제
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long sellerId
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        productService.deleteProduct(sellerId, id);
+        productService.deleteProduct(authUser.getId(), id);
         return ResponseEntity.noContent().build();
     }
 }

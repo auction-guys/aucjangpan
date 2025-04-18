@@ -4,7 +4,6 @@ import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.entity.BaseEntity;
-import com.fifteen.auction.domain.product.entity.ProductCategory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -41,6 +40,9 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ProductImage> images = new ArrayList<>();
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     private LocalDateTime deletedAt;
 
     private Product(User seller, ProductCategory category, String name, String description) {
@@ -65,6 +67,7 @@ public class Product extends BaseEntity {
     }
 
     public void softDelete() {
+        this.deleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 
@@ -73,5 +76,20 @@ public class Product extends BaseEntity {
                 .filter(ProductImage::isThumbnail)
                 .findFirst()
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
+    }
+
+    public List<String> getImageUrlsExcludingThumbnail() {
+        return images.stream()
+                .filter(image -> !image.isThumbnail())
+                .map(ProductImage::getImageUrl)
+                .toList();
+    }
+
+    public String getThumbnailUrl() {
+        return images.stream()
+                .filter(ProductImage::isThumbnail)
+                .map(ProductImage::getImageUrl)
+                .findFirst()
+                .orElseThrow (() -> new ClientException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND)); // 혹은 예외 던져도 됨
     }
 }
