@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -69,7 +70,10 @@ public class BidService {
         }
 
         findAuction.finalize(userId, findAuction.getBuyNowPrice(), buyAt);
+
         bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
+
+        applicationEventPublisher.publishEvent(BuyNowEvent.fromAuction(findAuction));
     }
 
     @Transactional(readOnly = true)
