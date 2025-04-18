@@ -6,6 +6,7 @@ import com.fifteen.auction.domain.auction.service.BidService;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class BidController {
     public ResponseEntity<Void> bid(
             @PathVariable("auctionSeq") String auctionSeq,
             @RequestParam("userId") Long userId,
-            @RequestBody BidRequest req
+            @Valid @RequestBody BidRequest req
     ) {
         bidService.bid(auctionSeq, userId, req);
         return ResponseEntity.ok().build();
