@@ -20,11 +20,14 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class AuctionService {
     private final AuctionCacheService auctionCacheService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    @Secured(ROLE_USER)
     @Transactional
     public String create(AuctionCreateRequest req, Long userId) {
         Product product = productRepository.findByIdWithSeller(req.getProductId())
@@ -55,7 +59,7 @@ public class AuctionService {
         return auctionRepository.save(auction).getAuctionSeq();
     }
 
-
+    @Secured(ROLE_USER)
     @Transactional
     public void cancel(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
@@ -64,6 +68,7 @@ public class AuctionService {
         auction.cancel(LocalDateTime.now());
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void open(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
@@ -77,6 +82,7 @@ public class AuctionService {
         applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void updateInfo(String auctionSeq, Long userId, AuctionUpdateRequest req) {
         Auction auction = auctionRepository
@@ -92,6 +98,7 @@ public class AuctionService {
         );
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void miscarry(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -99,6 +106,7 @@ public class AuctionService {
         auction.misCarry();
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void processWinning(String auctionSeq, Long winnerId, Long winPrice) {
         Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)

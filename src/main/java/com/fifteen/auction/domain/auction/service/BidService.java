@@ -17,10 +17,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+
+import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +36,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
 
-
+    @Secured(ROLE_USER)
     @Transactional
     public void bid(String auctionSeq, Long userId, BidRequest req) {
 
@@ -58,6 +61,7 @@ public class BidService {
                 new BidProcessEvent(auctionSeq, userId, req.getPrice(), bidAt));
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void buyNow(String auctionSeq, Long userId) {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
@@ -76,6 +80,7 @@ public class BidService {
         applicationEventPublisher.publishEvent(BuyNowEvent.fromAuction(findAuction));
     }
 
+    @Secured(ROLE_USER)
     @Transactional(readOnly = true)
     public Page<BidHistoryInfo> bidHistoriesInProgress(String auctionSeq, PageCond cond) {
         Pageable pageRequest = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
