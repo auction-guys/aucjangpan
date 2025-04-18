@@ -1,5 +1,7 @@
-package com.fifteen.auction.domain.settlement.util.csv;
+package com.fifteen.auction.domain.settlement.service;
 
+import com.fifteen.auction.domain.settlement.util.csv.CsvConstants;
+import com.fifteen.auction.domain.settlement.util.csv.RowMapper;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.infra.s3.S3Uploader;
@@ -16,7 +18,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CsvUtil {
+public class CsvUploadService {
     //TODO: 파일 이름이랑 밑에 static빠진거 나중에 다시 확인
     private final S3Uploader s3Uploader;
 

@@ -4,7 +4,6 @@ import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
 import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
-import com.fifteen.auction.domain.settlement.util.csv.CsvUtil;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
@@ -26,7 +25,7 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
-    private final CsvUtil csvUtil;
+    private final CsvUploadService csvUploadService;
     private final ChargeService chargeService;
 
     //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
@@ -54,7 +53,7 @@ public class SettlementService {
         // 구글 스프레드 시트?
         // 파일 작성 후 S3에 저장 url 반환
 
-        return csvUtil.writeToCsv(list);
+        return csvUploadService.writeToCsv(list);
     }
 
     @Transactional
@@ -71,7 +70,7 @@ public class SettlementService {
 
         // TODO: 비동기화
         // 파일 작성 후 S3에 저장 url 반환
-        return csvUtil.writeToCsv(dto);
+        return csvUploadService.writeToCsv(dto);
     }
 
     @Transactional(readOnly = true)
