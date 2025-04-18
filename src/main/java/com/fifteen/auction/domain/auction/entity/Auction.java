@@ -1,7 +1,6 @@
 package com.fifteen.auction.domain.auction.entity;
 
 import com.fifteen.auction.domain.product.entity.Product;
-import com.fifteen.auction.domain.recommend.entity.Recommendation;
 import com.fifteen.auction.domain.tag.entity.AuctionTag;
 import com.fifteen.auction.domain.tag.entity.Tag;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -135,7 +134,7 @@ public class Auction extends BaseEntity {
     }
 
     public void extendExpireTime(LocalDateTime bidAt) {
-        if (this.isAutoExtensible && is1mBeforeExpiration(bidAt)) {
+        if (this.isAutoExtensible && is1minBeforeExpiration(bidAt)) {
             this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
         }
     }
@@ -154,7 +153,7 @@ public class Auction extends BaseEntity {
         this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
     }
 
-    private boolean is1mBeforeExpiration(LocalDateTime bidAt) {
+    private boolean is1minBeforeExpiration(LocalDateTime bidAt) {
         Duration between = Duration.between(bidAt, this.expiresAt).abs();
         return between.toMinutes() == 0 && between.getSeconds() <= 60;
     }
