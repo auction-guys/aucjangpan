@@ -1,9 +1,12 @@
-package com.fifteen.auction.global.client;
+package com.fifteen.auction.global.client.chatgpt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
-import com.fifteen.auction.domain.product.dto.response.NaverShoppingItemDto;
+import com.fifteen.auction.global.client.chatgpt.dto.ChatGPTRequest;
+import com.fifteen.auction.global.client.chatgpt.dto.ChatMessage;
+import com.fifteen.auction.global.client.naver.dto.NaverShoppingItemDto;
+import com.fifteen.auction.global.client.naver.NaverSearchClient;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,7 @@ import java.util.stream.IntStream;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OpenAIClient {
+public class ChatGPTClient {
 
     @Value("${openai.api.url}")
     private String apiUrl;
@@ -125,16 +128,18 @@ public class OpenAIClient {
     }
 
     private List<GPTPricePredictionResponse> callGptWithPrompt(String prompt) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("model", "gpt-3.5-turbo");
-        request.put("messages", List.of(Map.of("role", "user", "content", prompt)));
-        request.put("temperature", 0.5);
+        ChatMessage userMessage = new ChatMessage("user", prompt);
+        ChatGPTRequest request = ChatGPTRequest.builder()
+                .model("gpt-3.5-turbo")
+                .messages(List.of(userMessage))
+                .temperature(0.5)
+                .build();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+        HttpEntity<ChatGPTRequest> entity = new HttpEntity<>(request, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(

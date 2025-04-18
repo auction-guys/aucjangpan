@@ -1,6 +1,6 @@
-package com.fifteen.auction.global.client;
+package com.fifteen.auction.global.client.naver;
 
-import com.fifteen.auction.domain.product.dto.response.NaverShoppingItemDto;
+import com.fifteen.auction.global.client.naver.dto.NaverShoppingItemDto;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;

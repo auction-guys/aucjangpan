@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.product.dto.response;
+package com.fifteen.auction.global.client.naver.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
