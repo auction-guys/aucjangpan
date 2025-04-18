@@ -108,7 +108,7 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         order.confirm(currentUserId);
-        // TODO: 승인 조건 다시 확인하기
+
         applicationEventPublisher.publishEvent(new OrderConfirmedEvent(order));
     }
 }
