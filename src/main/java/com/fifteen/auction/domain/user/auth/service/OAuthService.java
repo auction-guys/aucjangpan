@@ -73,7 +73,7 @@ public class OAuthService {
                     "설윤 포토카드",
                     "110-353-844210",
                     group,
-                    UserRole.ROLE_ADMIN
+                    UserRole.ROLE_USER
             );
             return userRepository.save(newUser);
         });
