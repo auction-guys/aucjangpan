@@ -90,6 +90,9 @@ public enum ErrorCode {
     // Inbox Exception
     INBOX_MSG_NOT_FOUND(HttpStatus.NOT_FOUND, "MSG-1", "해당 알림이 존재하지 않습니다."),
 
+    // Chat Exception
+    INVALID_CHAT_REQUEST(HttpStatus.BAD_REQUEST,"CHAT-1","본인과의 채팅은 불가능합니다."),
+
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 

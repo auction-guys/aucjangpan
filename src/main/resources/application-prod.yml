@@ -65,6 +65,13 @@ metrics:
     prometheus:
       enabled: true
 
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+
+api:
+  host: ${EC2_HOST}
+
 openai:
   api:
     key: ${OPENAI_KEY}
@@ -74,3 +81,4 @@ naver:
     id: ${NAVER_ID}
     secret: ${NAVER_SECRET}
     url: https://openapi.naver.com/v1/search/shop.json
+
