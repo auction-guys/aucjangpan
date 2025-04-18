@@ -9,6 +9,7 @@ import com.fifteen.auction.domain.auction.service.AuctionService;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,10 @@ public class AuctionController {
 
     // TODO: AuthUser 적용
     @PostMapping("/v1/auctions")
-    ResponseEntity<Object> create(@RequestBody AuctionCreateRequest req, @RequestParam("userId") Long userId) {
+    ResponseEntity<Object> create(
+            @RequestParam("userId") Long userId,
+            @Valid @RequestBody AuctionCreateRequest req
+    ) {
         String auctionSeq = auctionService.create(req, userId);
         return ResponseEntity
                 .created(URI.create("/api/v1/auctions/" + auctionSeq))
@@ -84,7 +88,7 @@ public class AuctionController {
     ResponseEntity<Response<Void>> updateInfo(
             @PathVariable("auctionSeq") String auctionSeq,
             @RequestParam("userId") Long userId,
-            @RequestBody AuctionUpdateRequest req
+            @Valid @RequestBody AuctionUpdateRequest req
     ) {
         auctionService.updateInfo(auctionSeq, userId, req);
         return ResponseEntity.noContent().build();

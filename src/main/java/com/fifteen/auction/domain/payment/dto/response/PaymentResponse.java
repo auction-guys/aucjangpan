@@ -4,7 +4,7 @@ import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -15,6 +15,6 @@ public class PaymentResponse {
     private PaymentCardResponse card;
     private PaymentStatus status;
     private String orderId;
-    private LocalDateTime requestedAt;
-    private LocalDateTime approvedAt;
+    private OffsetDateTime requestedAt;
+    private OffsetDateTime approvedAt;
 }

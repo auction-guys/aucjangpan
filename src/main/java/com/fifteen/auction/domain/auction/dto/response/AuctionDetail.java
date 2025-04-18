@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuctionDetail {
     private String productName;
-    //    private Long currentPrice;
+    private Long currentPrice;
     private String auctionSeq;
-    //    private String bidCount;
+    private Long bidCount;
     private Integer bidUnit;
 //    private String thumbnailImgUrl;
 
@@ -33,6 +33,27 @@ public class AuctionDetail {
     private Integer views;
 
     private MarketPriceFullResponse marketPrice;
+
+    //조회수 views 추가
+    private AuctionDetail(
+            String productName, String auctionSeq, Integer bidUnit, Long buyNowPrice,
+            Boolean isBuyNowSet, Boolean isAutoExtensible, LocalDateTime expiresAt,
+            Integer views, MarketPriceFullResponse marketPrice
+    ) {
+        this.productName = productName;
+        this.auctionSeq = auctionSeq;
+        this.bidUnit = bidUnit;
+        this.buyNowPrice = buyNowPrice;
+        this.isBuyNowSet = isBuyNowSet;
+        this.isAutoExtensible = isAutoExtensible;
+        this.expiresAt = expiresAt;
+        this.views = views;
+    }
+
+    public void updateBidInfo(Long currentPrice, Long bidCount) {
+        this.currentPrice = currentPrice;
+        this.bidCount = bidCount;
+    }
 
     public static AuctionDetail fromAuction(Auction auction, MarketPriceFullResponse marketPrice) {
         return new AuctionDetail(

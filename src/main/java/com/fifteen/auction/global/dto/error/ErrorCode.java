@@ -17,7 +17,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER-1", "해당 주문을 찾을 수 없습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORDER-2", "사용자의 주문 정보가 아닙니다."),
     ORDER_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "ORDER-3", "결제가 되지 않았거나 이미 처리된 주문입니다."),
-    ORDER_CANNOT_BE_CANCELED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문을 취소할 수 없습니다."),
+    ORDER_STATUS_CANNOT_BE_CHANGED(HttpStatus.BAD_REQUEST, "ORDER-3", "주문상태를 변경할 수 없습니다."),
 
     // Payment Exceptions
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT-1", "해당 결제 정보를 찾을 수 없습니다."),
@@ -56,6 +56,9 @@ public enum ErrorCode {
     INVALID_BUY_NOW_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-5", "즉시 구매가 불가한 경매입니다."),
     AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-6", "해당 경매에 접근할 수 없습니다."),
     AUCTION_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-7", "이미 공개된 경매입니다."),
+    CLOSE_NOT_PENDING(HttpStatus.BAD_REQUEST, "AUCTION-8", "공개 전 상태의 경매만 등록 취소가 가능합니다."),
+    AUCTION_NOT_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-9", "경매가 진행중일 때만 요청할 수 있는 작업입니다."),
+    FINALIZE_ALREADY_DONE(HttpStatus.BAD_REQUEST, "AUCTION-10", "이미 마감 처리 된 경매입니다."),
 
     // Product Custom Exception
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),

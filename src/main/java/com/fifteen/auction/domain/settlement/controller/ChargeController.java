@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequiredArgsConstructor
 public class ChargeController {
@@ -18,7 +20,7 @@ public class ChargeController {
     @PatchMapping("/api/v1/charges/{chargeId}")
     public ResponseEntity<Void> updateCharge(
             @PathVariable String chargeId,
-            @RequestParam double proportion){
+            @RequestParam BigDecimal proportion){
 
         chargeService.updateCharge(chargeId, proportion);
 

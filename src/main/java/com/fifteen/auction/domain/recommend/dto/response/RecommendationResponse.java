@@ -1,24 +1,26 @@
 package com.fifteen.auction.domain.recommend.dto.response;
 
-import com.fifteen.auction.domain.recommend.entity.Recommendation;
+import com.fifteen.auction.domain.auction.entity.Auction;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class RecommendationResponse {
-
     private final Long auctionId;
-    private final String title;
+    private final String productName;
+    private final String thumbnailUrl;
     private final int score;
     private final int ranking;
 
-    public static RecommendationResponse from(Recommendation recommendation) {
+    public static RecommendationResponse of(Auction auction, int score, int ranking) {
         return new RecommendationResponse(
-                recommendation.getAuction().getId(),
-                recommendation.getAuction().getProduct().getName(),
-                recommendation.getScore(),
-                recommendation.getRanking()
+                auction.getId(),
+                auction.getProduct().getName(),
+                auction.getProduct().getThumbnailUrl(),  // ← 여기!
+                score,
+                ranking
         );
     }
 }

@@ -2,10 +2,12 @@ package com.fifteen.auction.domain.product.controller;
 
 import com.fifteen.auction.domain.product.dto.response.ProductImageUploadResponse;
 import com.fifteen.auction.domain.product.service.ProductImageService;
+import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,7 @@ public class ProductImageController {
     // 이미지 업로드
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Response<ProductImageUploadResponse>> uploadImages(
+            @AuthenticationPrincipal AuthUser authUser,
             @RequestParam("images") List<MultipartFile> images
     ) {
         List<String> urls = productImageService.upload(images);

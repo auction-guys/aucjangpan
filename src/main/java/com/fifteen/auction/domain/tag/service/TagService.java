@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.tag.service;
 
+import com.fifteen.auction.domain.tag.dto.response.TagResponse;
 import com.fifteen.auction.domain.tag.entity.Tag;
 import com.fifteen.auction.domain.tag.repository.TagRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -48,6 +49,13 @@ public class TagService {
     public List<String> findAllTagNames() {
         return tagRepository.findAll().stream()
                 .map(Tag::getName)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TagResponse> findAll() {
+        return tagRepository.findAll().stream()
+                .map(TagResponse::from)
                 .toList();
     }
 

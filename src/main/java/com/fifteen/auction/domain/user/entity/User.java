@@ -4,6 +4,7 @@ import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
 import com.fifteen.auction.domain.recommend.enums.AgeGroup;
 import com.fifteen.auction.domain.recommend.enums.Gender;
 import com.fifteen.auction.domain.recommend.enums.Region;
+import com.fifteen.auction.domain.user.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,8 +56,12 @@ public class User {
     @JoinColumn(name = "group_id")
     private RecommendGroup recommendGroup;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
+
     // 수정된 생성자
-    public User(String email, String nickname, String name, String gender, String ageGroup, String password, String address, String contactNumber, String preferCategory, String accountNumber, RecommendGroup group) {
+    public User(String email, String nickname, String name, String gender, String ageGroup, String password, String address, String contactNumber, String preferCategory, String accountNumber, RecommendGroup group, UserRole role) {
         this.email = email;
         this.nickname = nickname;
         this.name = name;
@@ -69,6 +74,7 @@ public class User {
         this.accountNumber = accountNumber;
         // 그룹이 null일 경우 create() 메서드로 기본값 생성
         this.recommendGroup = group != null ? group : RecommendGroup.create(Gender.MALE, AgeGroup.TWENTIES, Region.SEOUL);
+        this.role = role;
     }
 
     public void updateProfile(String email, String nickname, String address) {
