@@ -51,10 +51,10 @@ public class BidService {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
+        bidRepository.save(new Bid(findAuction, userId, req.getPrice(), bidAt));
+
         applicationEventPublisher.publishEvent(
                 new BidProcessEvent(auctionSeq, userId, req.getPrice(), bidAt));
-
-        bidRepository.save(new Bid(findAuction, userId, req.getPrice(), bidAt));
     }
 
     @Transactional

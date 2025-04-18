@@ -12,9 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 @Component
 @RequiredArgsConstructor
 public class BidWorkerService {
@@ -30,18 +27,10 @@ public class BidWorkerService {
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
         // 자동연장 처리
-        if (auction.isAutoExtensible() && isWithinOneMinute(auction.getExpiresAt(), event.getBidAt())) {
-            auction.extendExpireTime();
-            System.out.println(auction.getExpiresAt());
-        }
+        auction.extendExpireTime(event.getBidAt());
 
         // 경매 표시가 반영
         auctionCacheService
                 .addNewHighPrice(event.getAuctionSeq(), event.getBidderId(), event.getBidPrice());
-    }
-
-    private boolean isWithinOneMinute(LocalDateTime expiresAt, LocalDateTime bidAt) {
-        Duration between = Duration.between(bidAt, expiresAt).abs();
-        return between.toMinutes() == 0 && between.getSeconds() <= 60;
     }
 }
