@@ -41,4 +41,6 @@ public class SignupRequest {
 
     @NotBlank
     private String accountNumber;
+
+    private String role;
 }

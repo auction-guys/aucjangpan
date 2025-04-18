@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -60,7 +62,6 @@ public class Auction extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-
     // Tag 연결을 위해 필요
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AuctionTag> tags = new ArrayList<>();
@@ -79,16 +80,6 @@ public class Auction extends BaseEntity {
     // 태그 삭제 메서드
     public void removeTags(List<Tag> tags) {
         this.tags.removeIf(tag -> tags.contains(tag.getTag())); // 전달된 태그 목록과 일치하는 태그 제거
-    }
-
-    // 추천 관련 필드 추가 (선택 사항)
-    // 예: 추천 목록을 추가할 수 있음
-    @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Recommendation> recommendations = new ArrayList<>();
-
-    // 추천 추가 메서드
-    public void addRecommendation(Recommendation recommendation) {
-        this.recommendations.add(recommendation);
     }
 
     public Auction(
@@ -152,5 +143,12 @@ public class Auction extends BaseEntity {
     //todo : redis를 통한 view 시간텀을 두고 증가
     public void increaseViews() {
         this.views++;
+    }
+
+    // 혹은 전체 tagId 조회용
+    public Set<Long> getTagIds() {
+        return this.tags.stream()
+                .map(at -> at.getTag().getId())
+                .collect(Collectors.toSet());
     }
 }
