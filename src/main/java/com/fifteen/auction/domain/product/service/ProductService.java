@@ -1,8 +1,8 @@
 package com.fifteen.auction.domain.product.service;
 
-import com.fifteen.auction.domain.product.dto.response.ProductCategoryTreeResponse;
 import com.fifteen.auction.domain.product.dto.request.ProductCreateRequest;
 import com.fifteen.auction.domain.product.dto.request.ProductUpdateRequest;
+import com.fifteen.auction.domain.product.dto.response.ProductCategoryTreeResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.entity.ProductCategory;
 import com.fifteen.auction.domain.product.entity.ProductImage;
@@ -13,7 +13,6 @@ import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
-    private final ProductImageService productImageUploadService;
+    private final ProductImageService productImageService;
     private final ProductCategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final MarketPriceService marketPriceService;
@@ -69,9 +68,9 @@ public class ProductService {
 
         product.update(request.getName(), request.getDescription(), category);
 
-        productImageUploadService.deleteByImageIds(request.getDeleteImageIds());
+        productImageService.deleteByImageIds(request.getDeleteImageIds());
 
-        List<ProductImage> newImages = productImageUploadService.createImagesWithThumbnail(
+        List<ProductImage> newImages = productImageService.createImagesWithThumbnail(
                 product, request.getImageUrls(), request.getThumbnailUrl());
 
         for (ProductImage image : newImages) {

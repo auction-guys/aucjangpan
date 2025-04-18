@@ -10,6 +10,7 @@ import com.fifteen.auction.domain.user.auth.OAuthUserInfoClient;
 import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.util.JwtUtil;
 import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.domain.user.enums.UserRole;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
@@ -71,12 +72,13 @@ public class OAuthService {
                     "010-9876-5432",
                     "설윤 포토카드",
                     "110-353-844210",
-                    group
+                    group,
+                    UserRole.ROLE_ADMIN
             );
             return userRepository.save(newUser);
         });
 
-        String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname());
+        String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
         String jwt = jwtUtil.substringToken(bearerToken);
         return new SigninResponse(jwt);
     }

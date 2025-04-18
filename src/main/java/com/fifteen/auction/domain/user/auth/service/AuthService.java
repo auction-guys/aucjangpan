@@ -13,6 +13,7 @@ import com.fifteen.auction.domain.user.auth.dto.request.WithdrawRequest;
 import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.util.JwtUtil;
 import com.fifteen.auction.domain.user.entity.User;
+import com.fifteen.auction.domain.user.enums.UserRole;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -52,6 +54,10 @@ public class AuthService {
                 Region.from(signupRequest.getAddress())
         );
 
+        UserRole userRole = Optional.ofNullable(signupRequest.getRole())
+                .map(UserRole::valueOf)
+                .orElse(UserRole.ROLE_USER); // 기본값 지정
+
         User user = new User(signupRequest.getEmail(),
                 signupRequest.getNickname(),
                 signupRequest.getName(),
@@ -62,7 +68,9 @@ public class AuthService {
                 signupRequest.getContactNumber(),
                 signupRequest.getPreferCategory(),
                 signupRequest.getAccountNumber(),
-                group);
+                group,
+                UserRole.valueOf(signupRequest.getRole())
+        );
         userRepository.save(user);
         recommendService.generateRecommendationsForGroup(group);
     }
@@ -81,7 +89,7 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_PASSWORD);
         }
 
-        String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname());
+        String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
         String jwt = jwtUtil.substringToken(bearerToken);
 
         return new SigninResponse(jwt);

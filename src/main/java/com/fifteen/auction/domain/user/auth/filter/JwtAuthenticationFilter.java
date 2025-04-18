@@ -13,11 +13,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -63,9 +67,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Long userId = Long.valueOf(claims.getSubject());
         String email = claims.get("email", String.class);
         String nickname = claims.get("nickname", String.class);
+        String role = claims.get("role", String.class);
 
         AuthUser authUser = new AuthUser(userId, email, nickname);
-        JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(authUser);
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(authUser, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        //        JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(authUser);
+//        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     }
 }
