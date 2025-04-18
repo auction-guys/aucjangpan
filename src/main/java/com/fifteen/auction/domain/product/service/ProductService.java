@@ -31,6 +31,7 @@ public class ProductService {
     private final ProductImageService productImageUploadService;
     private final ProductCategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final MarketPriceService marketPriceService;
 
     public Long createProduct(Long sellerId, ProductCreateRequest request) {
         User seller = userRepository.findById(sellerId)
@@ -47,7 +48,12 @@ public class ProductService {
             product.addImage(image);
         }
 
-        return productRepository.save(product).getId();
+        Product saved = productRepository.save(product);
+
+        // GPT 시세 예측 후 저장 (Redis + DB)
+        marketPriceService.findMarketPriceFullResponse(saved.getId());
+
+        return saved.getId();
     }
 
     public void updateProduct(Long sellerId, Long productId, ProductUpdateRequest request) {

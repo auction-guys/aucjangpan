@@ -9,8 +9,10 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
+import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
+import com.fifteen.auction.domain.product.service.MarketPriceService;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -31,6 +33,7 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
     private final AuctionSeqGenerator auctionSeqGenerator;
+    private final MarketPriceService marketPriceService;
     private final AuctionCacheService auctionCacheService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -51,9 +54,7 @@ public class AuctionService {
                 req.getStartPrice(), req.getBuyNowPrice(), req.getBidUnit(),
                 req.getIsBuyNowSet(), req.getIsAutoExtensible(), req.getExpiresAt());
 
-        Auction savedAuction = auctionRepository.save(auction);
-
-        return savedAuction.getAuctionSeq();
+        return auctionRepository.save(auction).getAuctionSeq();
     }
 
 
@@ -126,17 +127,18 @@ public class AuctionService {
         Auction findAuction = auctionRepository
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        return AuctionDetail.fromAuction(findAuction);
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
+        return AuctionDetail.fromAuction(findAuction, marketPrice);
     }
 
     @Transactional
     public AuctionDetail getAuctionDetailAndIncreaseView(Long auctionId) {
-        Auction auction = auctionRepository.findById(auctionId)
+        Auction findAuction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        auction.increaseViews();  // views += 1
-
-        return AuctionDetail.fromAuction(auction);
+        findAuction.increaseViews();  // views += 1
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
+        return AuctionDetail.fromAuction(findAuction, marketPrice);
     }
 
 }
