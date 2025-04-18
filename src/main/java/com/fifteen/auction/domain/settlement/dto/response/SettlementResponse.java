@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.settlement.dto.response;
 
 import com.fifteen.auction.domain.settlement.entity.Settlement;
-import com.fifteen.auction.domain.settlement.util.RowMapper;
+import com.fifteen.auction.domain.settlement.util.csv.RowMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

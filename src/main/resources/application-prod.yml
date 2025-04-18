@@ -64,3 +64,19 @@ metrics:
   export:
     prometheus:
       enabled: true
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+
+api:
+  host: ${EC2_HOST}
+
+openai:
+  api:
+    key: ${OPENAI_KEY}
+    url: https://api.openai.com/v1/chat/completions
+naver:
+  api:
+    id: ${NAVER_ID}
+    secret: ${NAVER_SECRET}
+    url: https://openapi.naver.com/v1/search/shop.json

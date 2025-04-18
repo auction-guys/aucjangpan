@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.settlement.util;
+package com.fifteen.auction.domain.settlement.util.csv;
 
 public class CsvConstants {
 

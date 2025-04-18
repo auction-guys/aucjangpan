@@ -4,17 +4,13 @@ import com.fifteen.auction.domain.settlement.dto.response.SettlementResponse;
 import com.fifteen.auction.domain.settlement.entity.Settlement;
 import com.fifteen.auction.domain.settlement.enums.SettlementStatus;
 import com.fifteen.auction.domain.settlement.repository.SettlementRepository;
-import com.fifteen.auction.domain.settlement.util.CsvConstants;
-import com.fifteen.auction.domain.settlement.util.CsvUtil;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.ServerException;
-import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,9 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -32,16 +25,14 @@ import java.util.List;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
+    private final CsvUploadService csvUploadService;
     private final ChargeService chargeService;
 
-    // csv 파일 저장 위치, 생성
-    String filePath = System.getProperty("java.io.tmpdir") + "settlement_" + LocalDate.now() + ".csv"; // 이건 이후 S3 연결 후 환경변수
-    String[] headers = CsvConstants.SETTLEMENT_HEADERS;
-
-    // 정산 - 스케줄러 등록은 crud 끝나고나 고도화 때
+    //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
     @Transactional
-    public void settle() {
+    public String settle() {
 
+        // 수정 findAll
         List<Settlement> settlements = settlementRepository.findByStatus(SettlementStatus.PENDING);
 
         // 정산 가능 데이터 존재 여부
@@ -58,26 +49,28 @@ public class SettlementService {
         List<SettlementResponse> list = settlements.stream()
                 .map(SettlementResponse::from).toList();
 
-        // TODO: S3에 저장하고 유저에게는 url 반환 - 고도화
-        // 파일 작성
-        CsvUtil.writeToCsv(filePath, headers, list);
+        // TODO: 비동기화
+        // 구글 스프레드 시트?
+        // 파일 작성 후 S3에 저장 url 반환
+
+        return csvUploadService.writeToCsv(list);
     }
 
     @Transactional
-    public void settleImmediately(Long settlementId, Long currentUserId) {
+    public String settleImmediately(Long settlementId, Long currentUserId) {
         // 검증
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        // 정산 처리
-        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
-
         // csv 파일에 받은 데이터 정리
         SettlementResponse dto = SettlementResponse.from(settlement);
 
-        // TODO: S3에 저장하고 유저에게는 url 반환 - 고도화
-        // 파일 작성
-        CsvUtil.writeToCsv(filePath, headers, dto);
+        // 정산 처리
+        settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
+
+        // TODO: 비동기화
+        // 파일 작성 후 S3에 저장 url 반환
+        return csvUploadService.writeToCsv(dto);
     }
 
     @Transactional(readOnly = true)
@@ -107,4 +100,6 @@ public class SettlementService {
 
         return SettlementResponse.from(settlement);
     }
+
+    //TODO: 올린 파일 삭제가 필요할까?
 }

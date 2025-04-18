@@ -18,7 +18,7 @@ public class ConfirmResponse {
         this.paymentKey = response.getPaymentKey();
         this.paymentMethod = response.getMethod();
         this.amount = response.getCard().getAmount();
-        this.requestedAt = response.getRequestedAt();
-        this.approvedAt = response.getApprovedAt();
+        this.requestedAt = response.getRequestedAt().toLocalDateTime();
+        this.approvedAt = response.getApprovedAt().toLocalDateTime();
     }
 }

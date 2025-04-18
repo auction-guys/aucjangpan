@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+<h1>Login</h1>
+<form id="loginForm">
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+</form>
+<script>
+    // 로그인 처리
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+
+        const API_URL = window.location.origin + "/api/v1/auth/login";
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('로그인 실패');
+                const jwtToken = response.headers.get('Authorization');
+                if (jwtToken) {
+                    sessionStorage.setItem("jwt", jwtToken);
+                    setTimeout(() => {
+                        alert("로그인 성공!");
+                        window.location.href = window.location.origin + "/checkout.html?orderId=6666666";
+                    }, 100); // 100ms 정도 텀 주기
+                } else {
+                    throw new Error('JWT 토큰 없음');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('로그인 실패');
+            });
+    });
+</script>
+</body>
+</html>
