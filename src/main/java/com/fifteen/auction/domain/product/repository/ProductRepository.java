@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -17,8 +20,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // (추후 필요 시 보류)
     // Page<Product> findAllBySellerIdAndDeletedAtIsNull(Long sellerId, Pageable pageable);
     // List<Product> findByCategoryAndDeletedAtIsNull(ProductCategory category);
-
+//
 //    Page<Product> findAllBySellerIdAndDeletedFalse(Long sellerId, Pageable pageable);
+//
+    List<Product> findByIdNotIn(Collection<Long> ids);
 //
 //    List<Product> findByCategoryAndDeletedFalse(ProductCategory category);
 //
@@ -26,7 +31,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 //
 //    Page<Product> findAllByDeletedFalse(Pageable pageable);
 
-    @Query("select p from Product p join fetch p.seller where p.id = :productId and p.deletedAt != null ")
+    @Query("select p from Product p join fetch p.seller where p.id = :productId and p.deletedAt is null ")
     Optional<Product> findByIdWithSeller(@Param("productId") Long id);
 
 }
