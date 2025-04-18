@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +77,10 @@ public class Product extends BaseEntity {
                 .filter(ProductImage::isThumbnail)
                 .findFirst()
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND));
+    }
+
+    public boolean isUserASeller(Long userId) {
+        return seller.getId().equals(userId);
     }
 
     public List<String> getImageUrlsExcludingThumbnail() {

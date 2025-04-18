@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.product.entity;
 
+
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -23,6 +24,7 @@ public class ProductCategory extends BaseEntity {
     @Column(nullable = false, unique = true, length = 50)
     private String name;
 
+    /** 상위 카테고리 여부 확장성 고려 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private ProductCategory parent;

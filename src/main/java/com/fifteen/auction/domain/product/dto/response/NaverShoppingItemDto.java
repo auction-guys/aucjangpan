@@ -1,0 +1,16 @@
+package com.fifteen.auction.domain.product.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class NaverShoppingItemDto {
+    private String title;       // 상품명
+    private Long lprice;        // 최저가
+    private String mallName;    // 쇼핑몰 이름
+}
