@@ -1,5 +1,6 @@
 package com.fifteen.auction.global.client.chatgpt;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
@@ -37,7 +38,17 @@ public class ChatGPTClient {
 
     public List<GPTPricePredictionResponse> callGptForHistoricalPrices(String title, String description) {
         log.info("상품 '{}' 시세 예측 시작 - 네이버 쇼핑 API 호출", title);
-        List<NaverShoppingItemDto> shoppingItems = naverSearchClient.findShoppingItems(title);
+
+        Map<String, Object> response = naverSearchClient.searchItems(title, 50, "sim");
+        List<Map<String, Object>> items = (List<Map<String, Object>>) response.get("items");
+
+        List<NaverShoppingItemDto> shoppingItems = items.stream()
+                .map(item -> NaverShoppingItemDto.builder()
+                        .title((String) item.get("title"))
+                        .lprice(parseLongOrDefault((String) item.get("lprice"), 0L))
+                        .mallName((String) item.get("mallName"))
+                        .build())
+                .toList();
 
         String marketSummary = null;
 
@@ -84,24 +95,28 @@ public class ChatGPTClient {
         return callGptWithPrompt(prompt);
     }
 
+    private Long parseLongOrDefault(String value, Long defaultValue) {
+        if (value == null || value.isEmpty()) return defaultValue;
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     private String buildPrompt(String title, String description, String marketSummary) {
         LocalDate today = LocalDate.now();
         List<LocalDate> dates = IntStream.rangeClosed(1, 3)
                 .mapToObj(i -> today.minusMonths(i).withDayOfMonth(1))
                 .collect(Collectors.toList());
         Collections.reverse(dates);
-        dates.add(today); // 오늘 포함
+        dates.add(today);
 
         String exampleJson = buildExampleJsonFormat(dates);
 
         return String.format("""
-            다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 알려줘.
-            형식은 다음과 같이 JSON 배열로 정확하게 반환해줘:
-
-            ※ 가격 숫자는 쉼표(,) 없이 정수로만 반환해주고 
-            모든 key는 반드시 따옴표로 감싸줘.
-             value는 숫자로 주고 절대 다른 텍스트 포함하지마
-
+            다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
+            쉼표 없이 정수만 사용하고 key는 반드시 따옴표로 감싸.
             %s
 
             %s
@@ -117,14 +132,14 @@ public class ChatGPTClient {
     }
 
     private String buildExampleJsonFormat(List<LocalDate> dates) {
-        StringBuilder exampleBuilder = new StringBuilder("[\n");
+        StringBuilder sb = new StringBuilder("[\n");
         for (LocalDate date : dates) {
-            exampleBuilder.append(String.format("  { \"date\": \"%s\", \"min\": 최저가, \"max\": 최고가 },\n",
+            sb.append(String.format("  { \"date\": \"%s\", \"min\": 최저가, \"max\": 최고가 },\n",
                     date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
         }
-        exampleBuilder.setLength(exampleBuilder.length() - 2); // 마지막 콤마 제거
-        exampleBuilder.append("\n]");
-        return exampleBuilder.toString();
+        sb.setLength(sb.length() - 2); // 마지막 쉼표 제거
+        sb.append("\n]");
+        return sb.toString();
     }
 
     private List<GPTPricePredictionResponse> callGptWithPrompt(String prompt) {
@@ -142,6 +157,7 @@ public class ChatGPTClient {
         HttpEntity<ChatGPTRequest> entity = new HttpEntity<>(request, headers);
 
         try {
+            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.exchange(
                     apiUrl,
                     HttpMethod.POST,
@@ -157,7 +173,7 @@ public class ChatGPTClient {
 
             return objectMapper.readValue(
                     content,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, GPTPricePredictionResponse.class)
+                    new TypeReference<>() {}
             );
         } catch (Exception e) {
             log.error("GPT API 호출 실패", e);
