@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(request -> request.getRequestURI().startsWith("/api/v1/auth")).permitAll()
 //                        .requestMatchers("/test").hasAuthority(UserRole.Authority.ADMIN)
-                        .requestMatchers("/open","/chat/**","/ws/**","/login","/login.html","/checkout.html","api/v1/payments/cancelReason","api/v1/payments/confirm/**").permitAll()
+                        .requestMatchers("/open","/chat/**","/ws/**","/login","/login.html","/checkout.html","/api/v1/payments/cancelReason","/api/v1/payments/confirm/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
