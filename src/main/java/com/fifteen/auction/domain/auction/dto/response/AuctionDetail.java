@@ -48,6 +48,7 @@ public class AuctionDetail {
         this.isAutoExtensible = isAutoExtensible;
         this.expiresAt = expiresAt;
         this.views = views;
+        this.marketPrice = marketPrice;
     }
 
     public void updateBidInfo(Long currentPrice, Long bidCount) {
