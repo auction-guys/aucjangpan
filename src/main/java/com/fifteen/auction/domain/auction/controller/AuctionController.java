@@ -54,14 +54,18 @@ public class AuctionController {
 
     @GetMapping("/v1/auctions/{auctionSeq}")
     ResponseEntity<Response<AuctionDetail>> findOne(@PathVariable("auctionSeq") String seq) {
-        return ResponseEntity.ok(Response.of(auctionService.findOne(seq)));
+        return ResponseEntity.ok(Response.of(auctionService.findOneAndIncreaseView(seq)));
     }
 
     // TODO: 조건 검색 추가
-    // TODO: AuthUser 적용
     @GetMapping("/v1/auctions/me")
-    ResponseEntity<Response<List<AuctionLog>>> findAllMyLog(@RequestParam("userId") Long userId) {
-        return null;
+    ResponseEntity<Response<List<AuctionLog>>> findAllMyLog(
+            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute PageCond cond
+    ) {
+        Page<AuctionLog> result = auctionService.findJoinedAuction(cond, authUser.getId());
+
+        return ResponseEntity.ok(Response.of(result.getContent(), PageInfo.fromPage(result)));
     }
 
     @PutMapping("/v1/auctions/{auctionSeq}/cancel")
