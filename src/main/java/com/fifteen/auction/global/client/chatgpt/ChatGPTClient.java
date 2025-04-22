@@ -33,7 +33,6 @@ public class ChatGPTClient {
     @Value("${openai.api.key}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
     private final NaverSearchClient naverSearchClient;
 
     public List<GPTPricePredictionResponse> callGptForHistoricalPrices(String title, String description) {
@@ -104,15 +103,6 @@ public class ChatGPTClient {
         return callGptWithPrompt(prompt);
     }
 
-    private Long parseLongOrDefault(String value, Long defaultValue) {
-        if (value == null || value.isEmpty()) return defaultValue;
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
-
     private String buildPrompt(String title, String description, String marketSummary) {
         LocalDate today = LocalDate.now();
         List<LocalDate> dates = IntStream.rangeClosed(1, 3)
@@ -124,14 +114,19 @@ public class ChatGPTClient {
         String exampleJson = buildExampleJsonFormat(dates);
 
         return String.format("""
-            다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
-            쉼표 없이 정수만 사용하고 key는 반드시 따옴표로 감싸.
-            %s
-
-            %s
-            제품명: %s
-            설명: %s
-            """,
+                        다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
+                        
+                        반드시 아래 조건을 지켜야해
+                        
+                        숫자에는 쉼표(,)를 절대 넣지 마 -> 예: 100800 (o), 100,800 (x)
+                        숫자는 정수형태로만해
+                        모든 key는 반드시 쌍따옴표 감싸
+                        %s
+                        
+                        %s
+                        제품명: %s
+                        설명: %s
+                        """,
                 today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 exampleJson,
                 marketSummary != null ? marketSummary + "\n" : "",
@@ -165,8 +160,10 @@ public class ChatGPTClient {
 
         HttpEntity<ChatGPTRequest> entity = new HttpEntity<>(request, headers);
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        RestTemplate restTemplate = new RestTemplate();
+
         try {
-            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.exchange(
                     apiUrl,
                     HttpMethod.POST,
@@ -174,19 +171,55 @@ public class ChatGPTClient {
                     String.class
             );
 
-            log.info("GPT 응답 원문: {}", response.getBody());
+            String content = extractGptContent(objectMapper, response.getBody());
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String content = root.path("choices").get(0).path("message").path("content").asText();
+            try {
+                return objectMapper.readValue(
+                        content,
+                        new TypeReference<>() {
+                        }
+                );
+            } catch (Exception e) {
+                log.warn("GPT 응답 JSON 파싱 실패 - 재시도 시도함");
 
-            return objectMapper.readValue(
-                    content,
-                    new TypeReference<>() {}
-            );
+                ChatMessage retryMessage = new ChatMessage("user", prompt + "\nJSON 형식이 올바르지 않았습니다. 정확한 JSON 형식으로 다시 응답해 주세요.");
+                ChatGPTRequest retryRequest = ChatGPTRequest.builder()
+                        .model("gpt-3.5-turbo")
+                        .messages(List.of(retryMessage))
+                        .temperature(0.5)
+                        .build();
+
+                ResponseEntity<String> retryResponse = restTemplate.exchange(
+                        apiUrl,
+                        HttpMethod.POST,
+                        new HttpEntity<>(retryRequest, headers),
+                        String.class
+                );
+
+                String retryContent = extractGptContent(objectMapper, retryResponse.getBody());
+
+                try {
+                    return objectMapper.readValue(retryContent, new TypeReference<>() {
+                    });
+                } catch (Exception retryFail) {
+                    log.error("GPT 재시도 응답 파싱 실패 - 응답 내용:\n{}", retryContent, retryFail);
+                    throw new ServerException(ErrorCode.EXTERNAL_API_ERROR);
+                }
+            }
+
         } catch (Exception e) {
             log.error("GPT API 호출 실패", e);
             throw new ServerException(ErrorCode.EXTERNAL_API_ERROR);
         }
+    }
+
+    private String extractGptContent(ObjectMapper objectMapper, String responseBody) throws Exception {
+        return objectMapper
+                .readTree(responseBody)
+                .path("choices")
+                .get(0)
+                .path("message")
+                .path("content")
+                .asText();
     }
 }
