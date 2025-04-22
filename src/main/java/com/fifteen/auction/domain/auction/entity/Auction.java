@@ -136,6 +136,7 @@ public class Auction extends BaseEntity {
     public void extendExpireTime(LocalDateTime bidAt) {
         if (this.isAutoExtensible && is1minBeforeExpiration(bidAt)) {
             this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
+            this.isAutoExtensible = false; // TODO(yeonic) : 동시성 문제 해결 필요할수도
         }
     }
 
