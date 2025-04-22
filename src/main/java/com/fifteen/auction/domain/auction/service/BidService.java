@@ -5,7 +5,6 @@ import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
@@ -40,7 +39,6 @@ public class BidService {
     @Transactional
     public void bid(String auctionSeq, Long userId, BidRequest req) {
 
-        // 본인이 생성한 경매이거나 마감된 경매인지 체크
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
@@ -89,7 +87,6 @@ public class BidService {
 
     private boolean isInvalidBid(Long userId, Auction findAuction, LocalDateTime bidAt) {
         return userId.equals(findAuction.getProduct().getSeller().getId())
-                || findAuction.getStatus() != AuctionStatus.OPEN
                 || bidAt.isAfter(findAuction.getExpiresAt());
     }
 }

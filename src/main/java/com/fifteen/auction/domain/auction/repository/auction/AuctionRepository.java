@@ -16,14 +16,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
             """)
     Optional<Auction> findOneBySeqAndSellerId(@Param("auctionSeq") String auctionSeq, @Param("sellerId") Long sellerId);
 
-    @Query("SELECT a FROM Auction a JOIN FETCH a.product p JOIN FETCH p.seller s WHERE a.auctionSeq = :auctionSeq")
+    @Query("SELECT a FROM Auction a JOIN FETCH a.product p JOIN FETCH p.seller s" +
+            " WHERE a.auctionSeq = :auctionSeq AND a.status = 'OPEN'")
     Optional<Auction> findOpenOneBySeqWithSeller(@Param("auctionSeq") String auctionSeq);
 
     // Auction과 Tag를 연결하는 AuctionTag를 통해 경매와 태그를 찾음
     @Query("""
-    SELECT DISTINCT a FROM Auction a
-    JOIN a.tags at
-    WHERE at.tag.id IN :tagIds AND a.status = 'OPEN'
-    """)
+            SELECT DISTINCT a FROM Auction a
+            JOIN a.tags at
+            WHERE at.tag.id IN :tagIds AND a.status = 'OPEN'
+            """)
     List<Auction> findOpenAuctionsByTagIds(@Param("tagIds") List<Long> tagIds);
 }
