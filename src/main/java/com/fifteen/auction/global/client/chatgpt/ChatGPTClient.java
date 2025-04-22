@@ -1,9 +1,14 @@
-package com.fifteen.auction.global.client;
+package com.fifteen.auction.global.client.chatgpt;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
-import com.fifteen.auction.domain.product.dto.response.NaverShoppingItemDto;
+import com.fifteen.auction.global.client.chatgpt.dto.ChatGPTRequest;
+import com.fifteen.auction.global.client.chatgpt.dto.ChatMessage;
+import com.fifteen.auction.global.client.naver.dto.NaverShoppingItemDto;
+import com.fifteen.auction.global.client.naver.NaverSearchClient;
+import com.fifteen.auction.global.client.naver.dto.NaverShoppingSearchResponse;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +26,7 @@ import java.util.stream.IntStream;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OpenAIClient {
+public class ChatGPTClient {
 
     @Value("${openai.api.url}")
     private String apiUrl;
@@ -34,7 +39,26 @@ public class OpenAIClient {
 
     public List<GPTPricePredictionResponse> callGptForHistoricalPrices(String title, String description) {
         log.info("상품 '{}' 시세 예측 시작 - 네이버 쇼핑 API 호출", title);
-        List<NaverShoppingItemDto> shoppingItems = naverSearchClient.findShoppingItems(title);
+
+        NaverShoppingSearchResponse response = naverSearchClient.searchItems(title, 50, "sim");
+        List<NaverShoppingItemDto> allItems = response.getItems();
+
+        List<NaverShoppingItemDto> catalogItems = allItems.stream()
+                .filter(item ->
+                        (item.getProductId() != null && !item.getProductId().isEmpty()) ||
+                                (item.getLink() != null && item.getLink().contains("/catalog/"))
+                )
+                .toList();
+
+        // 카탈로그상품 없을경우 -> 일반상품
+        List<NaverShoppingItemDto> fallbackItems = allItems.stream()
+                .filter(item ->
+                        (item.getProductId() == null || item.getProductId().isEmpty()) &&
+                                (item.getLink() == null || !item.getLink().contains("/catalog/"))
+                )
+                .toList();
+
+        List<NaverShoppingItemDto> shoppingItems = !catalogItems.isEmpty() ? catalogItems : fallbackItems;
 
         String marketSummary = null;
 
@@ -81,24 +105,28 @@ public class OpenAIClient {
         return callGptWithPrompt(prompt);
     }
 
+    private Long parseLongOrDefault(String value, Long defaultValue) {
+        if (value == null || value.isEmpty()) return defaultValue;
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     private String buildPrompt(String title, String description, String marketSummary) {
         LocalDate today = LocalDate.now();
         List<LocalDate> dates = IntStream.rangeClosed(1, 3)
                 .mapToObj(i -> today.minusMonths(i).withDayOfMonth(1))
                 .collect(Collectors.toList());
         Collections.reverse(dates);
-        dates.add(today); // 오늘 포함
+        dates.add(today);
 
         String exampleJson = buildExampleJsonFormat(dates);
 
         return String.format("""
-            다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 알려줘.
-            형식은 다음과 같이 JSON 배열로 정확하게 반환해줘:
-
-            ※ 가격 숫자는 쉼표(,) 없이 정수로만 반환해주고 
-            모든 key는 반드시 따옴표로 감싸줘.
-             value는 숫자로 주고 절대 다른 텍스트 포함하지마
-
+            다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
+            쉼표 없이 정수만 사용하고 key는 반드시 따옴표로 감싸.
             %s
 
             %s
@@ -114,29 +142,32 @@ public class OpenAIClient {
     }
 
     private String buildExampleJsonFormat(List<LocalDate> dates) {
-        StringBuilder exampleBuilder = new StringBuilder("[\n");
+        StringBuilder sb = new StringBuilder("[\n");
         for (LocalDate date : dates) {
-            exampleBuilder.append(String.format("  { \"date\": \"%s\", \"min\": 최저가, \"max\": 최고가 },\n",
+            sb.append(String.format("  { \"date\": \"%s\", \"min\": 최저가, \"max\": 최고가 },\n",
                     date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
         }
-        exampleBuilder.setLength(exampleBuilder.length() - 2); // 마지막 콤마 제거
-        exampleBuilder.append("\n]");
-        return exampleBuilder.toString();
+        sb.setLength(sb.length() - 2); // 마지막 쉼표 제거
+        sb.append("\n]");
+        return sb.toString();
     }
 
     private List<GPTPricePredictionResponse> callGptWithPrompt(String prompt) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("model", "gpt-3.5-turbo");
-        request.put("messages", List.of(Map.of("role", "user", "content", prompt)));
-        request.put("temperature", 0.5);
+        ChatMessage userMessage = new ChatMessage("user", prompt);
+        ChatGPTRequest request = ChatGPTRequest.builder()
+                .model("gpt-3.5-turbo")
+                .messages(List.of(userMessage))
+                .temperature(0.5)
+                .build();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+        HttpEntity<ChatGPTRequest> entity = new HttpEntity<>(request, headers);
 
         try {
+            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.exchange(
                     apiUrl,
                     HttpMethod.POST,
@@ -152,7 +183,7 @@ public class OpenAIClient {
 
             return objectMapper.readValue(
                     content,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, GPTPricePredictionResponse.class)
+                    new TypeReference<>() {}
             );
         } catch (Exception e) {
             log.error("GPT API 호출 실패", e);

@@ -70,7 +70,7 @@ public enum ErrorCode {
     MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다."),
 
     // Naver API Exceptions
-    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "네이버 오픈 API 호출 중 오류가 발생했습니다."),
+    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
 
     // FAVORITE 에러 코드
     DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE-1", "이미 찜한 경매입니다."),
