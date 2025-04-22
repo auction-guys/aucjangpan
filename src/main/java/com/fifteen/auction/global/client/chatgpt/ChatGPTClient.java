@@ -8,6 +8,7 @@ import com.fifteen.auction.global.client.chatgpt.dto.ChatGPTRequest;
 import com.fifteen.auction.global.client.chatgpt.dto.ChatMessage;
 import com.fifteen.auction.global.client.naver.dto.NaverShoppingItemDto;
 import com.fifteen.auction.global.client.naver.NaverSearchClient;
+import com.fifteen.auction.global.client.naver.dto.NaverShoppingSearchResponse;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
@@ -39,16 +40,25 @@ public class ChatGPTClient {
     public List<GPTPricePredictionResponse> callGptForHistoricalPrices(String title, String description) {
         log.info("상품 '{}' 시세 예측 시작 - 네이버 쇼핑 API 호출", title);
 
-        Map<String, Object> response = naverSearchClient.searchItems(title, 50, "sim");
-        List<Map<String, Object>> items = (List<Map<String, Object>>) response.get("items");
+        NaverShoppingSearchResponse response = naverSearchClient.searchItems(title, 50, "sim");
+        List<NaverShoppingItemDto> allItems = response.getItems();
 
-        List<NaverShoppingItemDto> shoppingItems = items.stream()
-                .map(item -> NaverShoppingItemDto.builder()
-                        .title((String) item.get("title"))
-                        .lprice(parseLongOrDefault((String) item.get("lprice"), 0L))
-                        .mallName((String) item.get("mallName"))
-                        .build())
+        List<NaverShoppingItemDto> catalogItems = allItems.stream()
+                .filter(item ->
+                        (item.getProductId() != null && !item.getProductId().isEmpty()) ||
+                                (item.getLink() != null && item.getLink().contains("/catalog/"))
+                )
                 .toList();
+
+        // 카탈로그상품 없을경우 -> 일반상품
+        List<NaverShoppingItemDto> fallbackItems = allItems.stream()
+                .filter(item ->
+                        (item.getProductId() == null || item.getProductId().isEmpty()) &&
+                                (item.getLink() == null || !item.getLink().contains("/catalog/"))
+                )
+                .toList();
+
+        List<NaverShoppingItemDto> shoppingItems = !catalogItems.isEmpty() ? catalogItems : fallbackItems;
 
         String marketSummary = null;
 
