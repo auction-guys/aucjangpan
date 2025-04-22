@@ -5,8 +5,10 @@ import com.fifteen.auction.domain.auction.dto.request.AuctionCreateRequest;
 import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
 import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
+import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
+import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
@@ -20,22 +22,29 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
+
 @Service
 @RequiredArgsConstructor
 public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
-    private final AuctionSeqGenerator auctionSeqGenerator;
+    private final BidRepository bidRepository;
+
     private final MarketPriceService marketPriceService;
     private final AuctionCacheService auctionCacheService;
+
+    private final AuctionSeqGenerator auctionSeqGenerator;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    @Secured(ROLE_USER)
     @Transactional
     public String create(AuctionCreateRequest req, Long userId) {
         Product product = productRepository.findByIdWithSeller(req.getProductId())
@@ -55,7 +64,7 @@ public class AuctionService {
         return auctionRepository.save(auction).getAuctionSeq();
     }
 
-
+    @Secured(ROLE_USER)
     @Transactional
     public void cancel(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
@@ -64,6 +73,7 @@ public class AuctionService {
         auction.cancel(LocalDateTime.now());
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void open(String auctionSeq, Long sellerId) {
         Auction auction = auctionRepository
@@ -77,6 +87,7 @@ public class AuctionService {
         applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void updateInfo(String auctionSeq, Long userId, AuctionUpdateRequest req) {
         Auction auction = auctionRepository
@@ -92,6 +103,7 @@ public class AuctionService {
         );
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void miscarry(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -99,6 +111,7 @@ public class AuctionService {
         auction.misCarry();
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void processWinning(String auctionSeq, Long winnerId, Long winPrice) {
         Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)
@@ -107,6 +120,24 @@ public class AuctionService {
         auction.finalize(winnerId, winPrice, auction.getExpiresAt());
     }
 
+    @Transactional
+    public AuctionDetail findOneAndIncreaseView(String auctionSeq) {
+        Auction findAuction = auctionRepository
+                .findOpenOneByAuctionSeq(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
+
+        AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
+
+        // 캐시에 존재하는 경매 정보 업데이트
+        Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());
+        Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
+        detail.updateBidInfo(currentPrice, bidCount);
+
+        findAuction.increaseViews();
+
+        return detail;
+    }
 
     @Transactional(readOnly = true)
     public Page<AuctionListItem> findAll(PageCond cond) {
@@ -123,31 +154,21 @@ public class AuctionService {
         return allOpenByCond;
     }
 
+    @Secured(ROLE_USER)
     @Transactional(readOnly = true)
-    public AuctionDetail findOne(String auctionSeq) {
-        Auction findAuction = auctionRepository
-                .findOpenOneByAuctionSeq(auctionSeq)
-                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
-
-        AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
-
-        // 캐시에 존재하는 경매 정보 업데이트
-        Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());
-        Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
-        detail.updateBidInfo(currentPrice, bidCount);
-
-        return detail;
+    public Page<AuctionLog> findJoinedAuction(PageCond cond, Long userId) {
+        Pageable pageable = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
+        return bidRepository.findJoinedAuction(pageable, userId)
+                .map(auc ->
+                        switch (auc.getStatus()) {
+                            case DONE -> AuctionLog.fromAuction(auc, userId, auc.getWinPrice());
+                            case MISCARRY -> AuctionLog.fromAuction(auc, userId, auc.getStartPrice());
+                            case OPEN -> AuctionLog.fromAuction(auc, userId,
+                                    auctionCacheService.findCurrentPrice(auc.getAuctionSeq()));
+                            default -> throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
+                        }
+                );
     }
 
-    @Transactional
-    public AuctionDetail getAuctionDetailAndIncreaseView(Long auctionId) {
-        Auction findAuction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-
-        findAuction.increaseViews();  // views += 1
-        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
-        return AuctionDetail.fromAuction(findAuction, marketPrice);
-    }
 
 }

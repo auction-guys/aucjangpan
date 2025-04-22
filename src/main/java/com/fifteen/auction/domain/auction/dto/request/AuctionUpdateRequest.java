@@ -2,29 +2,25 @@ package com.fifteen.auction.domain.auction.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 public class AuctionUpdateRequest {
-    @Min(0) @NotNull
+    @Min(0)
     private Long startPrice;
 
-    @Min(0) @NotNull
+    @Min(0)
     private Long buyNowPrice;
 
-    @Min(0) @NotNull
+    @Min(0)
     private Integer bidUnit;
 
-    @NotNull
     private Boolean isBuyNowSet;
 
-    @NotNull
     private Boolean isAutoExtensible;
 
-    @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     private LocalDateTime expiresAt;
 }
