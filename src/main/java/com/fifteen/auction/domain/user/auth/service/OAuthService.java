@@ -80,6 +80,8 @@ public class OAuthService {
 
         String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
         String jwt = jwtUtil.substringToken(bearerToken);
-        return new SigninResponse(jwt);
+        String refreshToken = jwtUtil.createRefreshToken(user.getId());
+
+        return new SigninResponse(jwt, refreshToken);
     }
 }

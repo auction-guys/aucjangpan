@@ -5,8 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class SigninResponse {
+public class AccessTokenResponse {
 
     private final String jwt;
-    private final String refreshToken;
 }

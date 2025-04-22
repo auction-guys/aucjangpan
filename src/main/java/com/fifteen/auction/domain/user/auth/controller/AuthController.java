@@ -3,6 +3,7 @@ package com.fifteen.auction.domain.user.auth.controller;
 import com.fifteen.auction.domain.user.auth.dto.request.SigninRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.SignupRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.WithdrawRequest;
+import com.fifteen.auction.domain.user.auth.dto.response.AccessTokenResponse;
 import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.service.AuthService;
 import com.fifteen.auction.domain.user.auth.service.OAuthService;
@@ -34,13 +35,14 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.AUTHORIZATION, response.getJwt())
+                .header("Refresh-Token", response.getRefreshToken())
                 .build(); // 바디 없이 헤더만 응답
     }
 
     @PostMapping("/logout")  // 수정
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String authorizationHeader) {
         authService.logout(authorizationHeader);  // 헤더 그대로 전달
-        return ResponseEntity.ok("로그 아웃이 완료되었습니다.");
+        return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
 
     @DeleteMapping("/withdraw")
@@ -52,5 +54,12 @@ public class AuthController {
     @GetMapping("/google/callback")
     public ResponseEntity<SigninResponse> googleCallback(@RequestParam("code") String code) {
         return ResponseEntity.ok(oAuthService.loginWithGoogle(code));
+    }
+
+    //리프레쉬 토큰 발급
+    @PostMapping("/reissue")
+    public ResponseEntity<AccessTokenResponse> reissue(@RequestHeader("Refresh-Token") String refreshToken) {
+        AccessTokenResponse response = authService.reissue(refreshToken);
+        return ResponseEntity.ok(response);
     }
 }

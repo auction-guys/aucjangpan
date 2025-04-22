@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.user.auth.service;
 
-import com.fifteen.auction.domain.recommend.dto.response.RecommendationResponse;
 import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
 import com.fifteen.auction.domain.recommend.enums.AgeGroup;
 import com.fifteen.auction.domain.recommend.enums.Gender;
@@ -10,6 +9,7 @@ import com.fifteen.auction.domain.recommend.service.RecommendService;
 import com.fifteen.auction.domain.user.auth.dto.request.SigninRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.SignupRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.WithdrawRequest;
+import com.fifteen.auction.domain.user.auth.dto.response.AccessTokenResponse;
 import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.util.JwtUtil;
 import com.fifteen.auction.domain.user.entity.User;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -91,8 +90,17 @@ public class AuthService {
 
         String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
         String jwt = jwtUtil.substringToken(bearerToken);
+        String refreshToken = jwtUtil.createRefreshToken(user.getId()); //리프레쉬 토큰 생성
 
-        return new SigninResponse(jwt);
+        // 리프레쉬 토큰 Redis 저장 (key: RT:<userId>)
+        redisTemplate.opsForValue().set(
+                "RT:" + user.getId(),
+                refreshToken,
+                jwtUtil.getRefreshTokenExpiry(),
+                TimeUnit.MILLISECONDS
+        );
+
+        return new SigninResponse(jwt, refreshToken);
     }
 
     @Transactional
@@ -131,5 +139,38 @@ public class AuthService {
         }
 
         userRepository.softDeleteByEmail(user.getEmail()); // soft-delete 기능 구현
+    }
+
+    @Transactional
+    public AccessTokenResponse reissue(String refreshToken) {
+        // 유효성 검사
+        if (!StringUtils.hasText(refreshToken) || !refreshToken.startsWith("Bearer ")) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String pureToken = jwtUtil.substringToken(refreshToken);
+        if (!jwtUtil.validateToken(pureToken)) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 사용자 ID 추출
+        Long userId = jwtUtil.extractUserId(pureToken);
+
+        // Redis에 저장된 RefreshToken과 일치하는지 확인
+        String redisKey = "RT:" + userId;
+        String storedToken = redisTemplate.opsForValue().get(redisKey);
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 사용자 정보 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
+
+        // AccessToken 재발급
+        String newAccessToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
+        String jwt = jwtUtil.substringToken(newAccessToken);
+
+        return new AccessTokenResponse(jwt);
     }
 }
