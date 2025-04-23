@@ -8,9 +8,11 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
+import io.micrometer.core.instrument.Clock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -29,11 +31,13 @@ import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER
 public class BidService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ClockHolder clockHolder;
 
     private final AuctionCacheService auctionCacheService;
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
+    private final Clock clock;
 
     @Secured(ROLE_USER)
     @Transactional
@@ -42,7 +46,7 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime bidAt = LocalDateTime.now();
+        LocalDateTime bidAt = clockHolder.now();
 
         if (isInvalidBid(userId, findAuction, bidAt)) {
             throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
@@ -65,7 +69,11 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime buyAt = LocalDateTime.now();
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (!findAuction.isBuyNowSet()) {
+            throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
+        }
 
         if (isInvalidBid(userId, findAuction, buyAt)) {
             throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
