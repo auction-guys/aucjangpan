@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -16,10 +17,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+
+import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +36,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
 
-
+    @Secured(ROLE_USER)
     @Transactional
     public void bid(String auctionSeq, Long userId, BidRequest req) {
 
@@ -51,12 +55,13 @@ public class BidService {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
+        bidRepository.save(new Bid(findAuction, userId, req.getPrice(), bidAt));
+
         applicationEventPublisher.publishEvent(
                 new BidProcessEvent(auctionSeq, userId, req.getPrice(), bidAt));
-
-        bidRepository.save(new Bid(findAuction, userId, req.getPrice(), bidAt));
     }
 
+    @Secured(ROLE_USER)
     @Transactional
     public void buyNow(String auctionSeq, Long userId) {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
@@ -69,9 +74,13 @@ public class BidService {
         }
 
         findAuction.finalize(userId, findAuction.getBuyNowPrice(), buyAt);
+
         bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
+
+        applicationEventPublisher.publishEvent(BuyNowEvent.fromAuction(findAuction));
     }
 
+    @Secured(ROLE_USER)
     @Transactional(readOnly = true)
     public Page<BidHistoryInfo> bidHistoriesInProgress(String auctionSeq, PageCond cond) {
         Pageable pageRequest = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());

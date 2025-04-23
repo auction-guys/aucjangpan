@@ -56,6 +56,9 @@ public enum ErrorCode {
     INVALID_BUY_NOW_REQUEST(HttpStatus.BAD_REQUEST, "AUCTION-5", "즉시 구매가 불가한 경매입니다."),
     AUCTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUCTION-6", "해당 경매에 접근할 수 없습니다."),
     AUCTION_ALREADY_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-7", "이미 공개된 경매입니다."),
+    CLOSE_NOT_PENDING(HttpStatus.BAD_REQUEST, "AUCTION-8", "공개 전 상태의 경매만 등록 취소가 가능합니다."),
+    AUCTION_NOT_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-9", "경매가 진행중일 때만 요청할 수 있는 작업입니다."),
+    FINALIZE_ALREADY_DONE(HttpStatus.BAD_REQUEST, "AUCTION-10", "이미 마감 처리 된 경매입니다."),
 
     // Product Custom Exception
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
@@ -67,7 +70,7 @@ public enum ErrorCode {
     MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다."),
 
     // Naver API Exceptions
-    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "네이버 오픈 API 호출 중 오류가 발생했습니다."),
+    EXTERNAL_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
 
     // FAVORITE 에러 코드
     DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE-1", "이미 찜한 경매입니다."),
