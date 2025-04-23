@@ -10,17 +10,16 @@ import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import com.fifteen.auction.global.dto.exception.ServerException;
+import com.fifteen.auction.infra.gMail.GmailSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +28,8 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
     private final CsvUploadService csvUploadService;
     private final ChargeService chargeService;
+    private final GmailSender gmailSender;
 
-    //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
     // 매달 정산
     @Transactional
     public String settleMonthly() {
@@ -111,8 +110,11 @@ public class SettlementService {
         List<SettlementResponse> list = settlements.stream()
                 .map(SettlementResponse::from).toList();
 
-        // TODO: 비동기화
-        // 파일 작성 후 S3에 저장 url 반환
-        return csvUploadService.writeToCsv(list);
+        // 파일 작성 후 S3에 저장 url 메일로 전송
+        String url = csvUploadService.writeToCsv(list);
+
+        gmailSender.sendSettlement(url);
+
+        return url;
     }
 }

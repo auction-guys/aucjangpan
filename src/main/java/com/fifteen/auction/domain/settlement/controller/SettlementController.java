@@ -34,8 +34,6 @@ public class SettlementController {
 
         SettlementResponse dto = settlementService.settleImmediately(settlementId, currentUserId);
 
-        settlementService.csvUpload(dto);
-
         return ResponseEntity.ok(Response.of(dto));
     }
 
