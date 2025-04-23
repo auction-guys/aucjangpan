@@ -155,9 +155,10 @@ public class Auction extends BaseEntity {
         this.expiresAt = useIfNotNull(expiresAt, this.expiresAt);
     }
 
+
     private boolean is1minBeforeExpiration(LocalDateTime bidAt) {
         Duration between = Duration.between(bidAt, this.expiresAt).abs();
-        return between.toMinutes() == 0 && between.getSeconds() <= 60;
+        return between.toMinutes() == 0 && between.getSeconds() < 60;
     }
 
     private <T> T useIfNotNull(T input, T existing) {

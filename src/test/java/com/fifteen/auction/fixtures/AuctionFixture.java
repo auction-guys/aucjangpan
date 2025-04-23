@@ -51,6 +51,21 @@ public class AuctionFixture {
         );
     }
 
+    public static Auction withIsAutoExtensible(
+            Long productId, Long ownerId, String auctionSeq, boolean isAutoExtensible, LocalDateTime expiresAt
+    ) {
+        return new Auction(
+                ProductFixture.ofUser(productId, ownerId),
+                auctionSeq,
+                1000L,
+                50000L,
+                1000,
+                true,
+                isAutoExtensible,
+                expiresAt
+        );
+    }
+
     public static Bid defaultBid(Auction auc, Long bidderId, Long bidPrice) {
         return new Bid(
                 auc,
