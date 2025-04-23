@@ -66,6 +66,19 @@ public class AuctionFixture {
         );
     }
 
+    public static Auction withStartPrice(Long productId, Long ownerId, String auctionSeq, Long startPrice) {
+        return new Auction(
+                ProductFixture.ofUser(productId, ownerId),
+                auctionSeq,
+                startPrice,
+                10000L,
+                1000,
+                true,
+                true,
+                LocalDateTime.now().plusHours(2)
+        );
+    }
+
     public static Bid defaultBid(Auction auc, Long bidderId, Long bidPrice) {
         return new Bid(
                 auc,
