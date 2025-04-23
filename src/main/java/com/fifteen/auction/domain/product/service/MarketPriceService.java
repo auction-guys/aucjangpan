@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class MarketPriceService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 네이버 API + GPT 호출을 통해 오늘 포함 최근 3개월 시세 예측
+        // 네이버 API + GPT 호출을 통해 오늘 시세 예측
         List<GPTPricePredictionResponse> predictedPrices = chatGPTClient.callGptForHistoricalPrices(
                 product.getName(),
                 product.getDescription()
@@ -48,45 +46,41 @@ public class MarketPriceService {
             throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
         }
 
-        Set<LocalDate> savedDates = new HashSet<>();
+        LocalDate today = LocalDate.now();
         MarketPrice todayPrice = null;
 
-        for (int i = 0; i < predictedPrices.size(); i++) {
-            GPTPricePredictionResponse dto = predictedPrices.get(i);
-            LocalDate priceDate = LocalDate.parse(dto.getDate());
+        GPTPricePredictionResponse dto = predictedPrices.get(predictedPrices.size() - 1);
+        boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(productId, today);
 
-            // 중복 날짜 필터링
-            if (!savedDates.add(priceDate)) continue;
-
-            boolean isToday = (i == predictedPrices.size() - 1);
-            boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(productId, priceDate);
-
-            // 이미 저장된 과거 데이터는 스킵
-            if (!isToday && alreadySaved) continue;
-
-            MarketPrice price = MarketPrice.builder()
+        if (!alreadySaved) {
+            todayPrice = MarketPrice.builder()
                     .product(product)
-                    .priceDate(priceDate)
+                    .priceDate(today)
                     .minMarketPrice(dto.getMin())
                     .maxMarketPrice(dto.getMax())
                     .build();
 
-            if (!isToday) {
-                // 과거 데이터만 DB 저장
-                marketPriceRepository.save(price);
-            } else {
-                // 오늘 데이터는 변수에만 저장하고, DB 저장 안 함
-                todayPrice = price;
-            }
+            marketPriceRepository.save(todayPrice);
+        } else {
+            todayPrice = marketPriceRepository
+                    .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(productId, today, today)
+                    .stream()
+                    .findFirst()
+                    .map(MarketPriceResponse::fromEntity)
+                    .map(mp -> MarketPrice.builder()
+                            .product(product)
+                            .priceDate(today)
+                            .minMarketPrice(mp.getMinMarketPrice())
+                            .maxMarketPrice(mp.getMaxMarketPrice())
+                            .build())
+                    .orElseThrow(() -> new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND));
         }
 
-        if (todayPrice == null) {
-            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
-        }
+        LocalDate threeMonthsAgo = today.minusMonths(3).withDayOfMonth(1);
 
         // DB에 저장된 최근 3개월 시세 조회 및 DTO 반환
         List<MarketPriceResponse> historicalPrices = marketPriceRepository
-                .findAllByProductIdOrderByPriceDateAsc(productId)
+                .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(productId, threeMonthsAgo, today.minusDays(1))
                 .stream()
                 .map(MarketPriceResponse::fromEntity)
                 .toList();

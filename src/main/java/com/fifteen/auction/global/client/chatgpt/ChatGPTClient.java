@@ -96,7 +96,8 @@ public class ChatGPTClient {
         }
 
         if (shoppingItems.isEmpty() || marketSummary == null) {
-            log.info("상품 '{}' 네이버 검색 결과 없음 또는 유효하지 않음 - ChatGPT를 사용한 예측으로 전환", title);
+            log.info("상품 '{}' 네이버 검색 결과 없음 또는 유효하지 않음", title);
+            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
         }
 
         String prompt = buildPrompt(title, description, marketSummary);
@@ -114,7 +115,7 @@ public class ChatGPTClient {
         String exampleJson = buildExampleJsonFormat(dates);
 
         return String.format("""
-                        다음 중고 상품의 최근 3개월 (1일 기준)과 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
+                        다음 중고 상품의 오늘(%s)의 예상 거래 가격 범위를 JSON 배열로 정확히 알려줘.
                         
                         반드시 아래 조건을 지켜야해
                         

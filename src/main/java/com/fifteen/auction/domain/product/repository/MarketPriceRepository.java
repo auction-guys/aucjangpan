@@ -12,6 +12,7 @@ public interface MarketPriceRepository extends JpaRepository<MarketPrice, Long> 
     boolean existsByProductIdAndPriceDate(Long productId, LocalDate marketDate);
 
     // 상품의 최근 3개월 시세 전체 조회
-    List<MarketPrice> findAllByProductIdOrderByPriceDateAsc(Long productId);
+    List<MarketPrice> findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(
+            Long productId, LocalDate start, LocalDate end);
 }
 
