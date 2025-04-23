@@ -15,10 +15,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -29,50 +31,41 @@ public class SettlementService {
     private final ChargeService chargeService;
 
     //TODO: 스케줄러 등록은 crud 끝나고나 고도화 때
+    // 매달 정산
     @Transactional
-    public String settle() {
+    public String settleMonthly() {
 
         // 수정 findAll
-        List<Settlement> settlements = settlementRepository.findByStatus(SettlementStatus.PENDING);
+        List<Settlement> settlements = settlementRepository.findAllByStatus(SettlementStatus.PENDING);
 
-        // 정산 가능 데이터 존재 여부
-        if (settlements.isEmpty()) {
-            throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
-        }
-
-        // 정산 처리
-        for (Settlement s : settlements) {
-            s.settled();
-        }
-
-        // csv 파일에 받은 데이터 정리
-        List<SettlementResponse> list = settlements.stream()
-                .map(SettlementResponse::from).toList();
-
-        // TODO: 비동기화
-        // 구글 스프레드 시트?
-        // 파일 작성 후 S3에 저장 url 반환
-
-        return csvUploadService.writeToCsv(list);
+        return settle(settlements);
     }
 
+    // 매일 정산
     @Transactional
-    public String settleImmediately(Long settlementId, Long currentUserId) {
+    public String settleDaily() {
+
+        // 수정 findAll
+        List<Settlement> settlements = settlementRepository.findAllByStatus(SettlementStatus.IN_PROGRESS);
+
+        return settle(settlements);
+    }
+
+    // 익일 정산 신청
+    @Transactional
+    public SettlementResponse settleImmediately(Long settlementId, Long currentUserId) {
         // 검증
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new ClientException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        // csv 파일에 받은 데이터 정리
-        SettlementResponse dto = SettlementResponse.from(settlement);
-
         // 정산 처리
         settlement.settleNow(currentUserId, chargeService.getImmediatelyCharge());
 
-        // TODO: 비동기화
-        // 파일 작성 후 S3에 저장 url 반환
-        return csvUploadService.writeToCsv(dto);
+        // csv 파일에 받은 데이터 정리
+        return SettlementResponse.from(settlement);
     }
 
+    // 정산 전체 조회
     @Transactional(readOnly = true)
     public Response<Page<SettlementResponse>> findSettlements(Long currentUserId, PageCond pageCond) {
 
@@ -89,7 +82,7 @@ public class SettlementService {
         return Response.of(pages, pageInfo);
     }
 
-
+    // 정산 단건 조회
     @Transactional(readOnly = true)
     public SettlementResponse findSettlement(Long currentUserId, Long settlementId) {
 
@@ -101,5 +94,25 @@ public class SettlementService {
         return SettlementResponse.from(settlement);
     }
 
-    //TODO: 올린 파일 삭제가 필요할까?
+    // 정산 처리 로직
+    public String settle(List<Settlement> settlements){
+
+        // 정산 가능 데이터 존재 여부
+        if (settlements.isEmpty()) {
+            throw new ServerException(ErrorCode.SETTLEMENT_NOT_FOUND);
+        }
+
+        // 정산 처리
+        for (Settlement s : settlements) {
+            s.settled();
+        }
+
+        // csv 파일에 받은 데이터 정리
+        List<SettlementResponse> list = settlements.stream()
+                .map(SettlementResponse::from).toList();
+
+        // TODO: 비동기화
+        // 파일 작성 후 S3에 저장 url 반환
+        return csvUploadService.writeToCsv(list);
+    }
 }

@@ -28,7 +28,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
     }
 
     @Override
-    public List<Settlement> findByStatus(SettlementStatus settlementStatus) {
+    public List<Settlement> findAllByStatus(SettlementStatus settlementStatus) {
 
         List<Settlement> settlements = queryFactory
                 .selectFrom(settlement)
