@@ -19,9 +19,9 @@ public class ChatMessageController {
 
     @MessageMapping("/message")
     public void sendMessage(ChatMessageRequest req,
-                            SimpMessageHeaderAccessor accessor){
+                            SimpMessageHeaderAccessor accessor) {
         Long userId = (Long) accessor.getSessionAttributes().get("userId");
-        ChatMessageResponse response = chatMessageService.createChatMessage(req,userId);
-        messagingTemplate.convertAndSend("/sub/channel/"+req.getChatRoomId(), response);
+        ChatMessageResponse response = chatMessageService.createChatMessage(req, userId);
+        messagingTemplate.convertAndSend("/sub/channel/" + req.getChatRoomId(), response);
     }
 }
