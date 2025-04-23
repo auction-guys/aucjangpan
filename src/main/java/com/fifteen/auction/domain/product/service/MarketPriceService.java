@@ -28,7 +28,7 @@ public class MarketPriceService {
 
     private final MarketPriceRepository marketPriceRepository;
     private final ProductRepository productRepository;
-    private final ChatGPTClient openAIClient;
+    private final ChatGPTClient chatGPTClient;
 
     @Cacheable(value = "marketPrice", key = "#productId")
     @Transactional
@@ -39,7 +39,7 @@ public class MarketPriceService {
                 .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 네이버 API + GPT 호출을 통해 오늘 포함 최근 3개월 시세 예측
-        List<GPTPricePredictionResponse> predictedPrices = openAIClient.callGptForHistoricalPrices(
+        List<GPTPricePredictionResponse> predictedPrices = chatGPTClient.callGptForHistoricalPrices(
                 product.getName(),
                 product.getDescription()
         );
