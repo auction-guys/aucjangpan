@@ -12,7 +12,6 @@ import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
-import io.micrometer.core.instrument.Clock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -37,7 +36,6 @@ public class BidService {
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
-    private final Clock clock;
 
     @Secured(ROLE_USER)
     @Transactional
