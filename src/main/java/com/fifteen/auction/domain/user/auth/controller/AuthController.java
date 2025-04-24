@@ -40,9 +40,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")  // 수정
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorizationHeader) {
         authService.logout(authorizationHeader);  // 헤더 그대로 전달
-        return ResponseEntity.ok("로그아웃이 완료되었습니다.");
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/withdraw")
@@ -60,6 +60,8 @@ public class AuthController {
     @PostMapping("/reissue")
     public ResponseEntity<AccessTokenResponse> reissue(@RequestHeader("Refresh-Token") String refreshToken) {
         AccessTokenResponse response = authService.reissue(refreshToken);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header("Authorization", response.getJwt())
+                .build();
     }
 }
