@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.chat.service;
+package com.fifteen.auction.domain.chat.service.chat;
 
 import com.fifteen.auction.domain.chat.dto.response.ChatMessageResponse;
 import com.fifteen.auction.domain.chat.dto.response.ChatRoomResponse;
