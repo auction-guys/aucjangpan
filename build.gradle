@@ -104,6 +104,9 @@ dependencies {
 
     //feign
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
+
+    // Redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:3.45.1'
 }
 
 tasks.named('test') {

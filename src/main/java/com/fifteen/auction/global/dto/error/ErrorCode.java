@@ -30,6 +30,8 @@ public enum ErrorCode {
     PAYMENT_WEBHOOK_DENIED(HttpStatus.UNAUTHORIZED, "PAYMENT-8", "유효하지 않거나 위조된 웹훅 요청입니다."),
     PAYMENT_WEBHOOK_RETRY_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-9", "웹훅의 재시도 횟수를 초과했습니다."),
     PAYMENT_WEBHOOK_UNMATCHED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-10", "웹훅의 정보가 db와 일치하지 않습니다."),
+    PAYMENT_LOCK_ILLEGAL_STATE(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-10", "웹훅의 정보가 db와 일치하지 않습니다."),
+    PAYMENT_LOCK_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-10", "웹훅의 정보가 db와 일치하지 않습니다."),
 
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),

@@ -26,8 +26,7 @@ public class WebhookRetryProcessor {
     private static final int MAX_RETRIES = 3;
     private static final String RETRY_COUNT_KEY_PREFIX = "webhook:retry:count:";
 
-    @Scheduled(fixedDelay = 10000) // 10초마다 실행_이후 서비스가 어느정도 사이즈냐에 따라 조정
-    @Transactional
+    //@Scheduled(fixedDelay = 10000) // 10초마다 실행_이후 서비스가 어느정도 사이즈냐에 따라 조정
     public void processRetryQueue() {
         // Redis 리스트에서 paymentKey 꺼내기
         String paymentKey = redisTemplate.opsForList().rightPop(RETRY_QUEUE);

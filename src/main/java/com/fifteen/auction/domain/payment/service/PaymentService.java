@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.payment.service;
 
-import com.fifteen.auction.domain.inbox.service.InboxService;
 import com.fifteen.auction.domain.order.entity.Order;
 import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
@@ -38,7 +37,6 @@ public class PaymentService {
     private final IdempotencyKeyGenerator idempotencyKeyGenerator;
     private final TossFeignClient tossFeignClient;
     private final RedisTemplate<String, String> redisTemplate;
-    private final InboxService inboxService;
 
     @Transactional
     public ConfirmResponse confirm(PaymentRequest request, Long currentUserId) {
@@ -50,11 +48,9 @@ public class PaymentService {
                     throw new ClientException(ErrorCode.PAYMENT_ALREADY_PROCESSED); // 예외를 던져서 메서드 종료
                 });
 
+        // orderId, amount 변조 검증
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
-        System.out.println(request.getAmount() + request.getOrderId() + request.getPaymentKey());
-
-        // orderId, amount 변조 검증
         order.validatePaymentInfo(currentUserId, Long.parseLong(request.getAmount()));
 
         // TODO: 로그 컨벤션 얘기해보기

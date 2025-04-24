@@ -6,12 +6,12 @@ import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
+import com.fifteen.auction.domain.payment.util.lock.PaymentLockFacade;
 import com.fifteen.auction.domain.payment.util.toss.TossWebhookVerifier;
 import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +24,14 @@ import java.util.concurrent.Executor;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentLockFacade paymentLockFacade;
     private final Executor executor;
 
-    public PaymentController(PaymentService paymentService, @Qualifier("customWebhookExecutor") Executor executor) {
+    public PaymentController(
+            PaymentService paymentService,
+            @Qualifier("customWebhookExecutor") Executor executor,
+            PaymentLockFacade paymentLockFacade) {
+        this.paymentLockFacade = paymentLockFacade;
         this.paymentService = paymentService;
         this.executor = executor;
     }
@@ -48,7 +53,7 @@ public class PaymentController {
             @ModelAttribute PaymentRequest paymentRequest) {
         Long currentUserId = 2L;// 테스트용
 
-        return ResponseEntity.ok(Response.of(paymentService.confirm(paymentRequest, currentUserId)));
+        return ResponseEntity.ok(Response.of(paymentLockFacade.confirmPaymentWithLock(paymentRequest, currentUserId)));
     }
 
     @PostMapping("/api/v1/payments/{paymentKey}/cancel")
@@ -58,7 +63,7 @@ public class PaymentController {
             @RequestBody CancelPaymentRequest dto) {
 
         Long currentUserId = 2L;
-        paymentService.cancelPaymentByUser(paymentKey, dto, currentUserId);
+        paymentLockFacade.cancelPaymentWithLock(paymentKey, dto, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
@@ -83,7 +88,7 @@ public class PaymentController {
         }
 
         // 웹훅 처리 (비동기)
-        executor.execute(() -> { paymentService.receiveWebhook(dto); });
+        executor.execute(() -> paymentLockFacade.receiveWebhookWithLock(dto));
 
         return ResponseEntity.ok().build();
     }
