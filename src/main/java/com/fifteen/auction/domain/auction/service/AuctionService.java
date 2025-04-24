@@ -11,6 +11,7 @@ import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
+import com.fifteen.auction.domain.product.dto.response.FutureMarketPriceResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
@@ -146,7 +147,12 @@ public class AuctionService {
 
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
 
-        AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
+        FutureMarketPriceResponse futurePrices = FutureMarketPriceResponse.fromGPT(
+                findAuction.getProduct().getId(),
+                marketPriceService.predictFutureMarketPrices(findAuction.getProduct().getId())
+        );
+
+        AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice, futurePrices);
 
         // 캐시에 존재하는 경매 정보 업데이트
         Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());

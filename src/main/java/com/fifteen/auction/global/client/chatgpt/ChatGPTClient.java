@@ -104,6 +104,45 @@ public class ChatGPTClient {
         return callGptWithPrompt(prompt);
     }
 
+    //미래 시세 예측용 메서드
+    public List<GPTPricePredictionResponse> callGptForFuturePrices(String title, String description, List<Long> pastWinningPrices) {
+        String priceData = pastWinningPrices.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+
+        String prompt = buildFuturePrompt(title, description, priceData);
+        return callGptWithPrompt(prompt);
+    }
+
+    //미래 예측용 프롬프트 생성
+    private String buildFuturePrompt(String title, String description, String priceData) {
+        LocalDate today = LocalDate.now();
+        List<LocalDate> futureDates = IntStream.rangeClosed(1, 3)
+                .mapToObj(i -> today.plusMonths(i).withDayOfMonth(1))
+                .toList();
+
+        String exampleJson = buildExampleJsonFormat(futureDates);
+
+        return String.format("""
+                다음 중고 상품의 이후 3개월(다음달 1일부터 3개월)의 예상 거래 가격 범위를 JSON 배열로 알려줘.
+
+                반드시 아래 조건을 지켜야 해:
+                숫자에는 쉼표(,)를 넣지 마
+                모든 key는 반드시 쌍따옴표로 감싸
+                날짜는 yyyy-MM-dd 형식으로
+
+                최근 낙찰된 가격들: [%s]
+                제품명: %s
+                설명: %s
+                %s
+                """,
+                priceData,
+                title,
+                description,
+                exampleJson
+        );
+    }
+
     private String buildPrompt(String title, String description, String marketSummary) {
         LocalDate today = LocalDate.now();
         List<LocalDate> dates = IntStream.rangeClosed(1, 3)

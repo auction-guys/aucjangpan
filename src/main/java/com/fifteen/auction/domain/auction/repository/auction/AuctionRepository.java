@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.auction.repository.auction;
 
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,4 +28,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
             WHERE at.tag.id IN :tagIds AND a.status = 'OPEN'
             """)
     List<Auction> findOpenAuctionsByTagIds(@Param("tagIds") List<Long> tagIds);
+
+    List<Auction> findByProduct_IdAndStatus(Long productId, AuctionStatus status);
 }

@@ -1,5 +1,8 @@
 package com.fifteen.auction.domain.product.service;
 
+import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.entity.AuctionStatus;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceResponse;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class MarketPriceService {
     private final MarketPriceRepository marketPriceRepository;
     private final ProductRepository productRepository;
     private final ChatGPTClient chatGPTClient;
+    private final AuctionRepository auctionRepository;
 
     @Cacheable(value = "marketPrice", key = "#productId")
     @Transactional
@@ -90,4 +95,30 @@ public class MarketPriceService {
                 .historicalPrices(historicalPrices)
                 .build();
     }
+
+    // 미래 3개월 시세 예측 기능
+    @Transactional(readOnly = true)
+    public List<GPTPricePredictionResponse> predictFutureMarketPrices(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        List<Auction> completedAuctions = auctionRepository.findByProduct_IdAndStatus(productId, AuctionStatus.DONE);
+
+        List<Long> winPrices = completedAuctions.stream()
+                .map(Auction::getWinPrice)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (winPrices.isEmpty()) {
+            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
+        }
+
+        return chatGPTClient.callGptForFuturePrices(
+                product.getName(),
+                product.getDescription(),
+                winPrices
+        );
+    }
 }
+
+
