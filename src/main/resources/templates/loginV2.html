@@ -148,7 +148,7 @@
             return;
         }
 
-        stompClient.send("/pub/message", {
+        stompClient.send("/pub/v2/message", {
             Authorization: "Bearer "+sessionStorage.getItem("jwt")
             }, JSON.stringify({
             chatRoomId: currentChatRoomId,
