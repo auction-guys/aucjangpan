@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Chat</title>
+</head>
+<body>
+<h1>Login</h1>
+<form id="loginForm">
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+</form>
+
+<hr>
+<h2>📨 실시간 채팅 테스트</h2>
+
+<div>
+    <label>Seller ID (채팅 요청 대상): </label>
+    <input type="text" id="sellerId" placeholder="예: 2" />
+</div>
+<button onclick="requestChatRoom()">채팅 요청</button>
+
+<br><br>
+
+<div id="chatSection" style="display:none;">
+    <input type="text" id="messageInput" placeholder="메시지 입력" />
+    <button onclick="sendMessage()">전송</button>
+
+    <ul id="chatMessages"></ul>
+</div>
+
+<!-- STOMP 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script th:inline="javascript">
+    let stompClient = null;
+    let currentChatRoomId = null;
+
+    // 로그인 처리
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "test";
+        const API_URL = `http://${API_HOST}:8080/api/v1/auth/login`;
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('로그인 실패');
+                const jwtToken = response.headers.get('Authorization');
+                if (jwtToken) {
+                    sessionStorage.setItem("jwt", jwtToken);
+                    alert("로그인 성공!");
+                } else {
+                    throw new Error('JWT 토큰 없음');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('로그인 실패');
+            });
+    });
+
+    // 채팅방 요청
+    function requestChatRoom() {
+        const jwt = sessionStorage.getItem("jwt");
+        const sellerId = document.getElementById("sellerId").value;
+
+        const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
+        const API_URL = `http://${API_HOST}:8080/api/v1/chatRoom`;
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + jwt
+            },
+            body: JSON.stringify({ sellerId: sellerId })
+        })
+            .then(res => res.json())
+            .then(data => {
+                currentChatRoomId = data.chatRoomId;
+                console.log("채팅방 정보:", data);
+
+                clearMessages();
+
+                // 메시지들을 받아와서 출력
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        showMessage(msg);
+                    });
+                }
+
+                connectStomp(currentChatRoomId);
+                document.getElementById("chatSection").style.display = "block";
+            })
+            .catch(err => {
+                console.error("채팅방 요청 실패", err);
+            });
+    }
+
+    // STOMP 연결
+    function connectStomp(chatRoomId) {
+        const token = sessionStorage.getItem("jwt");
+        const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
+        const API_URL = `http://${API_HOST}:8080/chat/inbox`;
+
+        const socket = new SockJS(API_URL);
+        stompClient = Stomp.over(socket);
+
+        const headers = {
+            Authorization: "Bearer " + token
+        };
+
+        stompClient.connect(headers, function (frame) {
+            console.log("Connected: " + frame);
+
+            stompClient.subscribe(`/sub/channel/${chatRoomId}`, function (message) {
+                const msg = JSON.parse(message.body);
+                showMessage(msg);
+            });
+
+            alert(`채팅방(${chatRoomId}) 연결됨`);
+        });
+    }
+
+    // 메시지 전송
+    function sendMessage() {
+        const content = document.getElementById("messageInput").value;
+
+        if (!currentChatRoomId) {
+            alert("채팅방 없음. 먼저 채팅 요청하세요.");
+            return;
+        }
+
+        stompClient.send("/pub/v1/message", {
+            Authorization: "Bearer "+sessionStorage.getItem("jwt")
+            }, JSON.stringify({
+            chatRoomId: currentChatRoomId,
+            content: content
+        }));
+
+        document.getElementById("messageInput").value = "";
+    }
+
+    // 기존 메시지 지우기
+    function clearMessages() {
+        const chatMessages = document.getElementById("chatMessages");
+        while (chatMessages.firstChild) {
+            chatMessages.removeChild(chatMessages.firstChild);
+        }
+    }
+
+    // 메시지 출력
+    function showMessage(msg) {
+        const messageEl = document.createElement("li");
+        messageEl.textContent = `${msg.nickname}: ${msg.content}`;
+        document.getElementById("chatMessages").appendChild(messageEl);
+    }
+</script>
+</body>
+</html>
