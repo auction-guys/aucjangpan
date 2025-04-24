@@ -16,7 +16,7 @@ public class SettlementScheduler {
 
     private final SettlementService settlementService;
 
-    @Async
+    @Async("customExecutor")
     @Scheduled(cron = "0 0 4 * * *")
     public void autoSettleDaily(){
         try {
@@ -30,7 +30,7 @@ public class SettlementScheduler {
         }
     }
 
-    @Async
+    @Async("customExecutor")
     @Scheduled(cron = "0 30 3 15 * *")
     public void autoSettleMonthly(){
         try {
