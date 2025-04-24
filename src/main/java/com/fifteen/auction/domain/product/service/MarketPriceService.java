@@ -7,7 +7,7 @@ import com.fifteen.auction.domain.product.entity.MarketPrice;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.MarketPriceRepository;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
-import com.fifteen.auction.global.client.OpenAIClient;
+import com.fifteen.auction.global.client.chatgpt.ChatGPTClient;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class MarketPriceService {
 
     private final MarketPriceRepository marketPriceRepository;
     private final ProductRepository productRepository;
-    private final OpenAIClient openAIClient;
+    private final ChatGPTClient openAIClient;
 
     @Cacheable(value = "marketPrice", key = "#productId")
     @Transactional
