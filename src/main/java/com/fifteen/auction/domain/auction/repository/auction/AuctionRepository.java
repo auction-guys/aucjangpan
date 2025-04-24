@@ -29,5 +29,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
             """)
     List<Auction> findOpenAuctionsByTagIds(@Param("tagIds") List<Long> tagIds);
 
-    List<Auction> findByProduct_IdAndStatus(Long productId, AuctionStatus status);
+    List<Auction> findByProduct_NameAndStatus(String name, AuctionStatus status);
+
 }

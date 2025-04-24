@@ -1,7 +1,9 @@
 package com.fifteen.auction.domain.product.repository;
 
 import com.fifteen.auction.domain.product.entity.MarketPrice;
+import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,5 +16,6 @@ public interface MarketPriceRepository extends JpaRepository<MarketPrice, Long> 
     // 상품의 최근 3개월 시세 전체 조회
     List<MarketPrice> findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(
             Long productId, LocalDate start, LocalDate end);
+
 }
 

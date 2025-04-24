@@ -145,11 +145,11 @@ public class AuctionService {
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
+        MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getName());
 
         FutureMarketPriceResponse futurePrices = FutureMarketPriceResponse.fromGPT(
                 findAuction.getProduct().getId(),
-                marketPriceService.predictFutureMarketPrices(findAuction.getProduct().getId())
+                marketPriceService.predictFutureMarketPrices(findAuction.getProduct().getName())
         );
 
         AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice, futurePrices);

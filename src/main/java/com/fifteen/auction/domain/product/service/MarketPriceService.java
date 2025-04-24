@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +34,12 @@ public class MarketPriceService {
     private final ChatGPTClient chatGPTClient;
     private final AuctionRepository auctionRepository;
 
-    @Cacheable(value = "marketPrice", key = "#productId")
+    @Cacheable(value = "marketPrice", key = "#productName")
     @Transactional
-    public MarketPriceFullResponse findMarketPriceFullResponse(Long productId) {
-        log.info("Redis 캐시 만료! 네이버 API + GPT 호출 & DB 저장! 상품 ID: {}", productId);
+    public MarketPriceFullResponse findMarketPriceFullResponse(String productName) {
+        log.info("Redis 캐시 만료! 네이버 API + GPT 호출 & DB 저장! 상품 ID: {}", productName);
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findTopByNameOrderByCreatedAtDesc(productName)
                 .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 네이버 API + GPT 호출을 통해 오늘 시세 예측
@@ -52,10 +53,10 @@ public class MarketPriceService {
         }
 
         LocalDate today = LocalDate.now();
-        MarketPrice todayPrice = null;
+        MarketPrice todayPrice;
 
         GPTPricePredictionResponse dto = predictedPrices.get(predictedPrices.size() - 1);
-        boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(productId, today);
+        boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(product.getId(), today);
 
         if (!alreadySaved) {
             todayPrice = MarketPrice.builder()
@@ -68,7 +69,7 @@ public class MarketPriceService {
             marketPriceRepository.save(todayPrice);
         } else {
             todayPrice = marketPriceRepository
-                    .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(productId, today, today)
+                    .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), today, today)
                     .stream()
                     .findFirst()
                     .map(MarketPriceResponse::fromEntity)
@@ -85,7 +86,7 @@ public class MarketPriceService {
 
         // DB에 저장된 최근 3개월 시세 조회 및 DTO 반환
         List<MarketPriceResponse> historicalPrices = marketPriceRepository
-                .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(productId, threeMonthsAgo, today.minusDays(1))
+                .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), threeMonthsAgo, today.minusDays(1))
                 .stream()
                 .map(MarketPriceResponse::fromEntity)
                 .toList();
@@ -96,29 +97,36 @@ public class MarketPriceService {
                 .build();
     }
 
-    // 미래 3개월 시세 예측 기능
+    // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 5개 상품 기준으로 경매 결과 분석)
     @Transactional(readOnly = true)
-    public List<GPTPricePredictionResponse> predictFutureMarketPrices(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
+    public List<GPTPricePredictionResponse> predictFutureMarketPrices(String productName) {
+        //최근 등록된 동일 상품명 기준 상품 5개 조회
+        List<Product> recentProducts = productRepository.findTop5ByNameOrderByCreatedAtDesc(productName);
+        if (recentProducts.isEmpty()) {
+            throw new ServerException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
 
-        List<Auction> completedAuctions = auctionRepository.findByProduct_IdAndStatus(productId, AuctionStatus.DONE);
+        //description 5개를 모두 합쳐서 프롬프트 생성
+        String combinedDescription = recentProducts.stream()
+                .map(Product::getDescription)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining("\n"));
 
-        List<Long> winPrices = completedAuctions.stream()
+        // 경매에서 DONE 상태 낙찰가 수집
+        List<Long> winPrices = recentProducts.stream()
+                .flatMap(product -> auctionRepository.findByProduct_NameAndStatus(product.getName(), AuctionStatus.DONE).stream())
                 .map(Auction::getWinPrice)
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(Collectors.toList());
 
         if (winPrices.isEmpty()) {
             throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
         }
 
-        return chatGPTClient.callGptForFuturePrices(
-                product.getName(),
-                product.getDescription(),
-                winPrices
-        );
+        return chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
     }
 }
+
 
 
