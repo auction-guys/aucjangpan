@@ -25,6 +25,11 @@ public enum ErrorCode {
     PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
     PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-4", "주문 정보가 일치하지 않습니다."),
     PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-5", "결제 승인 요청을 실패했습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "PAYMENT-6", "이미 처리된 결제입니다."),
+    PAYMENT_WEBHOOK_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-7", "웹훅 정보 로드 중 오류가 발생했습니다"),
+    PAYMENT_WEBHOOK_DENIED(HttpStatus.UNAUTHORIZED, "PAYMENT-8", "유효하지 않거나 위조된 웹훅 요청입니다."),
+    PAYMENT_WEBHOOK_RETRY_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-9", "웹훅의 재시도 횟수를 초과했습니다."),
+    PAYMENT_WEBHOOK_UNMATCHED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-10", "웹훅의 정보가 db와 일치하지 않습니다."),
 
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),

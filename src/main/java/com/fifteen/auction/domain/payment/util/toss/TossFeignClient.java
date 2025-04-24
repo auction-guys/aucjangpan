@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.payment.util;
+package com.fifteen.auction.domain.payment.util.toss;
 
 import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
 import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;

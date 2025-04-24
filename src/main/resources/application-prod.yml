@@ -92,3 +92,6 @@ naver:
     id: ${NAVER_ID}
     secret: ${NAVER_SECRET}
     url: https://openapi.naver.com/v1/search/shop.json
+
+settlement:
+  email: ${ADMIN_EMAIL}

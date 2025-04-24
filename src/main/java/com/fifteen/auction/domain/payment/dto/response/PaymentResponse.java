@@ -9,7 +9,6 @@ import java.time.OffsetDateTime;
 @Getter
 @NoArgsConstructor
 public class PaymentResponse {
-    private String mId;
     private String method;
     private String paymentKey;
     private PaymentCardResponse card;
