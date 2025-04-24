@@ -44,9 +44,13 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
+        if (findAuction.isOwnedByUser(userId)) {
+            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
+        }
+
         LocalDateTime bidAt = clockHolder.now();
 
-        if (isInvalidBid(userId, findAuction, bidAt)) {
+        if (bidAt.isAfter(findAuction.getExpiresAt())) {
             throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
         }
 
@@ -67,13 +71,17 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime buyAt = clockHolder.now();
-
         if (!findAuction.isBuyNowSet()) {
             throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
         }
+        
+        if (findAuction.isOwnedByUser(userId)) {
+            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
+        }
 
-        if (isInvalidBid(userId, findAuction, buyAt)) {
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (buyAt.isAfter(findAuction.getExpiresAt())) {
             throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
         }
 
@@ -89,10 +97,5 @@ public class BidService {
     public Page<BidHistoryInfo> bidHistoriesInProgress(String auctionSeq, PageCond cond) {
         Pageable pageRequest = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
         return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
-    }
-
-    private boolean isInvalidBid(Long userId, Auction findAuction, LocalDateTime bidAt) {
-        return userId.equals(findAuction.getProduct().getSeller().getId())
-                || bidAt.isAfter(findAuction.getExpiresAt());
     }
 }

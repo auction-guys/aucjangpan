@@ -155,6 +155,10 @@ public class Auction extends BaseEntity {
         this.expiresAt = useIfNotNull(expiresAt, this.expiresAt);
     }
 
+    public boolean isOwnedByUser(Long userId) {
+        return product.isUserASeller(userId);
+    }
+
 
     private boolean is1minBeforeExpiration(LocalDateTime bidAt) {
         Duration between = Duration.between(bidAt, this.expiresAt).abs();

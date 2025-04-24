@@ -93,14 +93,14 @@ public class BidTest {
             Auction auction = defaultAuction(1L, 1L, "seq");
             auction.open();
 
-
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
+
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().plusHours(1));
 
             // when & then
-            assertThatThrownBy(() -> bidService.bid("seq", 1L, request))
+            assertThatThrownBy(() -> bidService.bid("seq", 2L, request))
                     .isInstanceOf(ClientException.class)
                     .extracting(ERROR_CODE_ENUM_NAME)
                     .isEqualTo(ErrorCode.INVALID_BID_REQUEST);
@@ -184,8 +184,6 @@ public class BidTest {
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
-            given(clockHolder.now())
-                    .willReturn(auction.getExpiresAt().minusHours(1));
 
             // when & then
             assertThatThrownBy(() -> bidService.buyNow("seq", 2L))
@@ -203,8 +201,6 @@ public class BidTest {
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
-            given(clockHolder.now())
-                    .willReturn(auction.getExpiresAt().minusHours(1));
 
             // when & then
             assertThatThrownBy(() -> bidService.buyNow("seq", 1L))
