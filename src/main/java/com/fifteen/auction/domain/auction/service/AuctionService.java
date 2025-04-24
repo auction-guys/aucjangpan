@@ -10,6 +10,7 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
+import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
@@ -42,6 +42,7 @@ public class AuctionService {
     private final AuctionCacheService auctionCacheService;
 
     private final AuctionSeqGenerator auctionSeqGenerator;
+    private final ClockHolder clockHolder;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Secured(ROLE_USER)
@@ -70,7 +71,7 @@ public class AuctionService {
         Auction auction = auctionRepository
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-        auction.cancel(LocalDateTime.now());
+        auction.cancel(clockHolder.now());
     }
 
     @Secured(ROLE_USER)
@@ -99,7 +100,8 @@ public class AuctionService {
                 req.getBuyNowPrice(),
                 req.getBidUnit(),
                 req.getIsBuyNowSet(),
-                req.getIsAutoExtensible()
+                req.getIsAutoExtensible(),
+                req.getExpiresAt()
         );
     }
 

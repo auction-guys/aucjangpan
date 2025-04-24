@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.payment.util;
+package com.fifteen.auction.domain.payment.util.toss;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

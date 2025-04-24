@@ -1,6 +1,6 @@
 package com.fifteen.auction.global.config;
 
-import com.fifteen.auction.domain.payment.util.TossAuthHeaderGenerator;
+import com.fifteen.auction.domain.payment.util.toss.TossAuthHeaderGenerator;
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

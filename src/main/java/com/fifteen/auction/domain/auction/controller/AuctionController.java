@@ -42,14 +42,8 @@ public class AuctionController {
     @GetMapping("/v1/auctions")
     ResponseEntity<Response<List<AuctionListItem>>> findAll(@ModelAttribute PageCond cond) {
         Page<AuctionListItem> result = auctionService.findAll(cond);
-        PageInfo pageInfo = PageInfo.builder()
-                .pageNum(result.getNumber())
-                .pageSize(result.getSize())
-                .totalElement(result.getTotalElements())
-                .totalPage(result.getTotalPages())
-                .build();
 
-        return ResponseEntity.ok(Response.of(result.getContent(), pageInfo));
+        return ResponseEntity.ok(Response.of(result.getContent(), PageInfo.fromPage(result)));
     }
 
     @GetMapping("/v1/auctions/{auctionSeq}")

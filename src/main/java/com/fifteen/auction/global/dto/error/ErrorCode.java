@@ -25,13 +25,18 @@ public enum ErrorCode {
     PAYMENT_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "PAYMENT-3", "결제 정보가 일치하지 않습니다."),
     PAYMENT_INFO_NOT_MATCHED(HttpStatus.BAD_REQUEST, "PAYMENT-4", "주문 정보가 일치하지 않습니다."),
     PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-5", "결제 승인 요청을 실패했습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "PAYMENT-6", "이미 처리된 결제입니다."),
+    PAYMENT_WEBHOOK_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-7", "웹훅 정보 로드 중 오류가 발생했습니다"),
+    PAYMENT_WEBHOOK_DENIED(HttpStatus.UNAUTHORIZED, "PAYMENT-8", "유효하지 않거나 위조된 웹훅 요청입니다."),
+    PAYMENT_WEBHOOK_RETRY_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-9", "웹훅의 재시도 횟수를 초과했습니다."),
+    PAYMENT_WEBHOOK_UNMATCHED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT-10", "웹훅의 정보가 db와 일치하지 않습니다."),
 
     // Settlement Exceptions
-    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND,"SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
-    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
+    SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
 
     // Charge Exceptions
-    CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND,"CHARGE-1", "해당 수수료가 존재하지 않습니다."),
+    CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHARGE-1", "해당 수수료가 존재하지 않습니다."),
 
     //User 에러 코드
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-1", "해당 유저를 찾을 수 없습니다."),
@@ -59,6 +64,7 @@ public enum ErrorCode {
     CLOSE_NOT_PENDING(HttpStatus.BAD_REQUEST, "AUCTION-8", "공개 전 상태의 경매만 등록 취소가 가능합니다."),
     AUCTION_NOT_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-9", "경매가 진행중일 때만 요청할 수 있는 작업입니다."),
     FINALIZE_ALREADY_DONE(HttpStatus.BAD_REQUEST, "AUCTION-10", "이미 마감 처리 된 경매입니다."),
+    CANNOT_BUY_NOW(HttpStatus.BAD_REQUEST, "AUCTION-11", "즉시 구매가 불가능한 경매입니다."),
 
     // Product Custom Exception
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
@@ -94,7 +100,7 @@ public enum ErrorCode {
     INBOX_MSG_NOT_FOUND(HttpStatus.NOT_FOUND, "MSG-1", "해당 알림이 존재하지 않습니다."),
 
     // Chat Exception
-    INVALID_CHAT_REQUEST(HttpStatus.BAD_REQUEST,"CHAT-1","본인과의 채팅은 불가능합니다."),
+    INVALID_CHAT_REQUEST(HttpStatus.BAD_REQUEST, "CHAT-1", "본인과의 채팅은 불가능합니다."),
 
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");

@@ -20,7 +20,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String mId;
+    @Column(unique = true)
     private String paymentKey;
     private String paymentMethod = "Pending";
     private Long amount;
@@ -34,7 +34,6 @@ public class Payment {
     private Order order;
 
     public Payment(PaymentResponse response, Order order) {
-        this.mId = response.getMId();
         this.paymentKey = response.getPaymentKey();
         this.paymentMethod = response.getMethod();
         this.amount = response.getCard().getAmount();
@@ -44,7 +43,6 @@ public class Payment {
         this.order = order;
     }
 
-
     public void validateOwner(Long userId) {
         if (!this.order.getUser().getId().equals(userId)) {
             throw new ClientException(ErrorCode.PAYMENT_ACCESS_DENIED);
@@ -53,5 +51,11 @@ public class Payment {
 
     public void cancel() {
         this.status = PaymentStatus.CANCELED;
+    }
+
+    public void check(PaymentResponse response) {
+        if (!this.paymentKey.equals(response.getPaymentKey()) || this.status != response.getStatus() || !this.amount.equals(response.getCard().getAmount())){
+            throw new ClientException(ErrorCode.PAYMENT_INFO_EXCEPTION);
+        }
     }
 }
