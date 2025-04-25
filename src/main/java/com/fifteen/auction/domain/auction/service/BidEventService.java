@@ -3,6 +3,7 @@ package com.fifteen.auction.domain.auction.service;
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.service.port.in.BidEventUseCase;
@@ -23,7 +24,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class BidEventService implements BidEventUseCase {
 
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
@@ -41,7 +42,7 @@ public class BidEventService implements BidEventUseCase {
         auction.extendExpireTime(event.getBidAt());
 
         // 경매 표시가 반영
-        auctionCacheService
+        auctionRedisRepository
                 .addNewHighPrice(event.getAuctionSeq(), event.getBidderId(), event.getBidPrice());
     }
 
@@ -58,7 +59,7 @@ public class BidEventService implements BidEventUseCase {
         }
 
         // bid price cache 체크
-        if (auctionCacheService.isBidUnderPrice(auc.getAuctionSeq(), bidPrice, auc.getBidUnit())) {
+        if (auctionRedisRepository.isBidUnderPrice(auc.getAuctionSeq(), bidPrice, auc.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 

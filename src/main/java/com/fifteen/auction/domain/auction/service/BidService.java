@@ -7,6 +7,7 @@ import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.service.port.out.AuctionEventPublisher;
@@ -35,7 +36,7 @@ public class BidService {
     private final AuctionEventPublisher auctionEventPublisher;
     private final ClockHolder clockHolder;
 
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
@@ -58,7 +59,7 @@ public class BidService {
         }
 
         // bid price cache 체크
-        if (auctionCacheService.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
+        if (auctionRedisRepository.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
@@ -110,7 +111,7 @@ public class BidService {
             throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
         }
 
-        if (auctionCacheService.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
+        if (auctionRedisRepository.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 

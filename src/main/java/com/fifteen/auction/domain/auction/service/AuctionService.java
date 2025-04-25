@@ -7,6 +7,7 @@ import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
@@ -39,7 +40,7 @@ public class AuctionService {
     private final BidRepository bidRepository;
 
     private final MarketPriceService marketPriceService;
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
 
     private final AuctionSeqGenerator auctionSeqGenerator;
     private final ClockHolder clockHolder;
@@ -82,7 +83,7 @@ public class AuctionService {
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
         auction.open();
-        auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
+        auctionRedisRepository.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
 
         // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
         applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
@@ -132,8 +133,8 @@ public class AuctionService {
         AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
 
         // 캐시에 존재하는 경매 정보 업데이트
-        Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());
-        Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
+        Long currentPrice = auctionRedisRepository.findCurrentPrice(detail.getAuctionSeq());
+        Long bidCount = auctionRedisRepository.findBidCount(detail.getAuctionSeq());
         detail.updateBidInfo(currentPrice, bidCount);
 
         findAuction.increaseViews();
@@ -148,8 +149,8 @@ public class AuctionService {
 
         // 캐시에 존재하는 경매 정보 업데이트
         allOpenByCond.forEach(a -> {
-            Long currentPrice = auctionCacheService.findCurrentPrice(a.getAuctionSeq());
-            Long bidCount = auctionCacheService.findBidCount(a.getAuctionSeq());
+            Long currentPrice = auctionRedisRepository.findCurrentPrice(a.getAuctionSeq());
+            Long bidCount = auctionRedisRepository.findBidCount(a.getAuctionSeq());
             a.updateBidInfo(currentPrice, bidCount);
         });
 
@@ -166,7 +167,7 @@ public class AuctionService {
                             case DONE -> AuctionLog.fromAuction(auc, userId, auc.getWinPrice());
                             case MISCARRY -> AuctionLog.fromAuction(auc, userId, auc.getStartPrice());
                             case OPEN -> AuctionLog.fromAuction(auc, userId,
-                                    auctionCacheService.findCurrentPrice(auc.getAuctionSeq()));
+                                    auctionRedisRepository.findCurrentPrice(auc.getAuctionSeq()));
                             default -> throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
                         }
                 );

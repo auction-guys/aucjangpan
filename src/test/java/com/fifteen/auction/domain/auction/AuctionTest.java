@@ -5,9 +5,9 @@ import com.fifteen.auction.domain.auction.dto.request.AuctionCreateRequest;
 import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
 import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
-import com.fifteen.auction.domain.auction.service.AuctionCacheService;
 import com.fifteen.auction.domain.auction.service.AuctionService;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
@@ -57,7 +57,7 @@ public class AuctionTest {
     @Mock BidRepository bidRepository;
 
     @Mock MarketPriceService marketPriceService;
-    @Mock AuctionCacheService auctionCacheService;
+    @Mock AuctionRedisRepository auctionRedisRepository;
 
     @Mock ApplicationEventPublisher applicationEventPublisher;
     @Mock AuctionSeqGenerator auctionSeqGenerator;
@@ -142,7 +142,7 @@ public class AuctionTest {
 
             given(bidRepository.findJoinedAuction(any(Pageable.class), anyLong()))
                     .willReturn(new PageImpl<>(List.of(openAuction)));
-            given(auctionCacheService.findCurrentPrice(anyString()))
+            given(auctionRedisRepository.findCurrentPrice(anyString()))
                     .willReturn(1000L);
 
             // when

@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.auction.service;
+package com.fifteen.auction.domain.auction.repository.auction;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AuctionCacheService {
+public class AuctionRedisRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
 

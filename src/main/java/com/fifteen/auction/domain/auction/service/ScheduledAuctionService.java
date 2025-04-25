@@ -2,6 +2,7 @@ package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.AuctionOpenEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 public class ScheduledAuctionService {
     private final TaskScheduler taskScheduler;
 
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
     private final AuctionService auctionService;
     private final InboxService inboxService;
 
@@ -54,15 +55,15 @@ public class ScheduledAuctionService {
         sendWinnerMessage(event.getAuctionSeq(), event.getWinnerId());
 
         // 참가자 메시지 전송 처리
-        List<Long> participants = auctionCacheService.findParticipants(event.getAuctionSeq());
+        List<Long> participants = auctionRedisRepository.findParticipants(event.getAuctionSeq());
         sendParticipantsMessage(event.getAuctionSeq(), participants);
 
-        auctionCacheService.flushTopBidCache(event.getAuctionSeq());
+        auctionRedisRepository.flushTopBidCache(event.getAuctionSeq());
     }
 
     public void handleExpiration(Long auctionId, String auctionSeq, Long startPrice) {
         // 현재 가격 가져오기
-        Long currentPrice = auctionCacheService.findCurrentPrice(auctionSeq);
+        Long currentPrice = auctionRedisRepository.findCurrentPrice(auctionSeq);
 
         // 유찰 처리
         if (currentPrice.equals(startPrice)) {
@@ -71,7 +72,7 @@ public class ScheduledAuctionService {
         }
 
         // 입찰 이력 긁어오기
-        List<Long> participants = auctionCacheService.findParticipants(auctionSeq);
+        List<Long> participants = auctionRedisRepository.findParticipants(auctionSeq);
 
         // 낙찰자 처리
         Long winnerId = participants.get(0);
@@ -81,7 +82,7 @@ public class ScheduledAuctionService {
         // 이외 사람들 처리
         sendParticipantsMessage(auctionSeq, participants.subList(1, participants.size()));
 
-        auctionCacheService.flushTopBidCache(auctionSeq);
+        auctionRedisRepository.flushTopBidCache(auctionSeq);
 
         scheduledWork.remove(auctionSeq);
 

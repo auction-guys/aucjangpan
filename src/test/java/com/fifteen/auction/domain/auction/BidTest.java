@@ -5,9 +5,9 @@ import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
-import com.fifteen.auction.domain.auction.service.AuctionCacheService;
 import com.fifteen.auction.domain.auction.service.BidService;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.verify;
 public class BidTest {
 
     @Mock AuctionRepository auctionRepository;
-    @Mock AuctionCacheService auctionCacheService;
+    @Mock AuctionRedisRepository auctionRedisRepository;
     @Mock BidRepository bidRepository;
 
     @Mock ClockHolder clockHolder;
@@ -117,7 +117,7 @@ public class BidTest {
                     .willReturn(Optional.of(auction));
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().minusHours(1));
-            given(auctionCacheService.isBidUnderPrice(anyString(), anyLong(), anyInt()))
+            given(auctionRedisRepository.isBidUnderPrice(anyString(), anyLong(), anyInt()))
                     .willReturn(true);
 
             // when & then
@@ -138,7 +138,7 @@ public class BidTest {
                     .willReturn(Optional.of(auction));
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().minusHours(1));
-            given(auctionCacheService.isBidUnderPrice(anyString(), anyLong(), anyInt()))
+            given(auctionRedisRepository.isBidUnderPrice(anyString(), anyLong(), anyInt()))
                     .willReturn(false);
 
             // when
