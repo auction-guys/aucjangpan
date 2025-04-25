@@ -5,11 +5,14 @@ import com.fifteen.auction.domain.tag.service.TagService;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
+import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
 @RestController
 @RequestMapping("/api/v1/tags")
@@ -18,6 +21,7 @@ public class TagController {
 
     private final TagService tagService;
 
+    @Secured(ROLE_USER)
     @GetMapping
     public ResponseEntity<Response<List<TagResponse>>> getTags() {
         return ResponseEntity.ok(Response.of(tagService.findAll()));

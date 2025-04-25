@@ -10,6 +10,7 @@ import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.Response;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -46,9 +47,19 @@ public class AuctionController {
         return ResponseEntity.ok(Response.of(result.getContent(), PageInfo.fromPage(result)));
     }
 
+
     @GetMapping("/v1/auctions/{auctionSeq}")
-    ResponseEntity<Response<AuctionDetail>> findOne(@PathVariable("auctionSeq") String seq) {
-        return ResponseEntity.ok(Response.of(auctionService.findOneAndIncreaseView(seq)));
+    public ResponseEntity<Response<AuctionDetail>> findOne(
+            @PathVariable("auctionSeq") String seq,
+            @AuthenticationPrincipal AuthUser authUser,
+            HttpServletRequest request
+    ) {
+        String userKey = (authUser != null)
+                ? "user:" + authUser.getId()
+                : "ip:" + request.getRemoteAddr();
+
+        AuctionDetail detail = auctionService.findOneAndIncreaseView(seq, userKey);
+        return ResponseEntity.ok(Response.of(detail));
     }
 
     // TODO: 조건 검색 추가

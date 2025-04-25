@@ -1,15 +1,16 @@
-package com.fifteen.auction.infra.redis.service;
+package com.fifteen.auction.domain.recommend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class RedisTestService {
+public class RedisService {
 
     private final StringRedisTemplate redisTemplate;
 
@@ -26,6 +27,15 @@ public class RedisTestService {
             Integer score = entry.getValue();
             zSetOps.add(redisKey, String.valueOf(auctionId), score);
         }
+    }
+
+    public boolean isViewedRecently(String key) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+
+
+    public void markViewed(String key, Duration ttl) {
+        redisTemplate.opsForValue().set(key, "viewed", ttl);
     }
 }
 

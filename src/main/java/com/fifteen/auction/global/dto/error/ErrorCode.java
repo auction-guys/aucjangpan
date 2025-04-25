@@ -66,11 +66,27 @@ public enum ErrorCode {
     FINALIZE_ALREADY_DONE(HttpStatus.BAD_REQUEST, "AUCTION-10", "이미 마감 처리 된 경매입니다."),
     CANNOT_BUY_NOW(HttpStatus.BAD_REQUEST, "AUCTION-11", "즉시 구매가 불가능한 경매입니다."),
 
-    // Product Custom Exception
+    // Product Exception 에러 코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),
-    PRODUCT_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-2", "존재하지 않는 카테고리입니다."),
-    PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-3", "대표 이미지가 존재하지 않습니다."),
-    UNAUTHORIZED(HttpStatus.FORBIDDEN, "COMMON-1", "접근 권한이 없습니다."),
+    PRODUCT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "PRODUCT-2", "이미 삭제된 상품입니다."),
+    INVALID_PRODUCT_UPDATE(HttpStatus.BAD_REQUEST, "PRODUCT-3", "상품 정보를 수정할 수 없습니다."),
+    PRODUCT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PRODUCT-4", "해당 상품에 대한 권한이 없습니다."),
+
+    // Product Category Exception 에러 코드
+    PRODUCT_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY-1", "존재하지 않는 카테고리입니다."),
+    CATEGORY_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "CATEGORY-2", "이미 삭제된 카테고리입니다."),
+    CATEGORY_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "CATEGORY-3", "하위 카테고리가 존재하여 삭제할 수 없습니다."),
+    INVALID_CATEGORY_PARENT(HttpStatus.BAD_REQUEST, "CATEGORY-4", "유효하지 않은 부모 카테고리입니다."),
+
+    // Product Image Exception 에러 코드
+    PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "IMAGE-0", "대표 이미지가 존재하지 않습니다."),
+    UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-1", "이미지 업로드에 실패했습니다."),
+    DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-2", "이미지 삭제에 실패했습니다."),
+    KEY_EXTRACTION_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-3", "키 추출에 실패했습니다."),
+    INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "IMAGE-4", "파일 확장자를 찾을 수 없습니다."),
+    INVALID_IMAGE_REQUEST(HttpStatus.BAD_REQUEST, "IMAGE-5", "업로드할 이미지가 없습니다."),
+    IMAGE_NOT_BELONG_TO_PRODUCT(HttpStatus.BAD_REQUEST, "IMAGE-6", "해당 이미지는 요청한 상품에 속하지 않습니다."),
+    IMAGE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "IMAGE-7", "해당 이미지는 삭제할 수 없습니다."),
 
     // Market Price Exceptions
     MARKET_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "MARKETPRICE-1", "시세 정보가 존재하지 않습니다."),
@@ -81,12 +97,6 @@ public enum ErrorCode {
     // FAVORITE 에러 코드
     DUPLICATE_FAVORITE(HttpStatus.CONFLICT, "FAVORITE-1", "이미 찜한 경매입니다."),
     FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAVORITE-2", "찜 내역이 존재하지 않습니다."),
-
-    // Image Exception 에러 코드
-    UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-1", "이미지 업로드에 실패했습니다."),
-    DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-2", "이미지 삭제에 실패했습니다."),
-    KEY_EXTRACTION_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE-3", "키 추출에 실패했습니다."),
-    INVALID_EXTENSION(HttpStatus.BAD_REQUEST, "IMAGE-4", "파일 확장자를 찾을 수 없습니다."),
 
     // Tag 에러 코드
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "Tag-1", "존재하지 않는 태그입니다."),
@@ -104,6 +114,8 @@ public enum ErrorCode {
 
     NAVER_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "네이버 오픈 API 호출 중 오류가 발생했습니다."),
     GOOGLE_API_ERROR(HttpStatus.BAD_REQUEST, "GOOGLE-1", "Google OAuth API 호출 중 오류가 발생했습니다."),
+
+    UNAUTHORIZED(HttpStatus.FORBIDDEN, "COMMON-1", "접근 권한이 없습니다."),
 
     // Uncaught Exceptions
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");

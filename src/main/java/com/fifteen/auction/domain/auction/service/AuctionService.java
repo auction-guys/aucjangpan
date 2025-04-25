@@ -15,9 +15,12 @@ import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.product.service.MarketPriceService;
+import com.fifteen.auction.domain.tag.entity.Tag;
+import com.fifteen.auction.domain.tag.repository.TagRepository;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
+import com.fifteen.auction.domain.recommend.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -27,7 +30,12 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 
 import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
@@ -45,13 +53,15 @@ public class AuctionService {
     private final ClockHolder clockHolder;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final RedisService redisService;
+    private final TagRepository tagRepository;
+
     @Secured(ROLE_USER)
     @Transactional
     public String create(AuctionCreateRequest req, Long userId) {
         Product product = productRepository.findByIdWithSeller(req.getProductId())
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 자신이 생성한 물품인지 확인
         if (!product.isUserASeller(userId)) {
             throw new ClientException(ErrorCode.NOT_OWNING_PRODUCT);
         }
@@ -61,6 +71,12 @@ public class AuctionService {
         Auction auction = new Auction(product, auctionSeq,
                 req.getStartPrice(), req.getBuyNowPrice(), req.getBidUnit(),
                 req.getIsBuyNowSet(), req.getIsAutoExtensible(), req.getExpiresAt());
+
+        // 태그 연동
+        if (req.getTagIds() != null && !req.getTagIds().isEmpty()) {
+            List<Tag> tags = tagRepository.findAllById(req.getTagIds());
+            auction.addTags(tags); // Auction 내부에서 AuctionTag로 매핑
+        }
 
         return auctionRepository.save(auction).getAuctionSeq();
     }
@@ -123,10 +139,11 @@ public class AuctionService {
     }
 
     @Transactional
-    public AuctionDetail findOneAndIncreaseView(String auctionSeq) {
+    public AuctionDetail findOneAndIncreaseView(String auctionSeq, String userKey) {
         Auction findAuction = auctionRepository
                 .findOpenOneByAuctionSeq(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getId());
 
         AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice);
@@ -136,7 +153,15 @@ public class AuctionService {
         Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
         detail.updateBidInfo(currentPrice, bidCount);
 
-        findAuction.increaseViews();
+        // 조회수 증가: Redis에 key가 없을 때만 증가
+        String redisKey = "view:auction:" + findAuction.getId() + ":user:" + userKey;
+        Duration ttl = Duration.ofMinutes(60); // 중복 방지 시간
+//        Duration ttl = Duration.ofHours(1); // 1시간에 1번만 view 증가
+
+        if (!redisService.isViewedRecently(redisKey)) {
+            findAuction.increaseViews();
+            redisService.markViewed(redisKey, ttl);
+        }
 
         return detail;
     }

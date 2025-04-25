@@ -16,6 +16,8 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
 
     List<ProductCategory> findAllByDeletedAtIsNull();
 
+    boolean existsByParentIdAndDeletedAtIsNull(Long parentId);
+
     // 보류 상태
     // Optional<ProductCategory> findByName(String name);
 }

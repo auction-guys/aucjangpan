@@ -21,8 +21,12 @@ public class S3Uploader {
 
     private final AmazonS3 amazonS3;
 
+    @Value("${cloud.aws.cloudfront.domain}")
+    private String cloudFrontDomain;
+
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
+
     public String upload(MultipartFile multipartFile, String dir) {
         try {
             String originalName = multipartFile.getOriginalFilename();
@@ -34,7 +38,8 @@ public class S3Uploader {
             metadata.setContentType(multipartFile.getContentType());
 
             amazonS3.putObject(new PutObjectRequest(bucket, key, multipartFile.getInputStream(), metadata));
-            return amazonS3.getUrl(bucket, key).toString();
+
+            return cloudFrontDomain + "/" + key;
 
         } catch (IOException e) {
             throw new ServerException(ErrorCode.UPLOAD_FAIL);
