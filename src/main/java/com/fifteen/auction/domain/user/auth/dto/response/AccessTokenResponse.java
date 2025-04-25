@@ -8,4 +8,5 @@ import lombok.RequiredArgsConstructor;
 public class AccessTokenResponse {
 
     private final String jwt;
+    private final String refreshToken;
 }

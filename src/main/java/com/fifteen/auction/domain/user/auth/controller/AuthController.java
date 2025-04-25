@@ -8,13 +8,17 @@ import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.service.AuthService;
 import com.fifteen.auction.domain.user.auth.service.OAuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -56,12 +60,13 @@ public class AuthController {
         return ResponseEntity.ok(oAuthService.loginWithGoogle(code));
     }
 
-    //리프레쉬 토큰 발급
+    // 리프레쉬 토큰 발급
     @PostMapping("/reissue")
     public ResponseEntity<AccessTokenResponse> reissue(@RequestHeader("Refresh-Token") String refreshToken) {
         AccessTokenResponse response = authService.reissue(refreshToken);
         return ResponseEntity.ok()
-                .header("Authorization", response.getJwt())
+                .header(HttpHeaders.AUTHORIZATION, response.getJwt())
+                .header("Refresh-Token", response.getRefreshToken())
                 .build();
     }
 }

@@ -117,15 +117,22 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 3. Redis에 이미 로그아웃된 토큰인지 확인 + 저장 (원자적으로 처리)
-        String key = "BLACKLIST:" + token;
-        Long expiration = jwtUtil.getTokenExpiration(token);
-        Boolean isSet = redisTemplate.opsForValue().setIfAbsent(key, "logout", expiration, TimeUnit.MILLISECONDS);
+        // 3. 사용자 ID 추출
+        Long userId = jwtUtil.extractUserId(token);
 
-        // 4. 이미 존재한다면 → 이미 로그아웃된 토큰
+        // 4. Redis에 이미 로그아웃된 토큰인지 확인 + 저장 (원자적으로 처리)
+        String blacklistKey = "BLACKLIST:" + token;
+        Long expiration = jwtUtil.getTokenExpiration(token);
+        Boolean isSet = redisTemplate.opsForValue().setIfAbsent(blacklistKey, "logout", expiration, TimeUnit.MILLISECONDS);
+
+        // 5. 이미 존재한다면 → 이미 로그아웃된 토큰
         if (Boolean.FALSE.equals(isSet)) {
             throw new ClientException(ErrorCode.ALREADY_LOGOUT);
         }
+
+        // 6. Refresh Token 삭제
+        String refreshTokenKey = "RT:" + userId;
+        redisTemplate.delete(refreshTokenKey);
     }
 
     @Transactional
@@ -138,7 +145,8 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_PASSWORD);
         }
 
-        userRepository.softDeleteByEmail(user.getEmail()); // soft-delete 기능 구현
+        userRepository.softDeleteByEmail(user.getEmail());
+        redisTemplate.delete("RT:" + user.getId()); // Refresh Token 삭제
     }
 
     @Transactional
@@ -167,10 +175,22 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
-        // AccessToken 재발급
-        String newAccessToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
-        String jwt = jwtUtil.substringToken(newAccessToken);
+        // 기존 Refresh Token 삭제
+        redisTemplate.delete(redisKey);
 
-        return new AccessTokenResponse(jwt);
+        // 새로운 AccessToken과 RefreshToken 생성
+        String newAccessToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
+        String newJwt = jwtUtil.substringToken(newAccessToken);
+        String newRefreshToken = jwtUtil.createRefreshToken(user.getId());
+
+        // 새로운 Refresh Token을 Redis에 저장
+        redisTemplate.opsForValue().set(
+                redisKey,
+                newRefreshToken,
+                jwtUtil.getRefreshTokenExpiry(),
+                TimeUnit.MILLISECONDS
+        );
+
+        return new AccessTokenResponse(newJwt, newRefreshToken);
     }
 }
