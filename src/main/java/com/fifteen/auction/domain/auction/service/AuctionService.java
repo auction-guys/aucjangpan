@@ -147,7 +147,7 @@ public class AuctionService {
 
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getName());
 
-        FutureMarketPriceResponse futurePrices = marketPriceService.predictFutureMarketPrices(
+        FutureMarketPriceResponse futurePrices = marketPriceService.findOrPredictFutureMarketPrices(
                 findAuction.getProduct().getName()
         );
 

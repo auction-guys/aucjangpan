@@ -9,6 +9,7 @@ import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceResponse;
 import com.fifteen.auction.domain.product.entity.MarketPrice;
 import com.fifteen.auction.domain.product.entity.Product;
+import com.fifteen.auction.domain.product.enums.PriceType;
 import com.fifteen.auction.domain.product.repository.MarketPriceRepository;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.global.client.chatgpt.ChatGPTClient;
@@ -21,11 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +63,7 @@ public class MarketPriceService {
         // 예측 가격 존재 시 저장 or 조회
         if (predictedPrices != null && !predictedPrices.isEmpty()) {
             GPTPricePredictionResponse dto = predictedPrices.get(predictedPrices.size() - 1);
-            boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(product.getId(), today);
+            boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDateAndPriceType(product.getId(), today, PriceType.ACTUAL);
 
             if (!alreadySaved) {
                 todayPrice = MarketPrice.builder()
@@ -72,12 +71,13 @@ public class MarketPriceService {
                         .priceDate(today)
                         .minMarketPrice(dto.getMin())
                         .maxMarketPrice(dto.getMax())
+                        .priceType(PriceType.ACTUAL)
                         .build();
 
                 marketPriceRepository.save(todayPrice);
             } else {
                 todayPrice = marketPriceRepository
-                        .findFirstByProductIdAndPriceDate(product.getId(), today)
+                        .findFirstByProductIdAndPriceDateAndPriceType(product.getId(), today, PriceType.ACTUAL)
                         .orElse(null);
             }
         } else {
@@ -91,10 +91,11 @@ public class MarketPriceService {
         for (int i = 3; i >= 1; i--) {
             LocalDate targetDate = today.minusMonths(i).withDayOfMonth(1);
 
-            List<MarketPrice> prices = marketPriceRepository.findByProductNameAndPriceDate(productName, targetDate);
-            prices.stream().findFirst().ifPresent(mp -> {
-                historicalPrices.add(MarketPriceResponse.fromEntity(mp));
-            });
+            List<MarketPrice> prices = marketPriceRepository.findByProductNameAndPriceDateAndPriceType(productName, targetDate, PriceType.ACTUAL);
+            prices.stream()
+                    .sorted(Comparator.comparing(mp -> mp.getProduct().getCreatedAt(), Comparator.reverseOrder()))
+                    .findFirst()
+                    .ifPresent(mp -> historicalPrices.add(MarketPriceResponse.fromEntity(mp)));
 
             if (prices.isEmpty()) {
                 log.info("{} 기준의 시세 정보를 찾을 수 없습니다.", targetDate);
@@ -115,8 +116,12 @@ public class MarketPriceService {
 
 
     // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 5개 상품 기준으로 경매 결과 분석)
-    @Transactional(readOnly = true)
-    public FutureMarketPriceResponse predictFutureMarketPrices(String productName) {
+    @Transactional
+    public FutureMarketPriceResponse findOrPredictFutureMarketPrices(String productName) {
+        LocalDate today = LocalDate.now();
+        List<LocalDate> futureDates = IntStream.rangeClosed(1, 3)
+                .mapToObj(i -> today.plusMonths(i).withDayOfMonth(1))
+                .toList();
         //최근 등록된 동일 상품명 기준 상품 5개 조회
         List<Product> recentProducts = productRepository.findTop10ByNameOrderByCreatedAtDesc(productName);
         if (recentProducts.isEmpty()) {
@@ -126,6 +131,27 @@ public class MarketPriceService {
                     .build();
         }
 
+        Product productRef = recentProducts.get(0);
+
+        List<MarketPrice> existingPrices = marketPriceRepository
+                .findByProductNameAndPriceDateInAndPriceType(productName, futureDates, PriceType.PREDICTED);
+
+        Map<LocalDate, MarketPrice> existingPriceMap = existingPrices.stream()
+                .collect(Collectors.toMap(MarketPrice::getPriceDate, mp -> mp));
+
+        List<LocalDate> missingDates = futureDates.stream()
+                .filter(date -> !existingPriceMap.containsKey(date))
+                .toList();
+
+        List<GPTPricePredictionResponse> predicted = new ArrayList<>();
+
+        if (!missingDates.isEmpty()) {
+            List<Long> winPrices = recentProducts.stream()
+                    .flatMap(product -> auctionRepository.findByProduct_NameAndStatus(product.getName(), AuctionStatus.DONE).stream())
+                    .map(Auction::getWinPrice)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
         //description 5개를 모두 합쳐서 프롬프트 생성
         String combinedDescription = recentProducts.stream()
                 .map(Product::getDescription)
@@ -133,31 +159,31 @@ public class MarketPriceService {
                 .distinct()
                 .collect(Collectors.joining("\n"));
 
-        // 경매에서 DONE 상태 낙찰가 수집
-        List<Long> winPrices = recentProducts.stream()
-                .flatMap(product -> auctionRepository.findByProduct_NameAndStatus(product.getName(), AuctionStatus.DONE).stream())
-                .map(Auction::getWinPrice)
+            predicted = chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
+
+            List<MarketPrice> toSave = predicted.stream()
+                    .filter(p -> missingDates.contains(LocalDate.parse(p.getDate())))
+                    .map(p -> MarketPrice.builder()
+                            .product(productRef)
+                            .priceDate(LocalDate.parse(p.getDate()))
+                            .minMarketPrice(p.getMin())
+                            .maxMarketPrice(p.getMax())
+                            .priceType(PriceType.PREDICTED)
+                            .build())
+                    .toList();
+
+            marketPriceRepository.saveAll(toSave);
+            toSave.forEach(mp -> existingPriceMap.put(mp.getPriceDate(), mp));
+        }
+
+        List<MarketPriceResponse> finalResult = futureDates.stream()
+                .map(existingPriceMap::get)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .map(MarketPriceResponse::fromEntity)
+                .toList();
 
-        if (winPrices.isEmpty()) {
-            return FutureMarketPriceResponse.builder()
-                    .prices(List.of())
-                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
-                    .build();
-        }
-
-        List<GPTPricePredictionResponse> gptPrices =
-                chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
-
-        //예측 결과 비었을 때 메시지
-        if (gptPrices.isEmpty()) {
-            return FutureMarketPriceResponse.builder()
-                    .prices(List.of())
-                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
-                    .build();
-        }
-
-        return FutureMarketPriceResponse.fromGPT(recentProducts.get(0).getId(), gptPrices);
+        return FutureMarketPriceResponse.builder()
+                .prices(finalResult)
+                .build();
     }
 }

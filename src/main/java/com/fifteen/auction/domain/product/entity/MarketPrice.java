@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.product.entity;
 
+import com.fifteen.auction.domain.product.enums.PriceType;
 import com.fifteen.auction.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,4 +26,10 @@ public class MarketPrice extends BaseEntity {
     private LocalDate priceDate;
     private Long minMarketPrice;
     private Long maxMarketPrice;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PriceType priceType;
+
+
 }
