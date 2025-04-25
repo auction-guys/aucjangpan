@@ -16,5 +16,16 @@ public interface MarketPriceRepository extends JpaRepository<MarketPrice, Long> 
 
     Optional<MarketPrice> findFirstByProductIdAndPriceDate(Long productId, LocalDate priceDate);
 
+    @Query("""
+    SELECT mp FROM MarketPrice mp
+    JOIN mp.product p
+    WHERE p.name = :productName AND mp.priceDate = :priceDate
+    ORDER BY p.createdAt DESC
+""")
+    List<MarketPrice> findByProductNameAndPriceDate(
+            @Param("productName") String productName,
+            @Param("priceDate") LocalDate priceDate
+    );
+
 }
 

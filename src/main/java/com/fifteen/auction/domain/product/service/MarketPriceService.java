@@ -88,24 +88,15 @@ public class MarketPriceService {
         List<MarketPriceResponse> historicalPrices = new ArrayList<>();
         String historicalPricesMessage = null;
 
-        List<Product> products = productRepository.findTop5ByNameOrderByCreatedAtDesc(productName);
-
         for (int i = 3; i >= 1; i--) {
             LocalDate targetDate = today.minusMonths(i).withDayOfMonth(1);
 
-            boolean found = false;
-            for (Product p : products) {
-                Optional<MarketPrice> marketPriceOpt = marketPriceRepository
-                        .findFirstByProductIdAndPriceDate(p.getId(), targetDate);
+            List<MarketPrice> prices = marketPriceRepository.findByProductNameAndPriceDate(productName, targetDate);
+            prices.stream().findFirst().ifPresent(mp -> {
+                historicalPrices.add(MarketPriceResponse.fromEntity(mp));
+            });
 
-                if (marketPriceOpt.isPresent()) {
-                    historicalPrices.add(MarketPriceResponse.fromEntity(marketPriceOpt.get()));
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
+            if (prices.isEmpty()) {
                 log.info("{} 기준의 시세 정보를 찾을 수 없습니다.", targetDate);
             }
         }
