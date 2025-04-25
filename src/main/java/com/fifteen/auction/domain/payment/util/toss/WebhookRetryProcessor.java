@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.payment.util.toss;
 
-import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.entity.Payment;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -8,9 +7,7 @@ import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
