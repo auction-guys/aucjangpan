@@ -126,8 +126,8 @@ public class MarketPriceService {
         List<Product> recentProducts = productRepository.findTop10ByNameOrderByCreatedAtDesc(productName);
         if (recentProducts.isEmpty()) {
             return FutureMarketPriceResponse.builder()
-                    .prices(List.of())
-                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
+                    .predictedPrices(List.of())
+                    .predictedPricesMessage("향후 시세 예측 정보가 존재하지 않습니다.")
                     .build();
         }
 
@@ -150,9 +150,9 @@ public class MarketPriceService {
                     .flatMap(product -> auctionRepository.findByProduct_NameAndStatus(product.getName(), AuctionStatus.DONE).stream())
                     .map(Auction::getWinPrice)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
 
-        //description 5개를 모두 합쳐서 프롬프트 생성
+            //description 5개를 모두 합쳐서 프롬프트 생성
         String combinedDescription = recentProducts.stream()
                 .map(Product::getDescription)
                 .filter(Objects::nonNull)
@@ -182,8 +182,13 @@ public class MarketPriceService {
                 .map(MarketPriceResponse::fromEntity)
                 .toList();
 
+        String message = finalResult.isEmpty()
+                ? "향후 3개월 1일 기준 시세 정보가 존재하지 않습니다."
+                : null;
+
         return FutureMarketPriceResponse.builder()
-                .prices(finalResult)
+                .predictedPrices(finalResult)
+                .predictedPricesMessage(message)
                 .build();
     }
 }

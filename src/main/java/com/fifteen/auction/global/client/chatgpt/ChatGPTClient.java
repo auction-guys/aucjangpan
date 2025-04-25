@@ -8,8 +8,6 @@ import com.fifteen.auction.global.client.chatgpt.dto.ChatMessage;
 import com.fifteen.auction.global.client.naver.dto.NaverShoppingItemDto;
 import com.fifteen.auction.global.client.naver.NaverSearchClient;
 import com.fifteen.auction.global.client.naver.dto.NaverShoppingSearchResponse;
-import com.fifteen.auction.global.dto.error.ErrorCode;
-import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -164,8 +162,6 @@ public class ChatGPTClient {
                 예: 최근 낙찰가가 점점 낮아지고 있다면 이후 시세도 낮아질 가능성이 높아.
                 예: 최근 낙찰가가 고르게 분포되어 있다면 이후 시세도 비슷할 수 있어.
                 단순히 평균만 내서 같은 값을 반복하지 마.
-                각 달마다 min/max 가격이 조금씩이라도 차이가 나도록 구성해줘.
-                (예: 점점 낮아지거나 높아지거나 유지하더라도 약간의 변화는 있어야 해)
                
 
                 상품 설명:
@@ -252,13 +248,13 @@ public class ChatGPTClient {
                     });
                 } catch (Exception retryFail) {
                     log.error("GPT 재시도 응답 파싱 실패 - 응답 내용:\n{}", retryContent, retryFail);
-                    throw new ServerException(ErrorCode.EXTERNAL_API_ERROR);
+                    return List.of();
                 }
             }
 
         } catch (Exception e) {
             log.error("GPT API 호출 실패", e);
-            throw new ServerException(ErrorCode.EXTERNAL_API_ERROR);
+            return List.of();
         }
     }
 

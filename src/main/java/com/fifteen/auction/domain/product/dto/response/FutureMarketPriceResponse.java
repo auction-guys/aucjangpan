@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -15,29 +13,17 @@ import java.util.List;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FutureMarketPriceResponse {
-    private List<MarketPriceResponse> prices;
-    private String message;
 
+    // 향후 3개월 예측 시세
+    private List<MarketPriceResponse> predictedPrices;
 
-    public static FutureMarketPriceResponse fromGPT(Long productId, List<GPTPricePredictionResponse> gptPrices) {
-        if (gptPrices == null || gptPrices.isEmpty()) {
-            return FutureMarketPriceResponse.builder()
-                    .prices(List.of())
-                    .message("추후 시세 예측 정보가 존재하지 않습니다.")
-                    .build();
-        }
+    // 예측 시세 없음 메시지
+    private String predictedPricesMessage;
 
-        List<MarketPriceResponse> mapped = gptPrices.stream()
-                .map(p -> new MarketPriceResponse(
-                        productId,
-                        p.getMin(),
-                        p.getMax(),
-                        LocalDate.parse(p.getDate())
-                ))
-                .toList();
-
+    public static FutureMarketPriceResponse from(List<MarketPriceResponse> prices, String message) {
         return FutureMarketPriceResponse.builder()
-                .prices(mapped)
+                .predictedPrices(prices)
+                .predictedPricesMessage(message)
                 .build();
     }
 }
