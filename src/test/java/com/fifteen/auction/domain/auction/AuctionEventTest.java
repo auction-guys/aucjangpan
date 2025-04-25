@@ -6,7 +6,7 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.service.AuctionCacheService;
 import com.fifteen.auction.domain.auction.service.AuctionService;
-import com.fifteen.auction.domain.auction.service.BidWorkerService;
+import com.fifteen.auction.domain.auction.service.BidEventService;
 import com.fifteen.auction.domain.auction.service.ScheduledAuctionService;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
@@ -47,7 +47,7 @@ public class AuctionEventTest {
         @Mock AuctionRepository auctionRepository;
         @Mock AuctionCacheService auctionCacheService;
 
-        @InjectMocks BidWorkerService bidWorkerService;
+        @InjectMocks BidEventService bidEventService;
 
         @Test
         void 입찰_이벤트_처리_중_저동_연장이_설정된_경매만_연장_처리가_된다() {
@@ -62,7 +62,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt);
@@ -81,7 +81,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt.plusMinutes(3));
@@ -103,8 +103,8 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event1);
-            bidWorkerService.handleBidProcess(event2);
+            bidEventService.handleBidProcess(event1);
+            bidEventService.handleBidProcess(event2);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt.plusMinutes(3));
@@ -124,7 +124,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
             verify(auctionCacheService, times(1))

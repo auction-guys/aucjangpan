@@ -116,25 +116,4 @@ public class BidService {
 
         auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
     }
-
-    @Transactional
-    public void handleBidFromQueue(String auctionSeq, Long bidderId, Long bidPrice) {
-        Auction auc = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
-                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
-
-        LocalDateTime bidAt = clockHolder.now();
-
-        if (bidAt.isAfter(auc.getExpiresAt())) {
-            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
-        }
-
-        // bid price cache 체크
-        if (auctionCacheService.isBidUnderPrice(auc.getAuctionSeq(), bidPrice, auc.getBidUnit())) {
-            throw new ClientException(ErrorCode.LOW_BID_PRICE);
-        }
-
-        bidRepository.save(new Bid(auc, bidderId, bidPrice, bidAt));
-        applicationEventPublisher.publishEvent(
-                new BidProcessEvent(auctionSeq, bidderId, bidPrice, bidAt));
-    }
 }
