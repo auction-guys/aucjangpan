@@ -157,24 +157,28 @@ public class ChatGPTClient {
         String exampleJson = buildExampleJsonFormat(futureDates);
 
         return String.format("""
-                다음 중고 상품의 이후 3개월(다음달 1일부터 3개월)의 예상 거래 가격 범위를 JSON 배열로 알려줘.
+                아래는 최근 중고 상품 "%s"의 낙찰 가격이야: [%s]
 
-                반드시 아래 조건을 지켜야 해:
-                숫자에는 쉼표(,)를 넣지 마
-                모든 key는 반드시 쌍따옴표로 감싸
-                날짜는 yyyy-MM-dd 형식으로
-                가격은 정수 형태로
+                이 데이터와 아래 설명을 바탕으로 다음 3개월(각각 %s, %s, %s)의 중고 거래 가격을 예측해줘.
+                **단, 단순 평균이 아닌 가격 추세(상승/하락/유지 등)를 고려해서** 시세를 예측해.
+                예: 최근 낙찰가가 점점 낮아지고 있다면 이후 시세도 낮아질 가능성이 높아.
+                예: 최근 낙찰가가 고르게 분포되어 있다면 이후 시세도 비슷할 수 있어.
+                단순히 평균만 내서 같은 값을 반복하지 마.
+                각 달마다 min/max 가격이 조금씩이라도 차이가 나도록 구성해줘.
+                (예: 점점 낮아지거나 높아지거나 유지하더라도 약간의 변화는 있어야 해)
+               
 
-                최근 낙찰된 가격들: [%s]
-                제품명: %s
-                아래는 최근 등록된 동일 상품명 5개의 설명이야. 모두 고려해서 분석해줘:
-                
+                상품 설명:
                 %s
-                
+                응답은 반드시 아래 형식의 JSON 배열로만 반환해야 해.
+                숫자에는 쉼표 넣지 말고, 모든 key는 쌍따옴표로 감싸고, 날짜는 yyyy-MM-dd 형식이야.
                 %s
                 """,
-                priceData,
                 title,
+                priceData,
+                futureDates.get(0),
+                futureDates.get(1),
+                futureDates.get(2),
                 combinedDescriptions,
                 exampleJson
         );

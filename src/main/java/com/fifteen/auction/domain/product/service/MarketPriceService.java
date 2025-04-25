@@ -118,7 +118,7 @@ public class MarketPriceService {
     @Transactional(readOnly = true)
     public FutureMarketPriceResponse predictFutureMarketPrices(String productName) {
         //최근 등록된 동일 상품명 기준 상품 5개 조회
-        List<Product> recentProducts = productRepository.findTop5ByNameOrderByCreatedAtDesc(productName);
+        List<Product> recentProducts = productRepository.findTop10ByNameOrderByCreatedAtDesc(productName);
         if (recentProducts.isEmpty()) {
             return FutureMarketPriceResponse.builder()
                     .prices(List.of())
