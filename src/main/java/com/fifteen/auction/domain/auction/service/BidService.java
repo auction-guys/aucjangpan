@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
@@ -8,6 +9,7 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.service.port.out.AuctionEventPublisher;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -30,6 +32,7 @@ import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER
 public class BidService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AuctionEventPublisher auctionEventPublisher;
     private final ClockHolder clockHolder;
 
     private final AuctionCacheService auctionCacheService;
@@ -74,7 +77,7 @@ public class BidService {
         if (!findAuction.isBuyNowSet()) {
             throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
         }
-        
+
         if (findAuction.isOwnedByUser(userId)) {
             throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
         }
@@ -97,5 +100,41 @@ public class BidService {
     public Page<BidHistoryInfo> bidHistoriesInProgress(String auctionSeq, PageCond cond) {
         Pageable pageRequest = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
         return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
+    }
+
+    public void putBidIntoQueue(String auctionSeq, Long userId, Long bidPrice) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        if (findAuction.isOwnedByUser(userId)) {
+            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
+        }
+
+        if (auctionCacheService.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
+            throw new ClientException(ErrorCode.LOW_BID_PRICE);
+        }
+
+        auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
+    }
+
+    @Transactional
+    public void handleBidFromQueue(String auctionSeq, Long bidderId, Long bidPrice) {
+        Auction auc = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime bidAt = clockHolder.now();
+
+        if (bidAt.isAfter(auc.getExpiresAt())) {
+            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
+        }
+
+        // bid price cache 체크
+        if (auctionCacheService.isBidUnderPrice(auc.getAuctionSeq(), bidPrice, auc.getBidUnit())) {
+            throw new ClientException(ErrorCode.LOW_BID_PRICE);
+        }
+
+        bidRepository.save(new Bid(auc, bidderId, bidPrice, bidAt));
+        applicationEventPublisher.publishEvent(
+                new BidProcessEvent(auctionSeq, bidderId, bidPrice, bidAt));
     }
 }
