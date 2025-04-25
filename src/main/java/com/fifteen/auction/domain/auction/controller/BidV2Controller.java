@@ -26,4 +26,14 @@ public class BidV2Controller {
         bidService.putBidIntoQueue(auctionSeq, authUser.getId(), req.getPrice());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/v2/auctions/{auctionSeq}/buynow")
+    public ResponseEntity<Void> buyNow(
+            @PathVariable("auctionSeq") String auctionSeq,
+            @AuthenticationPrincipal AuthUser authUser
+
+    ) {
+        bidService.putBuyNowIntoQueue(auctionSeq, authUser.getId());
+        return ResponseEntity.ok().build();
+    }
 }
