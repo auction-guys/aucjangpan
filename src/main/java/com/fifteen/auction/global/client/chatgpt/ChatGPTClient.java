@@ -97,7 +97,7 @@ public class ChatGPTClient {
 
         if (shoppingItems.isEmpty() || marketSummary == null) {
             log.info("상품 '{}' 네이버 검색 결과 없음 또는 유효하지 않음", title);
-            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
+            return List.of();
         }
 
         String prompt = buildPrompt(title, description, marketSummary);

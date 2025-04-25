@@ -3,6 +3,7 @@ package com.fifteen.auction.domain.product.service;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
+import com.fifteen.auction.domain.product.dto.response.FutureMarketPriceResponse;
 import com.fifteen.auction.domain.product.dto.response.GPTPricePredictionResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceResponse;
@@ -42,44 +43,45 @@ public class MarketPriceService {
         Product product = productRepository.findTopByNameOrderByCreatedAtDesc(productName)
                 .orElseThrow(() -> new ServerException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 네이버 API + GPT 호출을 통해 오늘 시세 예측
-        List<GPTPricePredictionResponse> predictedPrices = chatGPTClient.callGptForHistoricalPrices(
-                product.getName(),
-                product.getDescription()
-        );
+        LocalDate today = LocalDate.now();
+        MarketPrice todayPrice = null;
+        String todayPriceMessage = null;
 
-        if (predictedPrices.isEmpty()) {
-            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
+        // 네이버 API + GPT 호출을 통해 오늘 시세 예측
+        List<GPTPricePredictionResponse> predictedPrices = null;
+        try {
+            predictedPrices = chatGPTClient.callGptForHistoricalPrices(
+                    product.getName(),
+                    product.getDescription()
+            );
+        } catch (ServerException e) {
+            log.warn("오늘 시세 GPT 호출 실패: {}", e.getMessage());
+            todayPriceMessage = "오늘 시세 정보가 존재하지 않습니다.";
         }
 
-        LocalDate today = LocalDate.now();
-        MarketPrice todayPrice;
+        // 예측 가격 존재 시 저장 or 조회
+        if (predictedPrices != null && !predictedPrices.isEmpty()) {
+            GPTPricePredictionResponse dto = predictedPrices.get(predictedPrices.size() - 1);
+            boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(product.getId(), today);
 
-        GPTPricePredictionResponse dto = predictedPrices.get(predictedPrices.size() - 1);
-        boolean alreadySaved = marketPriceRepository.existsByProductIdAndPriceDate(product.getId(), today);
+            if (!alreadySaved) {
+                todayPrice = MarketPrice.builder()
+                        .product(product)
+                        .priceDate(today)
+                        .minMarketPrice(dto.getMin())
+                        .maxMarketPrice(dto.getMax())
+                        .build();
 
-        if (!alreadySaved) {
-            todayPrice = MarketPrice.builder()
-                    .product(product)
-                    .priceDate(today)
-                    .minMarketPrice(dto.getMin())
-                    .maxMarketPrice(dto.getMax())
-                    .build();
-
-            marketPriceRepository.save(todayPrice);
+                marketPriceRepository.save(todayPrice);
+            } else {
+                todayPrice = marketPriceRepository
+                        .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), today, today)
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
+            }
         } else {
-            todayPrice = marketPriceRepository
-                    .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), today, today)
-                    .stream()
-                    .findFirst()
-                    .map(MarketPriceResponse::fromEntity)
-                    .map(mp -> MarketPrice.builder()
-                            .product(product)
-                            .priceDate(today)
-                            .minMarketPrice(mp.getMinMarketPrice())
-                            .maxMarketPrice(mp.getMaxMarketPrice())
-                            .build())
-                    .orElseThrow(() -> new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND));
+            todayPriceMessage = "오늘 시세 정보가 존재하지 않습니다.";
         }
 
         LocalDate threeMonthsAgo = today.minusMonths(3).withDayOfMonth(1);
@@ -91,19 +93,30 @@ public class MarketPriceService {
                 .map(MarketPriceResponse::fromEntity)
                 .toList();
 
+        // 최근 3개월 시세 없을 때 메시지
+        String historicalPricesMessage = null;
+        if (historicalPrices.isEmpty()) {
+            historicalPricesMessage = "최근 3개월 시세 정보가 존재하지 않습니다.";
+        }
+
         return MarketPriceFullResponse.builder()
-                .todayPrice(MarketPriceResponse.fromEntity(todayPrice))
+                .todayPriceMessage(todayPriceMessage)
+                .todayPrice(todayPrice != null ? MarketPriceResponse.fromEntity(todayPrice) : null)
                 .historicalPrices(historicalPrices)
+                .historicalPricesMessage(historicalPricesMessage)
                 .build();
     }
 
     // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 5개 상품 기준으로 경매 결과 분석)
     @Transactional(readOnly = true)
-    public List<GPTPricePredictionResponse> predictFutureMarketPrices(String productName) {
+    public FutureMarketPriceResponse predictFutureMarketPrices(String productName) {
         //최근 등록된 동일 상품명 기준 상품 5개 조회
         List<Product> recentProducts = productRepository.findTop5ByNameOrderByCreatedAtDesc(productName);
         if (recentProducts.isEmpty()) {
-            throw new ServerException(ErrorCode.PRODUCT_NOT_FOUND);
+            return FutureMarketPriceResponse.builder()
+                    .prices(List.of())
+                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
+                    .build();
         }
 
         //description 5개를 모두 합쳐서 프롬프트 생성
@@ -121,12 +134,23 @@ public class MarketPriceService {
                 .collect(Collectors.toList());
 
         if (winPrices.isEmpty()) {
-            throw new ServerException(ErrorCode.MARKET_PRICE_NOT_FOUND);
+            return FutureMarketPriceResponse.builder()
+                    .prices(List.of())
+                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
+                    .build();
         }
 
-        return chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
+        List<GPTPricePredictionResponse> gptPrices =
+                chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
+
+        //예측 결과 비었을 때 메시지
+        if (gptPrices.isEmpty()) {
+            return FutureMarketPriceResponse.builder()
+                    .prices(List.of())
+                    .message("향후 시세 예측 정보가 존재하지 않습니다.")
+                    .build();
+        }
+
+        return FutureMarketPriceResponse.fromGPT(recentProducts.get(0).getId(), gptPrices);
     }
 }
-
-
-

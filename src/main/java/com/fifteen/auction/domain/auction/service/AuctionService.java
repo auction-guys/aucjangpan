@@ -147,9 +147,8 @@ public class AuctionService {
 
         MarketPriceFullResponse marketPrice = marketPriceService.findMarketPriceFullResponse(findAuction.getProduct().getName());
 
-        FutureMarketPriceResponse futurePrices = FutureMarketPriceResponse.fromGPT(
-                findAuction.getProduct().getId(),
-                marketPriceService.predictFutureMarketPrices(findAuction.getProduct().getName())
+        FutureMarketPriceResponse futurePrices = marketPriceService.predictFutureMarketPrices(
+                findAuction.getProduct().getName()
         );
 
         AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice, futurePrices);

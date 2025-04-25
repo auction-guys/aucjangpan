@@ -1,5 +1,6 @@
 package com.fifteen.auction.domain.product.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,10 +13,20 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FutureMarketPriceResponse {
     private List<MarketPriceResponse> prices;
+    private String message;
+
 
     public static FutureMarketPriceResponse fromGPT(Long productId, List<GPTPricePredictionResponse> gptPrices) {
+        if (gptPrices == null || gptPrices.isEmpty()) {
+            return FutureMarketPriceResponse.builder()
+                    .prices(List.of())
+                    .message("추후 시세 예측 정보가 존재하지 않습니다.")
+                    .build();
+        }
+
         List<MarketPriceResponse> mapped = gptPrices.stream()
                 .map(p -> new MarketPriceResponse(
                         productId,
@@ -24,6 +35,9 @@ public class FutureMarketPriceResponse {
                         LocalDate.parse(p.getDate())
                 ))
                 .toList();
-        return new FutureMarketPriceResponse(mapped);
+
+        return FutureMarketPriceResponse.builder()
+                .prices(mapped)
+                .build();
     }
 }
