@@ -65,6 +65,8 @@ cloud:
       bucket: aucjangpan-api-images
     stack:
       auto: false
+    cloudfront:
+      domain: ${{CLOUDFRONT_DOMAIN_KEY}}
 
 management:
   endpoints:
