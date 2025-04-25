@@ -36,6 +36,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse httpResponse,
             @NonNull FilterChain chain
     ) throws ServletException, IOException {
+
+        // /api/v1/auth/** 경로는 JWT 검증 없이 통과
+         if (httpRequest.getRequestURI().startsWith("/api/v1/auth")) {
+            chain.doFilter(httpRequest, httpResponse);
+            return;
+         }
+
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -75,8 +82,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(authUser, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        //        JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(authUser);
-//        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     }
 }

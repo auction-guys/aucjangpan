@@ -28,17 +28,20 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String gender;
+    private Gender gender;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String ageGroup;
+    private AgeGroup ageGroup;
 
     @Column(nullable = true)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String address;
+    private Region address;
 
     @Column(unique = true, nullable = false)
     private String contactNumber;
@@ -61,7 +64,7 @@ public class User {
     private UserRole role;
 
     // 수정된 생성자
-    public User(String email, String nickname, String name, String gender, String ageGroup, String password, String address, String contactNumber, String preferCategory, String accountNumber, RecommendGroup group, UserRole role) {
+    public User(String email, String nickname, String name, Gender gender, AgeGroup ageGroup, String password, Region address, String contactNumber, String preferCategory, String accountNumber, RecommendGroup group, UserRole role) {
         this.email = email;
         this.nickname = nickname;
         this.name = name;
@@ -80,7 +83,7 @@ public class User {
     public void updateProfile(String email, String nickname, String address) {
         this.email = email;
         this.nickname = nickname;
-        this.address = address;
+        this.address = Region.from(address);
     }
 
     public void updatePassword(String newPassword) {

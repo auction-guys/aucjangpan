@@ -49,9 +49,9 @@ public class UserService {
                                       user.getEmail(),
                                       user.getNickname(),
                                       user.getName(),
-                                      user.getGender(),
-                                      user.getAgeGroup(),
-                                      user.getAddress(),
+                                      user.getGender().name(),
+                                      user.getAgeGroup().name(),
+                                      user.getAddress().name(),
                                       user.getContactNumber(),
                                       user.getPreferCategory(),
                                       user.getAccountNumber()
