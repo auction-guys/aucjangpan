@@ -34,6 +34,10 @@ public class ProductCategory extends BaseEntity {
 
     private LocalDateTime deletedAt;
 
+    public boolean isDeleted() {
+        return this.getDeletedAt() != null;
+    }
+
     private ProductCategory(String name, ProductCategory parent) {
         this.name = name;
         this.parent = parent;
