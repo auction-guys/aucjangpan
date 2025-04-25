@@ -10,19 +10,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
     private final StompHandler jwtChannelInterceptor;
 
     public WebSocketConfig(StompHandler jwtChannelInterceptor) {
         this.jwtChannelInterceptor = jwtChannelInterceptor;
     }
 
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
 
         registry.addEndpoint("/chat/inbox")
-//                .addInterceptors(jwtHandshakeInterceptor)
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }

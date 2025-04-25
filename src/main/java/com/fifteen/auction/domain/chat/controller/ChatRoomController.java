@@ -2,7 +2,7 @@ package com.fifteen.auction.domain.chat.controller;
 
 import com.fifteen.auction.domain.chat.dto.request.CreateChatRoomRequest;
 import com.fifteen.auction.domain.chat.dto.response.ChatRoomResponse;
-import com.fifteen.auction.domain.chat.service.ChatRoomService;
+import com.fifteen.auction.domain.chat.service.chat.ChatRoomService;
 import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
