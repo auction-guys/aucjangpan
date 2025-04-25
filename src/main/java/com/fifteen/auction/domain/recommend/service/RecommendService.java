@@ -11,7 +11,7 @@ import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
-import com.fifteen.auction.infra.redis.repository.RecommendRedisRepository;
+import com.fifteen.auction.domain.recommend.repository.RecommendRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -74,15 +74,25 @@ public class RecommendService {
         List<RecommendRedisRepository.AuctionScore> scores = sorted.stream()
                 .map(e -> new RecommendRedisRepository.AuctionScore(e.getKey(), e.getValue()))
                 .toList();
-
+      
         recommendRedisRepository.saveRecommendations(group.getId(), scores);
     }
 
     @Transactional(readOnly = true)
     public List<RecommendationResponse> getRecommendationsForGroup(RecommendGroup group) {
-        Set<ZSetOperations.TypedTuple<String>> results = recommendRedisRepository.getTopRecommendations(group.getId(), 10);
-        if (results.isEmpty()) return List.of();
+        Set<ZSetOperations.TypedTuple<String>> results =
+                recommendRedisRepository.getTopRecommendations(group.getId(), 10);
 
+        if (results.isEmpty()) {
+            generateRecommendationsForGroup(group);
+            results = recommendRedisRepository.getTopRecommendations(group.getId(), 10);
+        }
+
+        return mapToRecommendationResponses(results);
+    }
+
+    private List<RecommendationResponse> mapToRecommendationResponses(Set<ZSetOperations.TypedTuple<String>> results) {
+      
         List<Long> auctionIds = results.stream().map(t -> Long.valueOf(t.getValue())).toList();
         List<Auction> auctions = auctionRepository.findAllById(auctionIds);
         Map<Long, Auction> auctionMap = auctions.stream().collect(Collectors.toMap(Auction::getId, a -> a));

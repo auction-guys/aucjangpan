@@ -20,6 +20,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentFailException.class)
     public ResponseEntity<Map<String, Object>> handlePaymentFailException(PaymentFailException pe) {
 
+        pe.printStackTrace();
+
         Map<String, Object> body = new HashMap<>();
         body.put("error", pe.getErrorCode());
         body.put("status", pe.getStatus());
@@ -30,19 +32,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClientException.class)
     public ResponseEntity<ErrorResponse> handleClientException(ClientException ce) {
+        ce.printStackTrace();
         return ResponseEntity.status(ce.getErrorCode().getStatus())
                 .body(ErrorResponse.ofErrorCode(ce.getErrorCode()));
     }
 
     @ExceptionHandler(ServerException.class)
     public ResponseEntity<ErrorResponse> handleServerException(ServerException se) {
+        se.printStackTrace();
         return ResponseEntity.internalServerError()
                 .body(ErrorResponse.ofErrorCode(se.getErrorCode()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
-
+        e.printStackTrace();
         log.debug("exceptionHandler", e);
 
         return ResponseEntity.internalServerError()
