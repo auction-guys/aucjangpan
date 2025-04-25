@@ -21,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -75,28 +77,41 @@ public class MarketPriceService {
                 marketPriceRepository.save(todayPrice);
             } else {
                 todayPrice = marketPriceRepository
-                        .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), today, today)
-                        .stream()
-                        .findFirst()
+                        .findFirstByProductIdAndPriceDate(product.getId(), today)
                         .orElse(null);
             }
         } else {
             todayPriceMessage = "오늘 시세 정보가 존재하지 않습니다.";
         }
 
-        LocalDate threeMonthsAgo = today.minusMonths(3).withDayOfMonth(1);
-
         // DB에 저장된 최근 3개월 시세 조회 및 DTO 반환
-        List<MarketPriceResponse> historicalPrices = marketPriceRepository
-                .findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(product.getId(), threeMonthsAgo, today.minusDays(1))
-                .stream()
-                .map(MarketPriceResponse::fromEntity)
-                .toList();
-
-        // 최근 3개월 시세 없을 때 메시지
+        List<MarketPriceResponse> historicalPrices = new ArrayList<>();
         String historicalPricesMessage = null;
+
+        List<Product> products = productRepository.findTop5ByNameOrderByCreatedAtDesc(productName);
+
+        for (int i = 3; i >= 1; i--) {
+            LocalDate targetDate = today.minusMonths(i).withDayOfMonth(1);
+
+            boolean found = false;
+            for (Product p : products) {
+                Optional<MarketPrice> marketPriceOpt = marketPriceRepository
+                        .findFirstByProductIdAndPriceDate(p.getId(), targetDate);
+
+                if (marketPriceOpt.isPresent()) {
+                    historicalPrices.add(MarketPriceResponse.fromEntity(marketPriceOpt.get()));
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                log.info("{} 기준의 시세 정보를 찾을 수 없습니다.", targetDate);
+            }
+        }
+
         if (historicalPrices.isEmpty()) {
-            historicalPricesMessage = "최근 3개월 시세 정보가 존재하지 않습니다.";
+            historicalPricesMessage = " 1일 기준 최근 3개월 시세 정보가 존재하지 않습니다.";
         }
 
         return MarketPriceFullResponse.builder()
@@ -106,6 +121,7 @@ public class MarketPriceService {
                 .historicalPricesMessage(historicalPricesMessage)
                 .build();
     }
+
 
     // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 5개 상품 기준으로 경매 결과 분석)
     @Transactional(readOnly = true)

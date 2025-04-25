@@ -7,15 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface MarketPriceRepository extends JpaRepository<MarketPrice, Long> {
 
     // 상품의 특정 날짜 시세가 이미 존재하는지 확인
     boolean existsByProductIdAndPriceDate(Long productId, LocalDate marketDate);
 
-    // 상품의 최근 3개월 시세 전체 조회
-    List<MarketPrice> findAllByProductIdAndPriceDateBetweenOrderByPriceDateAsc(
-            Long productId, LocalDate start, LocalDate end);
+    Optional<MarketPrice> findFirstByProductIdAndPriceDate(Long productId, LocalDate priceDate);
 
 }
 
