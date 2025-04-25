@@ -5,10 +5,10 @@ import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.entity.AuctionStatus;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -30,6 +30,7 @@ import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER
 public class BidService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ClockHolder clockHolder;
 
     private final AuctionCacheService auctionCacheService;
 
@@ -40,11 +41,10 @@ public class BidService {
     @Transactional
     public void bid(String auctionSeq, Long userId, BidRequest req) {
 
-        // 본인이 생성한 경매이거나 마감된 경매인지 체크
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime bidAt = LocalDateTime.now();
+        LocalDateTime bidAt = clockHolder.now();
 
         if (isInvalidBid(userId, findAuction, bidAt)) {
             throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
@@ -67,7 +67,11 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime buyAt = LocalDateTime.now();
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (!findAuction.isBuyNowSet()) {
+            throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
+        }
 
         if (isInvalidBid(userId, findAuction, buyAt)) {
             throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
@@ -89,7 +93,6 @@ public class BidService {
 
     private boolean isInvalidBid(Long userId, Auction findAuction, LocalDateTime bidAt) {
         return userId.equals(findAuction.getProduct().getSeller().getId())
-                || findAuction.getStatus() != AuctionStatus.OPEN
                 || bidAt.isAfter(findAuction.getExpiresAt());
     }
 }

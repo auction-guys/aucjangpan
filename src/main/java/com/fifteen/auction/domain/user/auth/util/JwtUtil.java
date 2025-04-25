@@ -20,6 +20,7 @@ public class JwtUtil {
 
     private static final String BEARER_PREFIX = "Bearer ";
     private static final long TOKEN_TIME = 60 * 60 * 1000L; // 60분
+    private static final long REFRESH_TOKEN_TIME = 14 * 24 * 60 * 60 * 1000L; // 14일
 
     @Value("${jwt.secret.key}")
     private String secretKey;
@@ -47,9 +48,27 @@ public class JwtUtil {
                         .compact();
     }
 
+    // Refresh Token 생성
+    public String createRefreshToken(Long userId) {
+        Date now = new Date();
+
+        return BEARER_PREFIX +
+                Jwts.builder()
+                        .setSubject(String.valueOf(userId)) //refresh token 내에 최소한의 정보만 넣는 것이 일반적.
+                        .setIssuedAt(now)
+                        .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_TIME))
+                        .signWith(key, signatureAlgorithm)
+                        .compact();
+    }
+
+    // Refresh Token 유효 시간 반환 (ms)
+    public long getRefreshTokenExpiry() {
+        return REFRESH_TOKEN_TIME;
+    }
+
     public String substringToken(String tokenValue) {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
-            return tokenValue.substring(7);
+            return tokenValue.substring(BEARER_PREFIX.length());
         }
         throw new IllegalStateException("Not Found Token");
     }
@@ -78,5 +97,11 @@ public class JwtUtil {
             log.warn("Invalid JWT Token: {}", e.getMessage());
             return false;
         }
+    }
+
+    // RefreshToken에서 사용자 ID 추출
+    public Long extractUserId(String token) {
+        Claims claims = extractClaims(token);
+        return Long.parseLong(claims.getSubject());
     }
 }

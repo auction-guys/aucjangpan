@@ -48,12 +48,6 @@ public class BidController {
             @ModelAttribute PageCond pageCond
     ) {
         Page<BidHistoryInfo> result = bidService.bidHistoriesInProgress(auctionSeq, pageCond);
-        PageInfo pageInfo = PageInfo.builder()
-                .pageNum(result.getNumber())
-                .pageSize(result.getSize())
-                .totalElement(result.getTotalElements())
-                .totalPage(result.getTotalPages())
-                .build();
-        return ResponseEntity.ok(Response.of(result.getContent(), pageInfo));
+        return ResponseEntity.ok(Response.of(result.getContent(), PageInfo.fromPage(result)));
     }
 }

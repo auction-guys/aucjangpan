@@ -21,6 +21,18 @@ spring:
       max-file-size: 10MB
       max-request-size: 20MB
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
@@ -80,3 +92,6 @@ naver:
     id: ${NAVER_ID}
     secret: ${NAVER_SECRET}
     url: https://openapi.naver.com/v1/search/shop.json
+
+settlement:
+  email: ${ADMIN_EMAIL}

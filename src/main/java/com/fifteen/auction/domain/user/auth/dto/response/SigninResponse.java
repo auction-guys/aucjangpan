@@ -8,4 +8,5 @@ import lombok.RequiredArgsConstructor;
 public class SigninResponse {
 
     private final String jwt;
+    private final String refreshToken;
 }

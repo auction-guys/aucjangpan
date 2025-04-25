@@ -35,7 +35,7 @@ public class ScheduledAuctionService {
         // 스케줄러 세팅
         Instant reservedTime = event.getExpiresAt().atZone(ZoneId.systemDefault()).toInstant();
         ScheduledFuture<?> scheduled = taskScheduler.schedule(
-                sendExpirationMessage(event.getAuctionId(), event.getAuctionSeq(), event.getStartPrice()),
+                () -> handleExpiration(event.getAuctionId(), event.getAuctionSeq(), event.getStartPrice()),
                 reservedTime
         );
         scheduledWork.put(event.getAuctionSeq(), scheduled);
@@ -44,7 +44,12 @@ public class ScheduledAuctionService {
     @EventListener(BuyNowEvent.class)
     public void handleBuyNow(BuyNowEvent event) {
         cancelReservedNoti(event);
+        processBuyNowMessaging(event);
 
+        log.info("sent buy now message for auction: {}", event.getAuctionSeq());
+    }
+
+    public void processBuyNowMessaging(BuyNowEvent event) {
         // 낙찰자 메시지 전송
         sendWinnerMessage(event.getAuctionSeq(), event.getWinnerId());
 
@@ -53,43 +58,39 @@ public class ScheduledAuctionService {
         sendParticipantsMessage(event.getAuctionSeq(), participants);
 
         auctionCacheService.flushTopBidCache(event.getAuctionSeq());
+    }
 
-        log.info("sent buy now message for auction: {}", event.getAuctionSeq());
+    public void handleExpiration(Long auctionId, String auctionSeq, Long startPrice) {
+        // 현재 가격 가져오기
+        Long currentPrice = auctionCacheService.findCurrentPrice(auctionSeq);
+
+        // 유찰 처리
+        if (currentPrice.equals(startPrice)) {
+            auctionService.miscarry(auctionId);
+            return;
+        }
+
+        // 입찰 이력 긁어오기
+        List<Long> participants = auctionCacheService.findParticipants(auctionSeq);
+
+        // 낙찰자 처리
+        Long winnerId = participants.get(0);
+        auctionService.processWinning(auctionSeq, winnerId, currentPrice);
+        sendWinnerMessage(auctionSeq, winnerId);
+
+        // 이외 사람들 처리
+        sendParticipantsMessage(auctionSeq, participants.subList(1, participants.size()));
+
+        auctionCacheService.flushTopBidCache(auctionSeq);
+
+        scheduledWork.remove(auctionSeq);
+
+        log.info("sent expiration message for auction: {}", auctionSeq);
     }
 
     private void cancelReservedNoti(BuyNowEvent event) {
         scheduledWork.get(event.getAuctionSeq()).cancel(true);
         scheduledWork.remove(event.getAuctionSeq());
-    }
-
-    private Runnable sendExpirationMessage(Long auctionId, String auctionSeq, Long startPrice) {
-        return () -> {
-            // 현재 가격 가져오기
-            Long currentPrice = auctionCacheService.findCurrentPrice(auctionSeq);
-
-            // 유찰 처리
-            if (currentPrice.equals(startPrice)) {
-                auctionService.miscarry(auctionId);
-                return;
-            }
-
-            // 입찰 이력 긁어오기
-            List<Long> participants = auctionCacheService.findParticipants(auctionSeq);
-
-            // 낙찰자 처리
-            Long winnerId = participants.get(0);
-            auctionService.processWinning(auctionSeq, winnerId, currentPrice);
-            sendWinnerMessage(auctionSeq, winnerId);
-
-            // 이외 사람들 처리
-            sendParticipantsMessage(auctionSeq, participants.subList(1, participants.size()));
-
-            auctionCacheService.flushTopBidCache(auctionSeq);
-
-            scheduledWork.remove(auctionSeq);
-
-            log.info("sent expiration message for auction: {}", auctionSeq);
-        };
     }
 
     private void sendParticipantsMessage(String auctionSeq, List<Long> participants) {

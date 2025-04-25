@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.user.auth.service;
 
-import com.fifteen.auction.domain.recommend.dto.response.RecommendationResponse;
 import com.fifteen.auction.domain.recommend.entity.RecommendGroup;
 import com.fifteen.auction.domain.recommend.enums.AgeGroup;
 import com.fifteen.auction.domain.recommend.enums.Gender;
@@ -10,6 +9,7 @@ import com.fifteen.auction.domain.recommend.service.RecommendService;
 import com.fifteen.auction.domain.user.auth.dto.request.SigninRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.SignupRequest;
 import com.fifteen.auction.domain.user.auth.dto.request.WithdrawRequest;
+import com.fifteen.auction.domain.user.auth.dto.response.AccessTokenResponse;
 import com.fifteen.auction.domain.user.auth.dto.response.SigninResponse;
 import com.fifteen.auction.domain.user.auth.util.JwtUtil;
 import com.fifteen.auction.domain.user.entity.User;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -61,10 +60,10 @@ public class AuthService {
         User user = new User(signupRequest.getEmail(),
                 signupRequest.getNickname(),
                 signupRequest.getName(),
-                signupRequest.getGender(),
-                signupRequest.getAgeGroup(),
+                Gender.from(signupRequest.getGender()),
+                AgeGroup.from(signupRequest.getAgeGroup()),
                 encodedPassword,
-                signupRequest.getAddress(),
+                Region.from(signupRequest.getAddress()),
                 signupRequest.getContactNumber(),
                 signupRequest.getPreferCategory(),
                 signupRequest.getAccountNumber(),
@@ -91,8 +90,17 @@ public class AuthService {
 
         String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
         String jwt = jwtUtil.substringToken(bearerToken);
+        String refreshToken = jwtUtil.createRefreshToken(user.getId()); //리프레쉬 토큰 생성
 
-        return new SigninResponse(jwt);
+        // 리프레쉬 토큰 Redis 저장 (key: RT:<userId>)
+        redisTemplate.opsForValue().set(
+                "RT:" + user.getId(),
+                refreshToken,
+                jwtUtil.getRefreshTokenExpiry(),
+                TimeUnit.MILLISECONDS
+        );
+
+        return new SigninResponse(jwt, refreshToken);
     }
 
     @Transactional
@@ -109,15 +117,22 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 3. Redis에 이미 로그아웃된 토큰인지 확인 + 저장 (원자적으로 처리)
-        String key = "BLACKLIST:" + token;
-        Long expiration = jwtUtil.getTokenExpiration(token);
-        Boolean isSet = redisTemplate.opsForValue().setIfAbsent(key, "logout", expiration, TimeUnit.MILLISECONDS);
+        // 3. 사용자 ID 추출
+        Long userId = jwtUtil.extractUserId(token);
 
-        // 4. 이미 존재한다면 → 이미 로그아웃된 토큰
+        // 4. Redis에 이미 로그아웃된 토큰인지 확인 + 저장 (원자적으로 처리)
+        String blacklistKey = "BLACKLIST:" + token;
+        Long expiration = jwtUtil.getTokenExpiration(token);
+        Boolean isSet = redisTemplate.opsForValue().setIfAbsent(blacklistKey, "logout", expiration, TimeUnit.MILLISECONDS);
+
+        // 5. 이미 존재한다면 → 이미 로그아웃된 토큰
         if (Boolean.FALSE.equals(isSet)) {
             throw new ClientException(ErrorCode.ALREADY_LOGOUT);
         }
+
+        // 6. Refresh Token 삭제
+        String refreshTokenKey = "RT:" + userId;
+        redisTemplate.delete(refreshTokenKey);
     }
 
     @Transactional
@@ -130,6 +145,52 @@ public class AuthService {
             throw new ClientException(ErrorCode.INVALID_PASSWORD);
         }
 
-        userRepository.softDeleteByEmail(user.getEmail()); // soft-delete 기능 구현
+        userRepository.softDeleteByEmail(user.getEmail());
+        redisTemplate.delete("RT:" + user.getId()); // Refresh Token 삭제
+    }
+
+    @Transactional
+    public AccessTokenResponse reissue(String refreshToken) {
+        // 유효성 검사
+        if (!StringUtils.hasText(refreshToken) || !refreshToken.startsWith("Bearer ")) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String pureToken = jwtUtil.substringToken(refreshToken);
+        if (!jwtUtil.validateToken(pureToken)) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 사용자 ID 추출
+        Long userId = jwtUtil.extractUserId(pureToken);
+
+        // Redis에 저장된 RefreshToken과 일치하는지 확인
+        String redisKey = "RT:" + userId;
+        String storedToken = redisTemplate.opsForValue().get(redisKey);
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            throw new ClientException(ErrorCode.INVALID_TOKEN);
+        }
+
+        // 사용자 정보 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
+
+        // 기존 Refresh Token 삭제
+        redisTemplate.delete(redisKey);
+
+        // 새로운 AccessToken과 RefreshToken 생성
+        String newAccessToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getRole().name());
+        String newJwt = jwtUtil.substringToken(newAccessToken);
+        String newRefreshToken = jwtUtil.createRefreshToken(user.getId());
+
+        // 새로운 Refresh Token을 Redis에 저장
+        redisTemplate.opsForValue().set(
+                redisKey,
+                newRefreshToken,
+                jwtUtil.getRefreshTokenExpiry(),
+                TimeUnit.MILLISECONDS
+        );
+
+        return new AccessTokenResponse(newJwt, newRefreshToken);
     }
 }

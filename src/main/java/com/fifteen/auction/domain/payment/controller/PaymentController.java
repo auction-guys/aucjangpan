@@ -4,19 +4,32 @@ import com.fifteen.auction.domain.payment.dto.request.CancelPaymentRequest;
 import com.fifteen.auction.domain.payment.dto.request.PaymentRequest;
 import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
+import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
+import com.fifteen.auction.domain.payment.util.toss.TossWebhookVerifier;
 import com.fifteen.auction.global.dto.Response;
+import com.fifteen.auction.global.dto.error.ErrorCode;
+import com.fifteen.auction.global.dto.exception.ServerException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.Executor;
+
 @Slf4j
 @RestController
-@RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final Executor executor;
+
+    public PaymentController(PaymentService paymentService, @Qualifier("customWebhookExecutor") Executor executor) {
+        this.paymentService = paymentService;
+        this.executor = executor;
+    }
 
     @GetMapping("/api/v1/payment/cancelReason")
     public ResponseEntity<Void> getCancelReason(
@@ -56,5 +69,22 @@ public class PaymentController {
 
         Long currentUserId = 2L;
         return ResponseEntity.ok(Response.of(paymentService.findPayment(paymentKey, currentUserId)));
+    }
+
+    @PostMapping("/api/v1/payments/webhook")
+    public ResponseEntity<Response<FindPaymentResponse>> receiveWebhook(
+            @RequestBody PaymentResponse dto,
+            HttpServletRequest request) {
+
+        // 웹훅 검증
+        TossWebhookVerifier tossWebhookVerifier = new TossWebhookVerifier();
+        if(!tossWebhookVerifier.isValidSignature(request)){
+            throw new ServerException(ErrorCode.PAYMENT_WEBHOOK_DENIED);
+        }
+
+        // 웹훅 처리 (비동기)
+        executor.execute(() -> { paymentService.receiveWebhook(dto); });
+
+        return ResponseEntity.ok().build();
     }
 }

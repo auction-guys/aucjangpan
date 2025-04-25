@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface SettlementRepositoryCustom {
 
-    List<Settlement> findByStatus(SettlementStatus settlementStatus);
+    List<Settlement> findAllByStatus(SettlementStatus settlementStatus);
 
     Page<SettlementResponse> findBySellerId(Long currentUserId, Pageable pageable);
 }

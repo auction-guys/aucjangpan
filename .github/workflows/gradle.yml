@@ -72,6 +72,9 @@ jobs:
         NAVER_ID=${{secrets.NAVER_ID}}
         NAVER_SECRET=${{secrets.NAVER_SECRET}}
         EC2_HOST=${{secrets.EC2_HOST}}
+        GMAIL_USERNAME=${{secrets.GMAIL_USERNAME}}
+        GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
+        ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
         EOF
         
     - name: Copy .env to EC2

@@ -136,12 +136,13 @@ public class Auction extends BaseEntity {
     public void extendExpireTime(LocalDateTime bidAt) {
         if (this.isAutoExtensible && is1minBeforeExpiration(bidAt)) {
             this.expiresAt = this.expiresAt.plusMinutes(EXTENSION_TIME);
+            this.isAutoExtensible = false; // TODO(yeonic) : 동시성 문제 해결 필요할수도
         }
     }
 
     public void updateInfo(
             Long startPrice, Long buyNowPrice, Integer bidUnit,
-            Boolean isBuyNowSet, Boolean isAutoExtensible
+            Boolean isBuyNowSet, Boolean isAutoExtensible, LocalDateTime expiresAt
     ) {
         if (this.status != AuctionStatus.PENDING) {
             throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
@@ -151,11 +152,13 @@ public class Auction extends BaseEntity {
         this.bidUnit = useIfNotNull(bidUnit, this.bidUnit);
         this.isBuyNowSet = useIfNotNull(isBuyNowSet, this.isBuyNowSet);
         this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
+        this.expiresAt = useIfNotNull(expiresAt, this.expiresAt);
     }
+
 
     private boolean is1minBeforeExpiration(LocalDateTime bidAt) {
         Duration between = Duration.between(bidAt, this.expiresAt).abs();
-        return between.toMinutes() == 0 && between.getSeconds() <= 60;
+        return between.toMinutes() == 0 && between.getSeconds() < 60;
     }
 
     private <T> T useIfNotNull(T input, T existing) {

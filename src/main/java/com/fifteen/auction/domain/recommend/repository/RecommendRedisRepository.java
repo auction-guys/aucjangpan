@@ -17,9 +17,11 @@ import java.util.Set;
 public class RecommendRedisRepository {
 
     private final StringRedisTemplate redisTemplate;
+
     private static final Duration RECOMMEND_TTL = Duration.ofHours(1);
 
     private static final String RECOMMEND_KEY_PREFIX = "recommend:group:";
+
 
     public void saveRecommendation(Long groupId, Long auctionId, int score) {
         String key = RECOMMEND_KEY_PREFIX + groupId;

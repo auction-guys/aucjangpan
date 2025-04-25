@@ -40,14 +40,14 @@ public class Settlement {
         this.order = order;
     }
 
-    public void validateOwner(Long userId){
-        if(!this.order.getAuction().getProduct().getSeller().getId().equals(userId)){
+    public void validateOwner(Long userId) {
+        if (!this.order.getAuction().getProduct().getSeller().getId().equals(userId)) {
             throw new ClientException(ErrorCode.ORDER_ACCESS_DENIED);
         }
     }
 
     public void settled() {
-        this.status = SettlementStatus.IN_PROGRESS;
+        this.status = SettlementStatus.COMPLETED;
         this.settledAt = LocalDate.now().atStartOfDay();
     }
 
@@ -56,6 +56,5 @@ public class Settlement {
         this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
-        this.settledAt = LocalDate.now().atStartOfDay();
     }
 }
