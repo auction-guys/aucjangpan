@@ -34,4 +34,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("select p from Product p join fetch p.seller where p.id = :productId and p.deletedAt is null ")
     Optional<Product> findByIdWithSeller(@Param("productId") Long id);
 
+    List<Product> findTop10ByNameOrderByCreatedAtDesc(String name);
+
+    Optional<Product> findTopByNameOrderByCreatedAtDesc(String name);
+
+
 }

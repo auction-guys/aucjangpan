@@ -4,6 +4,7 @@ package com.fifteen.auction.domain.auction.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.product.dto.response.FutureMarketPriceResponse;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -32,12 +33,13 @@ public class AuctionDetail {
     private Integer views;
 
     private MarketPriceFullResponse marketPrice;
+    private FutureMarketPriceResponse futurePrices; // 미래 3개월 시세
 
     //조회수 views 추가
     private AuctionDetail(
             String productName, String auctionSeq, Integer bidUnit, Long buyNowPrice,
             Boolean isBuyNowSet, Boolean isAutoExtensible, LocalDateTime expiresAt,
-            Integer views, MarketPriceFullResponse marketPrice
+            Integer views, MarketPriceFullResponse marketPrice, FutureMarketPriceResponse futurePrices
     ) {
         this.productName = productName;
         this.auctionSeq = auctionSeq;
@@ -48,14 +50,16 @@ public class AuctionDetail {
         this.expiresAt = expiresAt;
         this.views = views;
         this.marketPrice = marketPrice;
+        this.futurePrices = futurePrices;
     }
 
     public void updateBidInfo(Long currentPrice, Long bidCount) {
         this.currentPrice = currentPrice;
         this.bidCount = bidCount;
     }
-
-    public static AuctionDetail fromAuction(Auction auction, MarketPriceFullResponse marketPrice) {
+    public static AuctionDetail fromAuction(Auction auction,
+                                            MarketPriceFullResponse marketPrice,
+                                            FutureMarketPriceResponse futurePrices) {
         return new AuctionDetail(
                 auction.getProduct().getName(),
                 auction.getAuctionSeq(),
@@ -65,7 +69,8 @@ public class AuctionDetail {
                 auction.isAutoExtensible(),
                 auction.getExpiresAt(),
                 auction.getViews(),
-                marketPrice
+                marketPrice,
+                futurePrices
         );
     }
 }
