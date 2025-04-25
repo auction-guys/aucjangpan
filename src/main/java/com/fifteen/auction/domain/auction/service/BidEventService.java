@@ -1,6 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
@@ -32,6 +33,7 @@ public class BidEventService implements BidEventUseCase {
     private final ClockHolder clockHolder;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    @Override
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleBidProcess(BidProcessEvent event) {
@@ -52,11 +54,7 @@ public class BidEventService implements BidEventUseCase {
         Auction auc = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime bidAt = clockHolder.now();
-
-        if (bidAt.isAfter(auc.getExpiresAt())) {
-            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
-        }
+        LocalDateTime bidAt = verifyAndGetRequestTime(auc.getExpiresAt(), ErrorCode.INVALID_BID_REQUEST);
 
         // bid price cache 체크
         if (auctionRedisRepository.isBidUnderPrice(auc.getAuctionSeq(), bidPrice, auc.getBidUnit())) {
@@ -66,5 +64,29 @@ public class BidEventService implements BidEventUseCase {
         bidRepository.save(new Bid(auc, bidderId, bidPrice, bidAt));
         applicationEventPublisher.publishEvent(
                 new BidProcessEvent(auctionSeq, bidderId, bidPrice, bidAt));
+    }
+
+    @Override
+    @Transactional
+    public void handleBuyNowFromQueue(String auctionSeq, Long bidderId) {
+        Auction auc = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime buyAt = verifyAndGetRequestTime(auc.getExpiresAt(), ErrorCode.INVALID_BUY_NOW_REQUEST);
+
+        auc.finalize(bidderId, auc.getBuyNowPrice(), buyAt);
+
+        bidRepository.save(new Bid(auc, bidderId, auc.getBuyNowPrice(), buyAt));
+
+        applicationEventPublisher.publishEvent(BuyNowProcessEvent.fromAuction(auc));
+    }
+
+    private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (buyAt.isAfter(expiresAt)) {
+            throw new ClientException(errorCode);
+        }
+        return buyAt;
     }
 }

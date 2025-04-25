@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowRequestEvent;
 import com.fifteen.auction.domain.auction.infrastructure.QueueKeyResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.*;
@@ -12,6 +14,7 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.DefaultClassMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -22,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @Configuration
@@ -33,6 +37,10 @@ public class RabbitConfig {
     public static final String BID_QUEUE_PREFIX = "bid.queue.";
     public static final String BID_ROUTING_KEY_PREFIX = "bid.routing.";
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+    public static final String TYPE_ID_HEADER_KEY = "__TypeId__";
+    public static final String TYPE_ID_BID_REQUEST_EVENT = "BidRequestEvent";
+    public static final String TYPE_ID_BUY_NOW_REQUEST_EVENT = "BuyNowRequestEvent";
 
     private static final List<String> queueNames = new ArrayList<>();
 
@@ -90,7 +98,16 @@ public class RabbitConfig {
                         .addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DATE_FORMATTER))
                         .addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DATE_FORMATTER))
         );
-        return new Jackson2JsonMessageConverter(om);
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(om);
+
+        DefaultClassMapper classMapper = new DefaultClassMapper();
+        classMapper.setIdClassMapping(Map.ofEntries(
+                        Map.entry(TYPE_ID_BID_REQUEST_EVENT, BidRequestEvent.class),
+                        Map.entry(TYPE_ID_BUY_NOW_REQUEST_EVENT, BuyNowRequestEvent.class)
+                )
+        );
+        converter.setClassMapper(classMapper);
+        return converter;
     }
 
     @Bean

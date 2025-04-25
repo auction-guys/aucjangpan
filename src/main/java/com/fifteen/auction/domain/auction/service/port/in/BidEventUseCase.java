@@ -6,5 +6,7 @@ public interface BidEventUseCase {
 
     void handleBidFromQueue(String auctionSeq, Long bidderId, Long bidPrice);
 
+    void handleBuyNowFromQueue(String auctionSeq, Long bidderId);
+
     void handleBidProcess(BidProcessEvent event);
 }

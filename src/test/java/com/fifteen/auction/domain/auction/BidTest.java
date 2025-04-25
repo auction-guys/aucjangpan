@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.auction;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -326,10 +326,10 @@ public class BidTest {
             bidService.buyNow("seq", 2L);
 
             // then
-            ArgumentCaptor<BuyNowEvent> captor = ArgumentCaptor.forClass(BuyNowEvent.class);
+            ArgumentCaptor<BuyNowProcessEvent> captor = ArgumentCaptor.forClass(BuyNowProcessEvent.class);
             verify(applicationEventPublisher, times(1)).publishEvent(captor.capture());
             assertSoftly(softly -> {
-                BuyNowEvent event = captor.getValue();
+                BuyNowProcessEvent event = captor.getValue();
                 softly.assertThat(event.getAuctionSeq()).isEqualTo("seq");
                 softly.assertThat(event.getWinnerId()).isEqualTo(2L);
                 softly.assertThat(event.getBuyNowPrice()).isEqualTo(8000L);

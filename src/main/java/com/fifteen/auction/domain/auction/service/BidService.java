@@ -2,7 +2,8 @@ package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
 import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowRequestEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
@@ -83,7 +84,7 @@ public class BidService {
 
         bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
 
-        applicationEventPublisher.publishEvent(BuyNowEvent.fromAuction(findAuction));
+        applicationEventPublisher.publishEvent(BuyNowProcessEvent.fromAuction(findAuction));
     }
 
     @Secured(ROLE_USER)
@@ -105,6 +106,22 @@ public class BidService {
         }
 
         auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
+    }
+
+
+    @Transactional
+    public void putBuyNowIntoQueue(String auctionSeq, Long userId) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        if (!findAuction.isBuyNowSet()) {
+            throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
+        }
+
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BUY_NOW_REQUEST);
+
+        auctionEventPublisher.publishBuyNowRequest(
+                new BuyNowRequestEvent(auctionSeq, userId, findAuction.getBuyNowPrice()));
     }
 
     private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {

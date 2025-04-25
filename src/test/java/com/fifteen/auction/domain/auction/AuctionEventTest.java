@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.auction;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
@@ -284,10 +284,10 @@ public class AuctionEventTest {
             String expectedMessage = CreateMessageRequest.forWinner(2L, "seq")
                     .getMessage();
 
-            BuyNowEvent buyNowEvent = BuyNowEvent.fromAuction(auction);
+            BuyNowProcessEvent buyNowProcessEvent = BuyNowProcessEvent.fromAuction(auction);
 
             // when
-            auctionScheduledService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowProcessEvent);
 
             // then
             ArgumentCaptor<CreateMessageRequest> captor = ArgumentCaptor.forClass(CreateMessageRequest.class);
@@ -303,7 +303,7 @@ public class AuctionEventTest {
             auction.open();
             auction.finalize(2L, 60000L, auction.getExpiresAt().minusHours(2));
 
-            BuyNowEvent buyNowEvent = BuyNowEvent.fromAuction(auction);
+            BuyNowProcessEvent buyNowProcessEvent = BuyNowProcessEvent.fromAuction(auction);
             String expectedMessage = CreateMessageRequest.forParticipants(2L, "seq")
                     .getMessage();
 
@@ -311,7 +311,7 @@ public class AuctionEventTest {
                     .willReturn(List.of(3L, 4L));
 
             // when
-            auctionScheduledService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowProcessEvent);
 
             // then
             ArgumentCaptor<List<CreateMessageRequest>> captor = ArgumentCaptor.forClass(List.class);

@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.AuctionOpenEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
@@ -42,15 +42,15 @@ public class AuctionScheduledService {
         scheduledWork.put(event.getAuctionSeq(), scheduled);
     }
 
-    @EventListener(BuyNowEvent.class)
-    public void handleBuyNow(BuyNowEvent event) {
+    @EventListener(BuyNowProcessEvent.class)
+    public void handleBuyNow(BuyNowProcessEvent event) {
         cancelReservedNoti(event);
         processBuyNowMessaging(event);
 
         log.info("sent buy now message for auction: {}", event.getAuctionSeq());
     }
 
-    public void processBuyNowMessaging(BuyNowEvent event) {
+    public void processBuyNowMessaging(BuyNowProcessEvent event) {
         // 낙찰자 메시지 전송
         sendWinnerMessage(event.getAuctionSeq(), event.getWinnerId());
 
@@ -89,7 +89,7 @@ public class AuctionScheduledService {
         log.info("sent expiration message for auction: {}", auctionSeq);
     }
 
-    private void cancelReservedNoti(BuyNowEvent event) {
+    private void cancelReservedNoti(BuyNowProcessEvent event) {
         scheduledWork.get(event.getAuctionSeq()).cancel(true);
         scheduledWork.remove(event.getAuctionSeq());
     }
