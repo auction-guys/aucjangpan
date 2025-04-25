@@ -20,7 +20,7 @@ public class RabbitBidRequestListener {
     @RabbitListener(queues = "#{rabbitConfig.queueNames}")
     public void bidRequestListener(BidRequestEvent e, Channel channel, Message raw) throws IOException {
         try {
-            log.info("[입찰 처리] auctionSeq:{}\tbidderId:{}\tbidPrice:{}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
+            log.info("[입찰 큐 이벤트 처리] auctionSeq={}\tbidderId={}\tbidPrice={}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
             bidService.handleBidFromQueue(e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
             channel.basicAck(raw.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception ex) {
