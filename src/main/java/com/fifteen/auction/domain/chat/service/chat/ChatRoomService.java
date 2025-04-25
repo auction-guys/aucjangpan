@@ -1,15 +1,20 @@
 package com.fifteen.auction.domain.chat.service.chat;
 
 import com.fifteen.auction.domain.chat.dto.response.ChatMessageResponse;
+import com.fifteen.auction.domain.chat.dto.response.ChatRoomListResponse;
 import com.fifteen.auction.domain.chat.dto.response.ChatRoomResponse;
 import com.fifteen.auction.domain.chat.entity.ChatRoom;
 import com.fifteen.auction.domain.chat.repository.message.ChatMessageRepository;
 import com.fifteen.auction.domain.chat.repository.room.ChatRoomRepository;
 import com.fifteen.auction.domain.user.repository.UserRepository;
+import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,5 +46,11 @@ public class ChatRoomService {
 
         ChatRoom newChatRoom = chatRoomRepository.save(new ChatRoom(userId, sellerId));
         return ChatRoomResponse.fromEntity(newChatRoom, Collections.emptyList());
+    }
+
+    public Page<ChatRoomListResponse> findChatRooms(PageCond cond, Long userId) {
+        log.info("service start");
+        Pageable pageable = PageRequest.of(cond.getPageNum()-1,cond.getPageSize());
+        return chatRoomRepository.findChatRoomsByUserId(userId, pageable);
     }
 }
