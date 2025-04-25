@@ -22,7 +22,7 @@ import java.util.concurrent.ScheduledFuture;
 
 @Slf4j @Service
 @RequiredArgsConstructor
-public class ScheduledAuctionService {
+public class AuctionScheduledService {
     private final TaskScheduler taskScheduler;
 
     private final AuctionRedisRepository auctionRedisRepository;

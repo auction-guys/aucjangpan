@@ -5,9 +5,9 @@ import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
+import com.fifteen.auction.domain.auction.service.AuctionScheduledService;
 import com.fifteen.auction.domain.auction.service.AuctionService;
 import com.fifteen.auction.domain.auction.service.BidEventService;
-import com.fifteen.auction.domain.auction.service.ScheduledAuctionService;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -140,14 +140,14 @@ public class AuctionEventTest {
         AuctionRedisRepository auctionRedisRepository;
         InboxService inboxService;
 
-        ScheduledAuctionService scheduledAuctionService;
+        AuctionScheduledService auctionScheduledService;
 
         public 종료된_경매() {
             auctionRepository = mock(AuctionRepository.class);
             auctionRedisRepository = mock(AuctionRedisRepository.class);
 
             inboxService = mock(InboxService.class);
-            scheduledAuctionService = new ScheduledAuctionService(
+            auctionScheduledService = new AuctionScheduledService(
                     mock(TaskScheduler.class),
                     auctionRedisRepository,
                     spy(new AuctionService(
@@ -170,7 +170,7 @@ public class AuctionEventTest {
             given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
 
             // when & then
-            assertThatThrownBy(() -> scheduledAuctionService.handleExpiration(1L, "seq", 8000L))
+            assertThatThrownBy(() -> auctionScheduledService.handleExpiration(1L, "seq", 8000L))
                     .isInstanceOf(ClientException.class)
                     .extracting(ERROR_CODE_ENUM_NAME)
                     .isEqualTo(ErrorCode.AUCTION_NOT_OPEN);
@@ -187,7 +187,7 @@ public class AuctionEventTest {
             given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             assertSoftly(softly -> {
@@ -210,7 +210,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             assertSoftly(softly -> {
@@ -238,7 +238,7 @@ public class AuctionEventTest {
                     .getMessage();
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             ArgumentCaptor<CreateMessageRequest> captor = ArgumentCaptor.forClass(CreateMessageRequest.class);
@@ -263,7 +263,7 @@ public class AuctionEventTest {
                     .getMessage();
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             ArgumentCaptor<List<CreateMessageRequest>> captor = ArgumentCaptor.forClass(List.class);
@@ -287,7 +287,7 @@ public class AuctionEventTest {
             BuyNowEvent buyNowEvent = BuyNowEvent.fromAuction(auction);
 
             // when
-            scheduledAuctionService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowEvent);
 
             // then
             ArgumentCaptor<CreateMessageRequest> captor = ArgumentCaptor.forClass(CreateMessageRequest.class);
@@ -311,7 +311,7 @@ public class AuctionEventTest {
                     .willReturn(List.of(3L, 4L));
 
             // when
-            scheduledAuctionService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowEvent);
 
             // then
             ArgumentCaptor<List<CreateMessageRequest>> captor = ArgumentCaptor.forClass(List.class);

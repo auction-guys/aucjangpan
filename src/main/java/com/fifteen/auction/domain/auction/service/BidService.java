@@ -48,15 +48,10 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        if (findAuction.isOwnedByUser(userId)) {
-            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
-        }
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BID_REQUEST);
 
-        LocalDateTime bidAt = clockHolder.now();
-
-        if (bidAt.isAfter(findAuction.getExpiresAt())) {
-            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
-        }
+        LocalDateTime bidAt = verifyAndGetRequestTime(
+                findAuction.getExpiresAt(), ErrorCode.INVALID_BID_REQUEST);
 
         // bid price cache 체크
         if (auctionRedisRepository.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
@@ -79,15 +74,10 @@ public class BidService {
             throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
         }
 
-        if (findAuction.isOwnedByUser(userId)) {
-            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
-        }
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BUY_NOW_REQUEST);
 
-        LocalDateTime buyAt = clockHolder.now();
-
-        if (buyAt.isAfter(findAuction.getExpiresAt())) {
-            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
-        }
+        LocalDateTime buyAt = verifyAndGetRequestTime(
+                findAuction.getExpiresAt(), ErrorCode.INVALID_BUY_NOW_REQUEST);
 
         findAuction.finalize(userId, findAuction.getBuyNowPrice(), buyAt);
 
@@ -103,18 +93,32 @@ public class BidService {
         return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
     }
 
+    @Secured(ROLE_USER)
     public void putBidIntoQueue(String auctionSeq, Long userId, Long bidPrice) {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        if (findAuction.isOwnedByUser(userId)) {
-            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
-        }
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BID_REQUEST);
 
         if (auctionRedisRepository.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
         auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
+    }
+
+    private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (buyAt.isAfter(expiresAt)) {
+            throw new ClientException(errorCode);
+        }
+        return buyAt;
+    }
+
+    private void verifyAuctionOwnerShip(Long userId, Auction findAuction, ErrorCode errorCode) {
+        if (findAuction.isOwnedByUser(userId)) {
+            throw new ClientException(errorCode);
+        }
     }
 }
