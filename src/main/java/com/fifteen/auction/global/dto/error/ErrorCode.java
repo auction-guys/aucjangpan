@@ -111,6 +111,7 @@ public enum ErrorCode {
 
     // Chat Exception
     INVALID_CHAT_REQUEST(HttpStatus.BAD_REQUEST, "CHAT-1", "본인과의 채팅은 불가능합니다."),
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND,"CHAT-2","존재하지 않는 채팅방입니다."),
 
     NAVER_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API-1", "네이버 오픈 API 호출 중 오류가 발생했습니다."),
     GOOGLE_API_ERROR(HttpStatus.BAD_REQUEST, "GOOGLE-1", "Google OAuth API 호출 중 오류가 발생했습니다."),

@@ -31,7 +31,7 @@ public class ChatMessageService {
     @Transactional
     public ChatMessageResponse sendChatMessageV1(ChatMessageRequest req, Long senderId) {
         ChatRoom chatRoom = chatRoomRepository.findById(req.getChatRoomId())
-                .orElseThrow(()-> new ClientException(ErrorCode.INVALID_CHAT_REQUEST));
+                .orElseThrow(()-> new ClientException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         User sender = userRepository.findById(senderId)
                 .orElseThrow(()->new ClientException(ErrorCode.USER_NOT_FOUND));
@@ -47,7 +47,7 @@ public class ChatMessageService {
     @Transactional(readOnly = true)
     public void sendChatMessageV2(ChatMessageRequest req, Long senderId) {
         ChatRoom chatRoom = chatRoomRepository.findById(req.getChatRoomId())
-                .orElseThrow(()-> new ClientException(ErrorCode.INVALID_CHAT_REQUEST));
+                .orElseThrow(()-> new ClientException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         User sender = userRepository.findById(senderId)
                 .orElseThrow(()-> new ClientException(ErrorCode.USER_NOT_FOUND));

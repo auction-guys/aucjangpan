@@ -48,8 +48,8 @@ public class ChatRoomService {
         return ChatRoomResponse.fromEntity(newChatRoom, Collections.emptyList());
     }
 
+    @Transactional(readOnly = true)
     public Page<ChatRoomListResponse> findChatRooms(PageCond cond, Long userId) {
-        log.info("service start");
         Pageable pageable = PageRequest.of(cond.getPageNum()-1,cond.getPageSize());
         return chatRoomRepository.findChatRoomsByUserId(userId, pageable);
     }
