@@ -100,10 +100,15 @@ public class Auction extends BaseEntity {
         this.views = 0;
     }
 
-    public void open() {
+    public void open(LocalDateTime now) {
         if (this.status != AuctionStatus.PENDING) {
             throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
         }
+
+        if (now.isAfter(this.getExpiresAt())) {
+            throw new ClientException(ErrorCode.CANNOT_OPEN_EXPIRED);
+        }
+
         this.status = AuctionStatus.OPEN;
     }
 

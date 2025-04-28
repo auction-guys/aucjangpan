@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,7 +73,7 @@ public class BidTest {
         void 입찰_은_자신이_생성한_경매에는_요청할_수_없다() {
             // given
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             BidRequest request = new BidRequest(8000L);
 
@@ -91,7 +92,7 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -111,7 +112,7 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -132,7 +133,7 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -180,7 +181,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", false, null);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -197,7 +198,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -214,7 +215,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -251,7 +252,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 8000L, auction.getExpiresAt());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
@@ -271,7 +272,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -293,7 +294,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -315,7 +316,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -345,7 +346,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             List<BidHistoryInfo> resultContent = List.of(
                     BidHistoryInfo.forProgress(defaultBid(auction, 2L, 8000L)),

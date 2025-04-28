@@ -138,7 +138,7 @@ public class AuctionTest {
         void 경매_내역_조회_에서_진행중인_경매는_현재_가격과_종료_예정_시각을_포함한다() {
             // given
             Auction openAuction = defaultAuction(1L, 1L, "seq");
-            openAuction.open();
+            openAuction.open(LocalDateTime.now());
 
             given(bidRepository.findJoinedAuction(any(Pageable.class), anyLong()))
                     .willReturn(new PageImpl<>(List.of(openAuction)));
@@ -162,7 +162,7 @@ public class AuctionTest {
         void 경매_내역_조회_에서_유찰된_경매는_시작_가격과_종료_시각을_포함한다() {
             // given
             Auction miscarryAuction = defaultAuction(1L, 1L, "seq");
-            miscarryAuction.open();
+            miscarryAuction.open(LocalDateTime.now());
             miscarryAuction.misCarry();
 
             given(bidRepository.findJoinedAuction(any(Pageable.class), anyLong()))
@@ -187,7 +187,7 @@ public class AuctionTest {
             LocalDateTime doneAt = LocalDateTime.now();
 
             Auction doneAuction = defaultAuction(1L, 1L, "seq");
-            doneAuction.open();
+            doneAuction.open(LocalDateTime.now());
             doneAuction.finalize(2L, 10000L, doneAt);
 
             given(bidRepository.findJoinedAuction(any(Pageable.class), anyLong()))
@@ -212,7 +212,7 @@ public class AuctionTest {
         void 경매_취소_를_공개_전_상태가_아닌데_시도하면_예외가_발생한다() {
             // given
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
                     .willReturn(Optional.of(auction));
@@ -248,7 +248,7 @@ public class AuctionTest {
         void 경매_공개_를_공개_전_상태가_아닌데_시도하면_예외가_발생한다() {
             // given
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
                     .willReturn(Optional.of(auction));
@@ -267,6 +267,8 @@ public class AuctionTest {
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
                     .willReturn(Optional.of(auction));
+            given(clockHolder.now())
+                    .willReturn(LocalDateTime.now());
 
             // when
             auctionService.open("seq", 1L);
@@ -282,6 +284,8 @@ public class AuctionTest {
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
                     .willReturn(Optional.of(auction));
+            given(clockHolder.now())
+                    .willReturn(LocalDateTime.now());
 
             // when
             auctionService.open("seq", 1L);
@@ -335,7 +339,7 @@ public class AuctionTest {
         void 경매_정보_변경_을_공개_전_상태가_아닌데_시도하면_예외가_발생한다() {
             // given
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             LocalDateTime newExpiresAt = LocalDateTime.now();
 

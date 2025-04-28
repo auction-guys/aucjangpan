@@ -3,7 +3,7 @@ package com.fifteen.auction.domain.auction;
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.infrastructure.SpringAuctionScheduleListener;
+import com.fifteen.auction.domain.auction.infrastructure.SpringAuctionMessageProcessor;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.service.AuctionService;
@@ -140,21 +140,21 @@ public class AuctionEventTest {
         AuctionRedisRepository auctionRedisRepository;
         InboxService inboxService;
 
-        SpringAuctionScheduleListener auctionScheduledService;
+        SpringAuctionMessageProcessor auctionScheduledService;
 
         public 종료된_경매() {
             auctionRepository = mock(AuctionRepository.class);
             auctionRedisRepository = mock(AuctionRedisRepository.class);
 
             inboxService = mock(InboxService.class);
-            auctionScheduledService = new SpringAuctionScheduleListener(
+            auctionScheduledService = new SpringAuctionMessageProcessor(
                     mock(TaskScheduler.class),
                     auctionRedisRepository,
                     spy(new AuctionService(
                             auctionRepository,
                             null, null, null,
                             auctionRedisRepository,
-                            null, null, null
+                            null, null, null, null
                     )),
                     inboxService
             );
@@ -181,7 +181,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(8000L);
             given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
@@ -201,7 +201,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
             given(auctionRedisRepository.findParticipants("seq"))
@@ -226,7 +226,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
             given(auctionRedisRepository.findParticipants("seq"))
@@ -251,7 +251,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
             given(auctionRedisRepository.findParticipants("seq"))
@@ -278,7 +278,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withIsBuyNow(1L, 1L, "seq", true, 60000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 60000L, auction.getExpiresAt().minusHours(2));
 
             String expectedMessage = CreateMessageRequest.forWinner(2L, "seq")
@@ -300,7 +300,7 @@ public class AuctionEventTest {
             // given
             Auction auction = withIsBuyNow(1L, 1L, "seq", true, 60000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 60000L, auction.getExpiresAt().minusHours(2));
 
             BuyNowProcessEvent buyNowProcessEvent = BuyNowProcessEvent.fromAuction(auction);
