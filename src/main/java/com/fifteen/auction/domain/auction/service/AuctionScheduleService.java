@@ -23,15 +23,14 @@ public class AuctionScheduleService implements AuctionScheduleProcessor {
         // 현재 가격 가져오기
         Long currentPrice = auctionRedisRepository.findCurrentPrice(auctionSeq);
 
-        // 입찰 이력 긁어오기
-        List<Long> participants = auctionRedisRepository.findParticipants(auctionSeq);
-
         // 유찰 처리
         if (currentPrice.equals(startPrice)) {
             auctionService.miscarry(auctionId);
-            sendParticipantsMessage(auctionSeq, participants);
             return;
         }
+
+        // 입찰 이력 긁어오기
+        List<Long> participants = auctionRedisRepository.findParticipants(auctionSeq);
 
         // 낙찰자 처리
         Long winnerId = participants.get(0);
