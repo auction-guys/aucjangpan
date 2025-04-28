@@ -3,7 +3,7 @@ package com.fifteen.auction.domain.auction;
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
-import com.fifteen.auction.domain.auction.infrastructure.SpringAuctionMessageProcessor;
+import com.fifteen.auction.domain.auction.infrastructure.SpringAuctionMessageListener;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.service.AuctionService;
@@ -140,14 +140,14 @@ public class AuctionEventTest {
         AuctionRedisRepository auctionRedisRepository;
         InboxService inboxService;
 
-        SpringAuctionMessageProcessor auctionScheduledService;
+        SpringAuctionMessageListener auctionScheduledService;
 
         public 종료된_경매() {
             auctionRepository = mock(AuctionRepository.class);
             auctionRedisRepository = mock(AuctionRedisRepository.class);
 
             inboxService = mock(InboxService.class);
-            auctionScheduledService = new SpringAuctionMessageProcessor(
+            auctionScheduledService = new SpringAuctionMessageListener(
                     mock(TaskScheduler.class),
                     auctionRedisRepository,
                     spy(new AuctionService(

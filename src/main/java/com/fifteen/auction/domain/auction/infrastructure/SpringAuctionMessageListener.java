@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledFuture;
 
 @Slf4j @Service
 @RequiredArgsConstructor
-public class SpringAuctionScheduleListener {
+public class SpringAuctionMessageListener {
     private final TaskScheduler taskScheduler;
 
     private final AuctionRedisRepository auctionRedisRepository;

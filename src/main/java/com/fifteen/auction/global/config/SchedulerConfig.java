@@ -5,17 +5,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.scheduler.SchedulerClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
-import java.net.URI;
-
 @Configuration
 public class SchedulerConfig {
 
-    @Value("${aws-scheduler.client.endpoint}")
-    private String awsClientEndPoint;
+    @Value("${aws-scheduler.access-key-id}")
+    private String accessKeyId;
+
+    @Value("${aws-scheduler.secret-access-key}")
+    private String secretAccessKey;
 
     @Bean
     public TaskScheduler taskScheduler() {
@@ -26,7 +29,9 @@ public class SchedulerConfig {
     public SchedulerClient schedulerClient() {
         return SchedulerClient.builder()
                 .region(Region.AP_NORTHEAST_2)
-                .endpointOverride(URI.create(awsClientEndPoint))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
+                ))
                 .build();
     }
 
@@ -34,7 +39,9 @@ public class SchedulerConfig {
     public SqsClient sqsClient() {
         return SqsClient.builder()
                 .region(Region.AP_NORTHEAST_2)
-                .endpointOverride(URI.create(awsClientEndPoint))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
+                ))
                 .build();
     }
 }

@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.scheduler.model.DeleteScheduleRequest;
 import software.amazon.awssdk.services.scheduler.model.FlexibleTimeWindow;
 import software.amazon.awssdk.services.scheduler.model.Target;
 
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -28,15 +29,16 @@ public class AwsAuctionEndScheduleService implements AuctionEndScheduleService {
     private final SchedulerClient client;
 
     public static final String RESERVE_MESSAGE_FORMAT =
-            "{\"auctionId\": %d, \"auctionSeq\": %s, \"startPrice\": %d}";
+            "{\"auctionId\": %d, \"auctionSeq\": \"%s\", \"startPrice\": %d}";
 
     @Override
     public void scheduleAuctionEnd(AuctionOpenEvent e) {
         String scheduleName = "auction-end-" + e.getAuctionSeq();
 
-        String reservedTime = DateTimeFormatter.ISO_INSTANT
-                .withZone(ZoneOffset.UTC)
-                .format(e.getExpiresAt());
+        String reservedTime = e.getExpiresAt()
+                .atZone(ZoneId.of("Asia/Seoul"))
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
 
         String reserveMessage = String.format(RESERVE_MESSAGE_FORMAT,
                 e.getAuctionId(), e.getAuctionSeq(), e.getStartPrice()

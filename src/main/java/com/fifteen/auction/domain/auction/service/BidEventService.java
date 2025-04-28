@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowV2ProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
@@ -78,7 +78,7 @@ public class BidEventService implements BidEventHandler {
 
         bidRepository.save(new Bid(auc, bidderId, auc.getBuyNowPrice(), buyAt));
 
-        applicationEventPublisher.publishEvent(BuyNowProcessEvent.fromAuction(auc));
+        applicationEventPublisher.publishEvent(BuyNowV2ProcessEvent.fromAuction(auc));
     }
 
     private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {
