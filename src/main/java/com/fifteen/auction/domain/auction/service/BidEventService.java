@@ -7,7 +7,7 @@ import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
-import com.fifteen.auction.domain.auction.service.port.in.BidEventHandlerUseCase;
+import com.fifteen.auction.domain.auction.service.port.in.BidEventHandler;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
-public class BidEventServiceUseCase implements BidEventHandlerUseCase {
+public class BidEventService implements BidEventHandler {
 
     private final AuctionRedisRepository auctionRedisRepository;
 

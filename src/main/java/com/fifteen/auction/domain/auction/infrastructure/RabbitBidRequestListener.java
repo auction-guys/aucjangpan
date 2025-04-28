@@ -2,7 +2,7 @@ package com.fifteen.auction.domain.auction.infrastructure;
 
 import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowRequestEvent;
-import com.fifteen.auction.domain.auction.service.port.in.BidEventUseCase;
+import com.fifteen.auction.domain.auction.service.port.in.BidEventHandler;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import static com.fifteen.auction.global.config.RabbitConfig.*;
 @RequiredArgsConstructor
 public class RabbitBidRequestListener {
 
-    private final BidEventUseCase bidEventUseCase;
+    private final BidEventHandler bidEventHandler;
 
     private final Jackson2JsonMessageConverter messageConverter;
 
@@ -33,12 +33,12 @@ public class RabbitBidRequestListener {
                 case TYPE_ID_BID_REQUEST_EVENT -> {
                     BidRequestEvent e = (BidRequestEvent) payload;
                     log.info("[입찰 큐 이벤트 처리] auctionSeq={}\tbidderId={}\tbidPrice={}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
-                    bidEventUseCase.handleBidFromQueue(e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
+                    bidEventHandler.handleBidFromQueue(e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
                 }
                 case TYPE_ID_BUY_NOW_REQUEST_EVENT -> {
                     BuyNowRequestEvent e = (BuyNowRequestEvent) payload;
                     log.info("[즉시 구매 큐 이벤트 처리] auctionSeq={}\tbidderId={}\tbidPrice={}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
-                    bidEventUseCase.handleBuyNowFromQueue(e.getAuctionSeq(), e.getUserId());
+                    bidEventHandler.handleBuyNowFromQueue(e.getAuctionSeq(), e.getUserId());
                 }
                 default -> log.warn("[RabbitBidRequestListener] 알 수 없는 이벤트 타입={}", typeId);
             }

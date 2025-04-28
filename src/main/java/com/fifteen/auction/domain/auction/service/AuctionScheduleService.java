@@ -12,7 +12,7 @@ import java.util.List;
 
 @Slf4j @Service
 @RequiredArgsConstructor
-public class AuctionScheduledProcessor implements AuctionScheduleProcessor {
+public class AuctionScheduleService implements AuctionScheduleProcessor {
 
     private final AuctionRedisRepository auctionRedisRepository;
     private final AuctionService auctionService;

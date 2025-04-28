@@ -1,6 +1,6 @@
 package com.fifteen.auction.domain.auction.service.port.in;
 
-public interface AuctionScheduleProcessUseCase {
+public interface AuctionScheduleProcessor {
 
     void processExpired(Long auctionId, String auctionSeq, Long startPrice);
 

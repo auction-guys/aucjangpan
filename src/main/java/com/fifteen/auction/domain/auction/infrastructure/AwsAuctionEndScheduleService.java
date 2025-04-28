@@ -1,7 +1,7 @@
 package com.fifteen.auction.domain.auction.infrastructure;
 
 import com.fifteen.auction.domain.auction.dto.event.AuctionOpenEvent;
-import com.fifteen.auction.domain.auction.service.port.out.AuctionSchedulerService;
+import com.fifteen.auction.domain.auction.service.port.out.AuctionEndScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j @Service
 @RequiredArgsConstructor
-public class AwsAuctionSchedulerService implements AuctionSchedulerService {
+public class AwsAuctionEndScheduleService implements AuctionEndScheduleService {
 
     @Value("${aws-scheduler.arn.schedule-role}")
     private String scheduleRoleArn;
