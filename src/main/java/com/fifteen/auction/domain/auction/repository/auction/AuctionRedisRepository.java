@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuctionRedisRepository {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> objectRedisTemplate;
 
     private static final String TOP_BIDS_KEY_FORMAT = "auctions:%s:top-bids";
 
@@ -26,13 +26,13 @@ public class AuctionRedisRepository {
 
     public Long findBidCount(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
-        return redisTemplate.opsForZSet().zCard(key) - 1;
+        return objectRedisTemplate.opsForZSet().zCard(key) - 1;
     }
 
     public Long findCurrentPrice(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
 
-        Set<ZSetOperations.TypedTuple<Object>> response = redisTemplate
+        Set<ZSetOperations.TypedTuple<Object>> response = objectRedisTemplate
                 .opsForZSet()
                 .reverseRangeWithScores(key, 0, 0);
 
@@ -55,13 +55,13 @@ public class AuctionRedisRepository {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
         String value = bidderId + "_" + timestamp;
 
-        redisTemplate.opsForZSet().add(key, value, bidPrice);
+        objectRedisTemplate.opsForZSet().add(key, value, bidPrice);
     }
 
     public List<Long> findParticipants(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
 
-        Set<Object> response = redisTemplate.opsForZSet()
+        Set<Object> response = objectRedisTemplate.opsForZSet()
                 .reverseRange(key, 0, -1);
 
         if (response == null) {
@@ -83,6 +83,6 @@ public class AuctionRedisRepository {
 
     public void flushTopBidCache(String auctionSeq) {
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
-        redisTemplate.delete(key);
+        objectRedisTemplate.delete(key);
     }
 }

@@ -18,7 +18,7 @@ public class RecommendationResponse {
         return new RecommendationResponse(
                 auction.getId(),
                 auction.getProduct().getName(),
-                auction.getProduct().getThumbnailUrl(),  // ← 여기!
+                auction.getProduct().getThumbnailUrl(),
                 score,
                 ranking
         );

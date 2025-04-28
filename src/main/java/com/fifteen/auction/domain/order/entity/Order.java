@@ -81,8 +81,7 @@ public class Order extends BaseEntity {
     }
 
     public void validatePaymentInfo( Long userId, Long amount) {
-        if (!this.getUser().getId().equals(userId) && this.getAuction().getWinPrice().equals(amount)) {
-            System.out.println("       "+userId+"    "+this.getUser().getId()+"       "+amount+"      "+this.getAuction().getWinPrice());
+        if (!this.getUser().getId().equals(userId) && this.getAuction().getWinPrice().equals(amount) && this.status != OrderStatus.PENDING) {
             throw new ServerException(ErrorCode.PAYMENT_INFO_NOT_MATCHED);
         }
     }

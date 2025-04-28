@@ -11,7 +11,7 @@ public class UserResponse {
 
     private final String email;
 
-    private final String nickName;
+    private final String nickname;
 
     private final String preferCategory;
 }

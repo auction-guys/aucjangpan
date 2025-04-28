@@ -7,7 +7,6 @@ import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.entity.ProductCategory;
 import com.fifteen.auction.domain.product.entity.ProductImage;
 import com.fifteen.auction.domain.product.repository.ProductCategoryRepository;
-import com.fifteen.auction.domain.product.repository.ProductImageRepository;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.repository.UserRepository;
@@ -26,10 +25,10 @@ import java.util.Map;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final ProductImageRepository productImageRepository;
-    private final ProductImageService productImageService;
     private final ProductCategoryRepository categoryRepository;
     private final UserRepository userRepository;
+
+    private final ProductImageService productImageService;
     private final MarketPriceService marketPriceService;
 
     public Long createProduct(Long sellerId, ProductCreateRequest request) {
@@ -37,7 +36,7 @@ public class ProductService {
                 .orElseThrow(() -> new ClientException(ErrorCode.USER_NOT_FOUND));
 
         ProductCategory category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_CATEGORY_NOT_FOUND));
+                .orElseThrow(() -> new ClientException(ErrorCode.INVALID_IMAGE_REQUEST));
 
         Product product = Product.create(seller, category, request.getName(), request.getDescription());
 
@@ -50,7 +49,7 @@ public class ProductService {
         Product saved = productRepository.save(product);
 
         // GPT 시세 예측 후 저장 (Redis + DB)
-        marketPriceService.findMarketPriceFullResponse(saved.getId());
+        marketPriceService.findMarketPriceFullResponse(saved.getName());
 
         return saved.getId();
     }
@@ -82,8 +81,8 @@ public class ProductService {
         Product product = productRepository.findByIdWithImages(productId)
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        if (!product.getSeller().getId().equals(sellerId)) {
-            throw new ClientException(ErrorCode.UNAUTHORIZED);
+        if (product.getDeletedAt() != null) {
+            throw new ClientException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
 
         product.softDelete();

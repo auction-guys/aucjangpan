@@ -62,6 +62,7 @@ jobs:
         REDIS_PORT=${{ secrets.REDIS_PORT }}
         S3_ACCESS_KEY=${{secrets.S3_ACCESS_KEY}}
         S3_SECRET_KEY=${{secrets.S3_SECRET_KEY}}
+        CLOUDFRONT_DOMAIN_KEY=${{secrets.CLOUDFRONT_DOMAIN_KEY}}
         JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
         OAUTH_CLIENT_ID=${{secrets.OAUTH_CLIENT_ID}}
         OAUTH_SECRET=${{secrets.OAUTH_SECRET}}
@@ -72,7 +73,8 @@ jobs:
         NAVER_SECRET=${{secrets.NAVER_SECRET}}
         EC2_HOST=${{secrets.EC2_HOST}}
         GMAIL_USERNAME=${{secrets.GMAIL_USERNAME}}
-        GMAIL_PASSWORD=$#{{secrets.GMAIL_PASSWORD}}
+        GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
+        ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
         EOF
         
     - name: Copy .env to EC2

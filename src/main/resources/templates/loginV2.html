@@ -18,6 +18,8 @@
     </div>
     <button type="submit">Login</button>
 </form>
+<button id="chatRoomListBtn" type="button">채팅방 목록</button>
+<div id="chatRoomList"></div>
 
 <hr>
 <h2>📨 실시간 채팅 테스트</h2>
@@ -30,10 +32,14 @@
 
 <br><br>
 
+<div id="chatControl">
+    <span id="connectionStatus" style="margin-right: 10px;">연결 끊김</span>
+    <button id="exitBtn" style="display:none;" onclick="disconnect()">나가기</button>
+</div>
+
 <div id="chatSection" style="display:none;">
     <input type="text" id="messageInput" placeholder="메시지 입력" />
     <button onclick="sendMessage()">전송</button>
-
     <ul id="chatMessages"></ul>
 </div>
 
@@ -99,7 +105,6 @@
 
                 clearMessages();
 
-                // 메시지들을 받아와서 출력
                 if (data.messages && data.messages.length > 0) {
                     data.messages.forEach(msg => {
                         showMessage(msg);
@@ -116,6 +121,12 @@
 
     // STOMP 연결
     function connectStomp(chatRoomId) {
+
+        if (stompClient !== null) {
+            stompClient.disconnect();
+            stompClient = null;
+        }
+
         const token = sessionStorage.getItem("jwt");
         const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
         const API_URL = `http://${API_HOST}:8080/chat/inbox`;
@@ -135,7 +146,8 @@
                 showMessage(msg);
             });
 
-            alert(`채팅방(${chatRoomId}) 연결됨`);
+            document.getElementById("exitBtn").style.display = "inline-block";
+            document.getElementById("connectionStatus").textContent = "✅ 연결됨";
         });
     }
 
@@ -148,9 +160,9 @@
             return;
         }
 
-        stompClient.send("/pub/message", {
-            Authorization: "Bearer "+sessionStorage.getItem("jwt")
-            }, JSON.stringify({
+        stompClient.send("/pub/v2/message", {
+            Authorization: "Bearer " + sessionStorage.getItem("jwt")
+        }, JSON.stringify({
             chatRoomId: currentChatRoomId,
             content: content
         }));
@@ -158,7 +170,22 @@
         document.getElementById("messageInput").value = "";
     }
 
-    // 기존 메시지 지우기
+    // 연결 끊기
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect(() => {
+                console.log("Disconnected from chat room");
+                document.getElementById("exitBtn").style.display = "none";
+                document.getElementById("chatSection").style.display = "none";
+                document.getElementById("connectionStatus").textContent = "❌ 연결 끊김";
+                clearMessages();
+                currentChatRoomId = null;
+            });
+            stompClient = null;
+        }
+    }
+
+    // 메시지 초기화
     function clearMessages() {
         const chatMessages = document.getElementById("chatMessages");
         while (chatMessages.firstChild) {
@@ -171,6 +198,60 @@
         const messageEl = document.createElement("li");
         messageEl.textContent = `${msg.nickname}: ${msg.content}`;
         document.getElementById("chatMessages").appendChild(messageEl);
+    }
+
+    document.getElementById("chatRoomListBtn").addEventListener("click", () => {
+        loadChatRooms(0);
+    });
+
+    // 채팅방 목록 조회 및 페이징 처리
+    function loadChatRooms(pageNum) {
+        const jwt = sessionStorage.getItem("jwt");
+        const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
+        const API_URL = `http://${API_HOST}:8080/api/v1/chatRoom?page=${pageNum}`;
+
+        fetch(API_URL, {
+            method: "GET",
+            headers: {
+                'Authorization': 'Bearer ' + jwt
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                const listDiv = document.getElementById("chatRoomList");
+                listDiv.innerHTML = ""; // 초기화
+
+                const ul = document.createElement("ul");
+                data.data.forEach(room => {
+                    const li = document.createElement("li");
+                    const btn = document.createElement("button");
+                    btn.textContent = `${room.opponentNickname} 님과의 채팅`;
+                    btn.onclick = () => {
+                        document.getElementById("sellerId").value = room.opponentUserId; // 숨겨진 input 없이 바로 설정
+                        requestChatRoom(); // 기존 함수 재활용
+                    };
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                });
+                listDiv.appendChild(ul);
+
+                // 간단한 페이징 버튼
+                const page = data.page;
+                if (page.totalPage > 1) {
+                    const pageDiv = document.createElement("div");
+                    for (let i = 0; i < page.totalPage; i++) {
+                        const btn = document.createElement("button");
+                        btn.textContent = i + 1;
+                        if (i === page.pageNum) btn.style.fontWeight = "bold";
+                        btn.onclick = () => loadChatRooms(i);
+                        pageDiv.appendChild(btn);
+                    }
+                    listDiv.appendChild(pageDiv);
+                }
+            })
+            .catch(err => {
+                console.error("채팅방 목록 조회 실패", err);
+            });
     }
 </script>
 </body>

@@ -1,5 +1,8 @@
 package com.fifteen.auction.fixtures;
 
+import com.fifteen.auction.domain.recommend.enums.AgeGroup;
+import com.fifteen.auction.domain.recommend.enums.Gender;
+import com.fifteen.auction.domain.recommend.enums.Region;
 import com.fifteen.auction.domain.user.entity.User;
 import com.fifteen.auction.domain.user.enums.UserRole;
 import lombok.AccessLevel;
@@ -13,10 +16,10 @@ public class UserFixture {
                 "seller@example.com",
                 "sellery",
                 "seller",
-                "male",
-                "20-29",
+                Gender.MALE,
+                AgeGroup.TEENS,
                 "1234",
-                "address",
+                Region.BUSAN,
                 "010-1234-5678",
                 "electronics",
                 "001-1133-111131",

@@ -1,12 +1,12 @@
 package com.fifteen.auction.domain.payment.dto.response;
 
+import com.fifteen.auction.domain.payment.entity.Payment;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 public class ConfirmResponse {
-    private String mId;
     private String paymentKey;
     private String paymentMethod;
     private Long amount;
@@ -14,7 +14,6 @@ public class ConfirmResponse {
     private LocalDateTime approvedAt;
 
     public ConfirmResponse(PaymentResponse response) {
-        this.mId = response.getMId();
         this.paymentKey = response.getPaymentKey();
         this.paymentMethod = response.getMethod();
         this.amount = response.getCard().getAmount();

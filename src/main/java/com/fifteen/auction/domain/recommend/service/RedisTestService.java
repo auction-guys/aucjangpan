@@ -1,4 +1,4 @@
-package com.fifteen.auction.infra.redis.service;
+package com.fifteen.auction.domain.recommend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
