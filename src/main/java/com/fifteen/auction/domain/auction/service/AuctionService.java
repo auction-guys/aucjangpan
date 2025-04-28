@@ -10,6 +10,7 @@ import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.service.port.out.AuctionEndScheduleService;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
@@ -45,6 +47,7 @@ public class AuctionService {
     private final AuctionSeqGenerator auctionSeqGenerator;
     private final ClockHolder clockHolder;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AuctionEndScheduleService auctionEndScheduleService;
 
     @Secured(ROLE_USER)
     @Transactional
@@ -82,8 +85,10 @@ public class AuctionService {
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        auction.open();
-        auctionRedisRepository.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
+        LocalDateTime now = clockHolder.now();
+
+        auction.open(now);
+        auctionRedisRepository.initializeAuction(auctionSeq, auction.getStartPrice());
 
         // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
         applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
@@ -106,7 +111,6 @@ public class AuctionService {
         );
     }
 
-    @Secured(ROLE_USER)
     @Transactional
     public void miscarry(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -114,7 +118,6 @@ public class AuctionService {
         auction.misCarry();
     }
 
-    @Secured(ROLE_USER)
     @Transactional
     public void processWinning(String auctionSeq, Long winnerId, Long winPrice) {
         Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)
@@ -174,4 +177,22 @@ public class AuctionService {
     }
 
 
+    /**
+     * V2 services
+     */
+    @Secured(ROLE_USER)
+    @Transactional
+    public void openV2(String auctionSeq, Long sellerId) {
+        Auction auction = auctionRepository
+                .findOneBySeqAndSellerId(auctionSeq, sellerId)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime now = clockHolder.now();
+
+        auction.open(now);
+        auctionRedisRepository.initializeAuction(auctionSeq, auction.getStartPrice());
+
+        // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
+        auctionEndScheduleService.scheduleAuctionEnd(AuctionOpenEvent.fromAuction(auction));
+    }
 }

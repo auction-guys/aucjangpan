@@ -41,6 +41,15 @@ public class AuctionRedisRepository {
                         o.getScore().longValue()).orElse(0L);
     }
 
+    public void initializeAuction(String auctionSeq, Long startPrice) {
+        long timestamp = System.currentTimeMillis();
+        String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
+        String value = -1 + "_" + timestamp;
+
+        redisTemplate.delete(key);
+        redisTemplate.opsForZSet().add(key, value, startPrice);
+    }
+
     public void addNewHighPrice(String auctionSeq, Long bidderId, Long bidPrice) {
         long timestamp = System.currentTimeMillis();
         String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
