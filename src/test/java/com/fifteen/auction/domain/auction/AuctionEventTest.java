@@ -1,13 +1,13 @@
 package com.fifteen.auction.domain.auction;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.infrastructure.SpringAuctionMessageListener;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
-import com.fifteen.auction.domain.auction.service.AuctionCacheService;
 import com.fifteen.auction.domain.auction.service.AuctionService;
-import com.fifteen.auction.domain.auction.service.BidWorkerService;
-import com.fifteen.auction.domain.auction.service.ScheduledAuctionService;
+import com.fifteen.auction.domain.auction.service.BidEventService;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -45,9 +45,9 @@ public class AuctionEventTest {
     @Nested
     class 입찰_이벤트 {
         @Mock AuctionRepository auctionRepository;
-        @Mock AuctionCacheService auctionCacheService;
+        @Mock AuctionRedisRepository auctionRedisRepository;
 
-        @InjectMocks BidWorkerService bidWorkerService;
+        @InjectMocks BidEventService bidEventService;
 
         @Test
         void 입찰_이벤트_처리_중_저동_연장이_설정된_경매만_연장_처리가_된다() {
@@ -62,7 +62,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt);
@@ -81,7 +81,7 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt.plusMinutes(3));
@@ -103,8 +103,8 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event1);
-            bidWorkerService.handleBidProcess(event2);
+            bidEventService.handleBidProcess(event1);
+            bidEventService.handleBidProcess(event2);
 
             // then
             assertThat(auction.getExpiresAt()).isEqualTo(originalExpiresAt.plusMinutes(3));
@@ -124,10 +124,10 @@ public class AuctionEventTest {
                     .willReturn(Optional.of(auction));
 
             // when
-            bidWorkerService.handleBidProcess(event);
+            bidEventService.handleBidProcess(event);
 
             // then
-            verify(auctionCacheService, times(1))
+            verify(auctionRedisRepository, times(1))
                     .addNewHighPrice(eq("seq"), eq(2L), eq(2000L));
         }
 
@@ -137,24 +137,24 @@ public class AuctionEventTest {
     class 종료된_경매 {
         AuctionRepository auctionRepository;
 
-        AuctionCacheService auctionCacheService;
+        AuctionRedisRepository auctionRedisRepository;
         InboxService inboxService;
 
-        ScheduledAuctionService scheduledAuctionService;
+        SpringAuctionMessageListener auctionScheduledService;
 
         public 종료된_경매() {
             auctionRepository = mock(AuctionRepository.class);
-            auctionCacheService = mock(AuctionCacheService.class);
+            auctionRedisRepository = mock(AuctionRedisRepository.class);
 
             inboxService = mock(InboxService.class);
-            scheduledAuctionService = new ScheduledAuctionService(
+            auctionScheduledService = new SpringAuctionMessageListener(
                     mock(TaskScheduler.class),
-                    auctionCacheService,
+                    auctionRedisRepository,
                     spy(new AuctionService(
                             auctionRepository,
                             null, null, null,
-                            auctionCacheService,
-                            null, null, null
+                            auctionRedisRepository,
+                            null, null, null, null
                     )),
                     inboxService
             );
@@ -166,11 +166,11 @@ public class AuctionEventTest {
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
 
-            given(auctionCacheService.findCurrentPrice(anyString())).willReturn(8000L);
+            given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(8000L);
             given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
 
             // when & then
-            assertThatThrownBy(() -> scheduledAuctionService.handleExpiration(1L, "seq", 8000L))
+            assertThatThrownBy(() -> auctionScheduledService.handleExpiration(1L, "seq", 8000L))
                     .isInstanceOf(ClientException.class)
                     .extracting(ERROR_CODE_ENUM_NAME)
                     .isEqualTo(ErrorCode.AUCTION_NOT_OPEN);
@@ -181,13 +181,13 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
-            given(auctionCacheService.findCurrentPrice(anyString())).willReturn(8000L);
+            given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(8000L);
             given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             assertSoftly(softly -> {
@@ -201,16 +201,16 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
-            given(auctionCacheService.findCurrentPrice(anyString())).willReturn(10000L);
-            given(auctionCacheService.findParticipants("seq"))
+            given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
+            given(auctionRedisRepository.findParticipants("seq"))
                     .willReturn(List.of(2L, 3L, 4L));
             given(auctionRepository.findOpenOneByAuctionSeq(anyString()))
                     .willReturn(Optional.of(auction));
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             assertSoftly(softly -> {
@@ -226,10 +226,10 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
-            given(auctionCacheService.findCurrentPrice(anyString())).willReturn(10000L);
-            given(auctionCacheService.findParticipants("seq"))
+            given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
+            given(auctionRedisRepository.findParticipants("seq"))
                     .willReturn(List.of(2L, 3L, 4L));
             given(auctionRepository.findOpenOneByAuctionSeq(anyString()))
                     .willReturn(Optional.of(auction));
@@ -238,7 +238,7 @@ public class AuctionEventTest {
                     .getMessage();
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             ArgumentCaptor<CreateMessageRequest> captor = ArgumentCaptor.forClass(CreateMessageRequest.class);
@@ -251,10 +251,10 @@ public class AuctionEventTest {
             // given
             Auction auction = withStartPrice(1L, 1L, "seq", 8000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
-            given(auctionCacheService.findCurrentPrice(anyString())).willReturn(10000L);
-            given(auctionCacheService.findParticipants("seq"))
+            given(auctionRedisRepository.findCurrentPrice(anyString())).willReturn(10000L);
+            given(auctionRedisRepository.findParticipants("seq"))
                     .willReturn(List.of(2L, 3L, 4L));
             given(auctionRepository.findOpenOneByAuctionSeq(anyString()))
                     .willReturn(Optional.of(auction));
@@ -263,7 +263,7 @@ public class AuctionEventTest {
                     .getMessage();
 
             // when
-            scheduledAuctionService.handleExpiration(1L, "seq", 8000L);
+            auctionScheduledService.handleExpiration(1L, "seq", 8000L);
 
             // then
             ArgumentCaptor<List<CreateMessageRequest>> captor = ArgumentCaptor.forClass(List.class);
@@ -278,16 +278,16 @@ public class AuctionEventTest {
             // given
             Auction auction = withIsBuyNow(1L, 1L, "seq", true, 60000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 60000L, auction.getExpiresAt().minusHours(2));
 
             String expectedMessage = CreateMessageRequest.forWinner(2L, "seq")
                     .getMessage();
 
-            BuyNowEvent buyNowEvent = BuyNowEvent.fromAuction(auction);
+            BuyNowProcessEvent buyNowProcessEvent = BuyNowProcessEvent.fromAuction(auction);
 
             // when
-            scheduledAuctionService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowProcessEvent);
 
             // then
             ArgumentCaptor<CreateMessageRequest> captor = ArgumentCaptor.forClass(CreateMessageRequest.class);
@@ -300,18 +300,18 @@ public class AuctionEventTest {
             // given
             Auction auction = withIsBuyNow(1L, 1L, "seq", true, 60000L);
             ReflectionTestUtils.setField(auction, "id", 1L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 60000L, auction.getExpiresAt().minusHours(2));
 
-            BuyNowEvent buyNowEvent = BuyNowEvent.fromAuction(auction);
+            BuyNowProcessEvent buyNowProcessEvent = BuyNowProcessEvent.fromAuction(auction);
             String expectedMessage = CreateMessageRequest.forParticipants(2L, "seq")
                     .getMessage();
 
-            given(auctionCacheService.findParticipants("seq"))
+            given(auctionRedisRepository.findParticipants("seq"))
                     .willReturn(List.of(3L, 4L));
 
             // when
-            scheduledAuctionService.processBuyNowMessaging(buyNowEvent);
+            auctionScheduledService.processBuyNowMessaging(buyNowProcessEvent);
 
             // then
             ArgumentCaptor<List<CreateMessageRequest>> captor = ArgumentCaptor.forClass(List.class);

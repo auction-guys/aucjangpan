@@ -65,6 +65,7 @@ public enum ErrorCode {
     AUCTION_NOT_OPEN(HttpStatus.BAD_REQUEST, "AUCTION-9", "경매가 진행중일 때만 요청할 수 있는 작업입니다."),
     FINALIZE_ALREADY_DONE(HttpStatus.BAD_REQUEST, "AUCTION-10", "이미 마감 처리 된 경매입니다."),
     CANNOT_BUY_NOW(HttpStatus.BAD_REQUEST, "AUCTION-11", "즉시 구매가 불가능한 경매입니다."),
+    CANNOT_OPEN_EXPIRED(HttpStatus.BAD_REQUEST, "AUCTION-12", "마감 시간이 지난 경매는 공개할 수 없습니다."),
 
     // Product Exception 에러 코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "존재하지 않는 상품입니다."),

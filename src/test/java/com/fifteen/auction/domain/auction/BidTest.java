@@ -1,13 +1,13 @@
 package com.fifteen.auction.domain.auction;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
-import com.fifteen.auction.domain.auction.service.AuctionCacheService;
 import com.fifteen.auction.domain.auction.service.BidService;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.verify;
 public class BidTest {
 
     @Mock AuctionRepository auctionRepository;
-    @Mock AuctionCacheService auctionCacheService;
+    @Mock AuctionRedisRepository auctionRedisRepository;
     @Mock BidRepository bidRepository;
 
     @Mock ClockHolder clockHolder;
@@ -72,7 +73,7 @@ public class BidTest {
         void 입찰_은_자신이_생성한_경매에는_요청할_수_없다() {
             // given
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             BidRequest request = new BidRequest(8000L);
 
@@ -91,16 +92,16 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
-
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
+
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().plusHours(1));
 
             // when & then
-            assertThatThrownBy(() -> bidService.bid("seq", 1L, request))
+            assertThatThrownBy(() -> bidService.bid("seq", 2L, request))
                     .isInstanceOf(ClientException.class)
                     .extracting(ERROR_CODE_ENUM_NAME)
                     .isEqualTo(ErrorCode.INVALID_BID_REQUEST);
@@ -111,13 +112,13 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().minusHours(1));
-            given(auctionCacheService.isBidUnderPrice(anyString(), anyLong(), anyInt()))
+            given(auctionRedisRepository.isBidUnderPrice(anyString(), anyLong(), anyInt()))
                     .willReturn(true);
 
             // when & then
@@ -132,13 +133,13 @@ public class BidTest {
             // given
             BidRequest request = new BidRequest(8000L);
             Auction auction = defaultAuction(1L, 1L, "seq");
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
             given(clockHolder.now())
                     .willReturn(auction.getExpiresAt().minusHours(1));
-            given(auctionCacheService.isBidUnderPrice(anyString(), anyLong(), anyInt()))
+            given(auctionRedisRepository.isBidUnderPrice(anyString(), anyLong(), anyInt()))
                     .willReturn(false);
 
             // when
@@ -180,12 +181,10 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", false, null);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
-            given(clockHolder.now())
-                    .willReturn(auction.getExpiresAt().minusHours(1));
 
             // when & then
             assertThatThrownBy(() -> bidService.buyNow("seq", 2L))
@@ -199,12 +198,10 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
-            given(clockHolder.now())
-                    .willReturn(auction.getExpiresAt().minusHours(1));
 
             // when & then
             assertThatThrownBy(() -> bidService.buyNow("seq", 1L))
@@ -218,7 +215,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -255,7 +252,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
             auction.finalize(2L, 8000L, auction.getExpiresAt());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
@@ -275,7 +272,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -297,7 +294,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -319,7 +316,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             given(auctionRepository.findOpenOneBySeqWithSeller(anyString()))
                     .willReturn(Optional.of(auction));
@@ -330,10 +327,10 @@ public class BidTest {
             bidService.buyNow("seq", 2L);
 
             // then
-            ArgumentCaptor<BuyNowEvent> captor = ArgumentCaptor.forClass(BuyNowEvent.class);
+            ArgumentCaptor<BuyNowProcessEvent> captor = ArgumentCaptor.forClass(BuyNowProcessEvent.class);
             verify(applicationEventPublisher, times(1)).publishEvent(captor.capture());
             assertSoftly(softly -> {
-                BuyNowEvent event = captor.getValue();
+                BuyNowProcessEvent event = captor.getValue();
                 softly.assertThat(event.getAuctionSeq()).isEqualTo("seq");
                 softly.assertThat(event.getWinnerId()).isEqualTo(2L);
                 softly.assertThat(event.getBuyNowPrice()).isEqualTo(8000L);
@@ -349,7 +346,7 @@ public class BidTest {
             // given
             Auction auction = withIsBuyNow(
                     1L, 1L, "seq", true, 8000L);
-            auction.open();
+            auction.open(LocalDateTime.now());
 
             List<BidHistoryInfo> resultContent = List.of(
                     BidHistoryInfo.forProgress(defaultBid(auction, 2L, 8000L)),

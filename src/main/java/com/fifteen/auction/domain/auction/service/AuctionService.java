@@ -7,8 +7,10 @@ import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
 import com.fifteen.auction.domain.auction.entity.Auction;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.service.port.out.AuctionEndScheduleService;
 import com.fifteen.auction.domain.auction.util.AuctionSeqGenerator;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.domain.product.dto.response.FutureMarketPriceResponse;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,11 +51,12 @@ public class AuctionService {
     private final BidRepository bidRepository;
 
     private final MarketPriceService marketPriceService;
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
 
     private final AuctionSeqGenerator auctionSeqGenerator;
     private final ClockHolder clockHolder;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AuctionEndScheduleService auctionEndScheduleService;
 
     private final RedisService redisService;
     private final TagRepository tagRepository;
@@ -98,8 +102,10 @@ public class AuctionService {
                 .findOneBySeqAndSellerId(auctionSeq, sellerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        auction.open();
-        auctionCacheService.addNewHighPrice(auctionSeq, -1L, auction.getStartPrice());
+        LocalDateTime now = clockHolder.now();
+
+        auction.open(now);
+        auctionRedisRepository.initializeAuction(auctionSeq, auction.getStartPrice());
 
         // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
         applicationEventPublisher.publishEvent(AuctionOpenEvent.fromAuction(auction));
@@ -122,7 +128,6 @@ public class AuctionService {
         );
     }
 
-    @Secured(ROLE_USER)
     @Transactional
     public void miscarry(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
@@ -130,7 +135,6 @@ public class AuctionService {
         auction.misCarry();
     }
 
-    @Secured(ROLE_USER)
     @Transactional
     public void processWinning(String auctionSeq, Long winnerId, Long winPrice) {
         Auction auction = auctionRepository.findOpenOneByAuctionSeq(auctionSeq)
@@ -154,8 +158,8 @@ public class AuctionService {
         AuctionDetail detail = AuctionDetail.fromAuction(findAuction, marketPrice, futurePrices);
 
         // 캐시에 존재하는 경매 정보 업데이트
-        Long currentPrice = auctionCacheService.findCurrentPrice(detail.getAuctionSeq());
-        Long bidCount = auctionCacheService.findBidCount(detail.getAuctionSeq());
+        Long currentPrice = auctionRedisRepository.findCurrentPrice(detail.getAuctionSeq());
+        Long bidCount = auctionRedisRepository.findBidCount(detail.getAuctionSeq());
         detail.updateBidInfo(currentPrice, bidCount);
 
         // 조회수 증가: Redis에 key가 없을 때만 증가
@@ -178,8 +182,8 @@ public class AuctionService {
 
         // 캐시에 존재하는 경매 정보 업데이트
         allOpenByCond.forEach(a -> {
-            Long currentPrice = auctionCacheService.findCurrentPrice(a.getAuctionSeq());
-            Long bidCount = auctionCacheService.findBidCount(a.getAuctionSeq());
+            Long currentPrice = auctionRedisRepository.findCurrentPrice(a.getAuctionSeq());
+            Long bidCount = auctionRedisRepository.findBidCount(a.getAuctionSeq());
             a.updateBidInfo(currentPrice, bidCount);
         });
 
@@ -196,11 +200,29 @@ public class AuctionService {
                             case DONE -> AuctionLog.fromAuction(auc, userId, auc.getWinPrice());
                             case MISCARRY -> AuctionLog.fromAuction(auc, userId, auc.getStartPrice());
                             case OPEN -> AuctionLog.fromAuction(auc, userId,
-                                    auctionCacheService.findCurrentPrice(auc.getAuctionSeq()));
+                                    auctionRedisRepository.findCurrentPrice(auc.getAuctionSeq()));
                             default -> throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
                         }
                 );
     }
 
 
+    /**
+     * V2 services
+     */
+    @Secured(ROLE_USER)
+    @Transactional
+    public void openV2(String auctionSeq, Long sellerId) {
+        Auction auction = auctionRepository
+                .findOneBySeqAndSellerId(auctionSeq, sellerId)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime now = clockHolder.now();
+
+        auction.open(now);
+        auctionRedisRepository.initializeAuction(auctionSeq, auction.getStartPrice());
+
+        // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
+        auctionEndScheduleService.scheduleAuctionEnd(AuctionOpenEvent.fromAuction(auction));
+    }
 }

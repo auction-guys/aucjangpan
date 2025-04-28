@@ -1,4 +1,4 @@
-package com.fifteen.auction.domain.auction.service;
+package com.fifteen.auction.domain.auction.repository.auction;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AuctionCacheService {
+public class AuctionRedisRepository {
 
     private final RedisTemplate<String, Object> objectRedisTemplate;
 
@@ -39,6 +39,15 @@ public class AuctionCacheService {
         return response.stream().findFirst()
                 .map(o ->
                         o.getScore().longValue()).orElse(0L);
+    }
+
+    public void initializeAuction(String auctionSeq, Long startPrice) {
+        long timestamp = System.currentTimeMillis();
+        String key = String.format(TOP_BIDS_KEY_FORMAT, auctionSeq);
+        String value = -1 + "_" + timestamp;
+
+        redisTemplate.delete(key);
+        redisTemplate.opsForZSet().add(key, value, startPrice);
     }
 
     public void addNewHighPrice(String auctionSeq, Long bidderId, Long bidPrice) {

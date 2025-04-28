@@ -100,10 +100,15 @@ public class Auction extends BaseEntity {
         this.views = 0;
     }
 
-    public void open() {
+    public void open(LocalDateTime now) {
         if (this.status != AuctionStatus.PENDING) {
             throw new ClientException(ErrorCode.AUCTION_ALREADY_OPEN);
         }
+
+        if (now.isAfter(this.getExpiresAt())) {
+            throw new ClientException(ErrorCode.CANNOT_OPEN_EXPIRED);
+        }
+
         this.status = AuctionStatus.OPEN;
     }
 
@@ -153,6 +158,10 @@ public class Auction extends BaseEntity {
         this.isBuyNowSet = useIfNotNull(isBuyNowSet, this.isBuyNowSet);
         this.isAutoExtensible = useIfNotNull(isAutoExtensible, this.isAutoExtensible);
         this.expiresAt = useIfNotNull(expiresAt, this.expiresAt);
+    }
+
+    public boolean isOwnedByUser(Long userId) {
+        return product.isUserASeller(userId);
     }
 
 

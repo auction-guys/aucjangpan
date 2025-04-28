@@ -1,13 +1,17 @@
 package com.fifteen.auction.domain.auction.service;
 
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
-import com.fifteen.auction.domain.auction.dto.event.BuyNowEvent;
+import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
+import com.fifteen.auction.domain.auction.dto.event.BuyNowRequestEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
+import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
 import com.fifteen.auction.domain.auction.repository.bid.BidRepository;
+import com.fifteen.auction.domain.auction.service.port.out.AuctionEventPublisher;
 import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -30,9 +34,10 @@ import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER
 public class BidService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final AuctionEventPublisher auctionEventPublisher;
     private final ClockHolder clockHolder;
 
-    private final AuctionCacheService auctionCacheService;
+    private final AuctionRedisRepository auctionRedisRepository;
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
@@ -44,14 +49,13 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime bidAt = clockHolder.now();
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BID_REQUEST);
 
-        if (isInvalidBid(userId, findAuction, bidAt)) {
-            throw new ClientException(ErrorCode.INVALID_BID_REQUEST);
-        }
+        LocalDateTime bidAt = verifyAndGetRequestTime(
+                findAuction.getExpiresAt(), ErrorCode.INVALID_BID_REQUEST);
 
         // bid price cache 체크
-        if (auctionCacheService.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
+        if (auctionRedisRepository.isBidUnderPrice(auctionSeq, req.getPrice(), findAuction.getBidUnit())) {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
@@ -67,21 +71,20 @@ public class BidService {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
                 .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
 
-        LocalDateTime buyAt = clockHolder.now();
-
         if (!findAuction.isBuyNowSet()) {
             throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
         }
 
-        if (isInvalidBid(userId, findAuction, buyAt)) {
-            throw new ClientException(ErrorCode.INVALID_BUY_NOW_REQUEST);
-        }
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BUY_NOW_REQUEST);
+
+        LocalDateTime buyAt = verifyAndGetRequestTime(
+                findAuction.getExpiresAt(), ErrorCode.INVALID_BUY_NOW_REQUEST);
 
         findAuction.finalize(userId, findAuction.getBuyNowPrice(), buyAt);
 
         bidRepository.save(new Bid(findAuction, userId, findAuction.getBuyNowPrice(), buyAt));
 
-        applicationEventPublisher.publishEvent(BuyNowEvent.fromAuction(findAuction));
+        applicationEventPublisher.publishEvent(BuyNowProcessEvent.fromAuction(findAuction));
     }
 
     @Secured(ROLE_USER)
@@ -91,8 +94,48 @@ public class BidService {
         return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
     }
 
-    private boolean isInvalidBid(Long userId, Auction findAuction, LocalDateTime bidAt) {
-        return userId.equals(findAuction.getProduct().getSeller().getId())
-                || bidAt.isAfter(findAuction.getExpiresAt());
+    @Secured(ROLE_USER)
+    public void putBidIntoQueue(String auctionSeq, Long userId, Long bidPrice) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BID_REQUEST);
+
+        if (auctionRedisRepository.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
+            throw new ClientException(ErrorCode.LOW_BID_PRICE);
+        }
+
+        auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
+    }
+
+
+    @Transactional
+    public void putBuyNowIntoQueue(String auctionSeq, Long userId) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        if (!findAuction.isBuyNowSet()) {
+            throw new ClientException(ErrorCode.CANNOT_BUY_NOW);
+        }
+
+        verifyAuctionOwnerShip(userId, findAuction, ErrorCode.INVALID_BUY_NOW_REQUEST);
+
+        auctionEventPublisher.publishBuyNowRequest(
+                new BuyNowRequestEvent(auctionSeq, userId, findAuction.getBuyNowPrice()));
+    }
+
+    private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {
+        LocalDateTime buyAt = clockHolder.now();
+
+        if (buyAt.isAfter(expiresAt)) {
+            throw new ClientException(errorCode);
+        }
+        return buyAt;
+    }
+
+    private void verifyAuctionOwnerShip(Long userId, Auction findAuction, ErrorCode errorCode) {
+        if (findAuction.isOwnedByUser(userId)) {
+            throw new ClientException(errorCode);
+        }
     }
 }
