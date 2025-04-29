@@ -95,11 +95,7 @@ dependencies {
     // Thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-
-    // rabbitmq
-    implementation 'org.springframework.boot:spring-boot-starter-amqp'
-    testImplementation 'org.springframework.amqp:spring-rabbit-test'
-
+    
     //feign
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
 }
