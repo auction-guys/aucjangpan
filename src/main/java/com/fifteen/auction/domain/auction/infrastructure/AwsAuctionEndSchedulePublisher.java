@@ -18,12 +18,12 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j @Service
 @RequiredArgsConstructor
-public class AwsAuctionEndScheduleService implements AuctionEndScheduleService {
+public class AwsAuctionEndSchedulePublisher implements AuctionEndScheduleService {
 
-    @Value("${aws-scheduler.arn.schedule-role}")
+    @Value("${cloud.aws.scheduler.arn.schedule-role}")
     private String scheduleRoleArn;
 
-    @Value("${aws-scheduler.arn.sqs-queue}")
+    @Value("${cloud.aws.scheduler.arn.sqs-queue}")
     private String sqsQueueArn;
 
     private final SchedulerClient client;

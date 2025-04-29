@@ -14,10 +14,10 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 @Configuration
 public class SchedulerConfig {
 
-    @Value("${aws-scheduler.access-key-id}")
+    @Value("${cloud.aws.scheduler.access-key-id}")
     private String accessKeyId;
 
-    @Value("${aws-scheduler.secret-access-key}")
+    @Value("${cloud.aws.scheduler.secret-access-key}")
     private String secretAccessKey;
 
     @Bean
