@@ -62,8 +62,13 @@ public class BidEventService implements BidEventHandler {
         }
 
         bidRepository.save(new Bid(auc, bidderId, bidPrice, bidAt));
-        applicationEventPublisher.publishEvent(
-                new BidProcessEvent(auctionSeq, bidderId, bidPrice, bidAt));
+
+        // 자동연장 처리
+        auc.extendExpireTime(bidAt);
+
+        // 경매 표시가 반영
+        auctionRedisRepository
+                .addNewHighPrice(auc.getAuctionSeq(), bidderId, bidPrice);
     }
 
     @Override

@@ -18,7 +18,7 @@ import static com.fifteen.auction.global.config.QueueConfig.*;
 
 @Slf4j @Component
 @RequiredArgsConstructor
-public class SqsAuctionEventPublisher implements AuctionEventPublisher {
+public class SqsBidEventPublisher implements AuctionEventPublisher {
 
     @Value("${cloud.aws.sqs.url.auction-req-queue-fifo}")
     private String sqsUrl;

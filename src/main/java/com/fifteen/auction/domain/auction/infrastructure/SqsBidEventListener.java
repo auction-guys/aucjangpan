@@ -22,7 +22,7 @@ import static com.fifteen.auction.global.config.QueueConfig.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SqsBidRequestListener {
+public class SqsBidEventListener {
 
     private final BidEventHandler bidEventHandler;
 
