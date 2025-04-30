@@ -14,6 +14,7 @@ import com.fifteen.auction.domain.auction.util.ClockHolder;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.product.service.MarketPriceService;
+import com.fifteen.auction.domain.recommend.service.RedisService;
 import com.fifteen.auction.fixtures.ProductFixture;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -63,6 +64,8 @@ public class AuctionTest {
     @Mock AuctionSeqGenerator auctionSeqGenerator;
     @Mock ClockHolder clockHolder;
 
+    @Mock RedisService redisService;
+
     @InjectMocks AuctionService auctionService;
 
 
@@ -79,7 +82,8 @@ public class AuctionTest {
                     1000,
                     true,
                     true,
-                    LocalDateTime.now().plusHours(2)
+                    LocalDateTime.now().plusHours(2),
+                    null
             );
 
             given(productRepository.findByIdWithSeller(anyLong())).willReturn(Optional.of(product));
@@ -105,7 +109,8 @@ public class AuctionTest {
                     1000,
                     true,
                     true,
-                    LocalDateTime.now().plusHours(2)
+                    LocalDateTime.now().plusHours(2),
+                    null
             );
 
             given(productRepository.findByIdWithSeller(anyLong())).willReturn(Optional.of(product));
@@ -126,9 +131,11 @@ public class AuctionTest {
             Auction auction = defaultAuction(1L, 1L, "seq");
             given(auctionRepository.findOpenOneByAuctionSeq(anyString()))
                     .willReturn(Optional.of(auction));
+            given(redisService.isViewedRecently(anyString()))
+                    .willReturn(false);
 
             // when
-            auctionService.findOneAndIncreaseView("seq");
+            auctionService.findOneAndIncreaseView("seq", "userKey");
 
             // then
             assertThat(auction.getViews()).isEqualTo(1);
@@ -314,7 +321,8 @@ public class AuctionTest {
                     500,
                     false,
                     false,
-                    newExpiresAt
+                    newExpiresAt,
+                    null
             );
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
@@ -349,7 +357,8 @@ public class AuctionTest {
                     500,
                     false,
                     false,
-                    newExpiresAt
+                    newExpiresAt,
+                    null
             );
 
             given(auctionRepository.findOneBySeqAndSellerId(anyString(), anyLong()))
