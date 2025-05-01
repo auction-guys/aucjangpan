@@ -29,48 +29,48 @@ public class OrderController {
         return ResponseEntity.ok(orderInfo);
     }
 
-    @PostMapping("api/v1/orders")
+    @PostMapping("/api/v1/orders")
     public ResponseEntity<Void> createOrder(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @RequestParam Long auctionId) {
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         orderService.createOrder(currentUserId, auctionId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("api/v1/orders")
+    @GetMapping("/api/v1/orders")
     public ResponseEntity<Response<Page<OrdersResponse>>> findOrders(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute PageCond pageCond) {
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         Response<Page<OrdersResponse>> response = orderService.findOrders(currentUserId, pageCond);
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("api/v1/orders/{orderId}")
+    @GetMapping("/api/v1/orders/{orderId}")
     public ResponseEntity<Response<OrderResponse>> findOrder(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String orderId) {
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         return ResponseEntity.ok(Response.of(orderService.findOrder(currentUserId, orderId)));
     }
 
-    @DeleteMapping("api/v1/orders/{orderId}/cancel")
+    @DeleteMapping("/api/v1/orders/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String orderId) {
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         orderService.cancelOrder(currentUserId, orderId);
 
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("api/v1/orders/{orderId}/confirmed")
+    @PatchMapping("/api/v1/orders/{orderId}/confirmed")
     public ResponseEntity<Void> confirmOrder(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String orderId) {
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         orderService.confirmOrder(currentUserId, orderId);
 
         return ResponseEntity.noContent().build();

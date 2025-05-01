@@ -27,7 +27,7 @@ public class Settlement {
     private BigDecimal settlementAmount;
     @Enumerated(EnumType.STRING)
     private SettlementStatus status = SettlementStatus.PENDING;
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime settledAt = null;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -56,5 +56,7 @@ public class Settlement {
         this.charge = new BigDecimal(String.valueOf(this.order.getAuction().getWinPrice())).multiply(proportion);
         this.settlementAmount = new BigDecimal(this.order.getAuction().getWinPrice()).subtract(charge);
         this.status = SettlementStatus.IN_PROGRESS;
+        this.settledAt = LocalDateTime.now().isAfter(LocalDateTime.now()
+                .toLocalDate().atTime(3,59)) ? LocalDateTime.now().plusDays(1) : LocalDateTime.now();
     }
 }

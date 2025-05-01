@@ -5,6 +5,8 @@ import com.fifteen.auction.domain.settlement.util.csv.RowMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 @AllArgsConstructor
 public class SettlementResponse implements RowMapper {
@@ -14,6 +16,7 @@ public class SettlementResponse implements RowMapper {
     private String amount;
     private String charge;
     private String settlementAmount;
+    private String status;
     private String settlementDate;
     private String createdAt;
     private String bankAccount;
@@ -26,7 +29,8 @@ public class SettlementResponse implements RowMapper {
                 settlement.getOrder().getAuction().getWinPrice().toString(),
                 settlement.getCharge().toString(),
                 settlement.getSettlementAmount().toString(),
-                settlement.getSettledAt().toString(),
+                settlement.getStatus().toString(),
+                settlement.getSettledAt() == null ? "자동 정산 예정" : settlement.getSettledAt().toString(),
                 settlement.getCreatedAt().toString(),
                 settlement.getOrder().getAuction().getProduct().getSeller().getAccountNumber());
     }
@@ -40,6 +44,7 @@ public class SettlementResponse implements RowMapper {
                 this.getAmount(),
                 this.getCharge(),
                 this.getSettlementAmount(),
+                this.getStatus(),
                 this.getSettlementDate(),
                 this.getCreatedAt(),
                 this.getBankAccount()

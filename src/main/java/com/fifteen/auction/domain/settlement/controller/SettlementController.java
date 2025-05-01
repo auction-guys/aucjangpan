@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,38 +18,38 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
-    @PostMapping("api/v1/settlements")
+    @PostMapping("/api/v1/settlements")
     public ResponseEntity<Response<String>> settle() {
         // TODO: 나중에 시큐리티로 어드민만 가능하게
 
         return ResponseEntity.ok(Response.of(settlementService.settleMonthly()));
     }
 
-    @PostMapping("api/v1/settlements/{settlementId}")
+    @PostMapping("/api/v1/settlements/{settlementId}")
     public ResponseEntity<Response<SettlementResponse>> settleImmediately(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long settlementId) {
-        Long currentUserId = 1L;
+        Long currentUserId = authUser.getId();
 
         SettlementResponse dto = settlementService.settleImmediately(settlementId, currentUserId);
 
         return ResponseEntity.ok(Response.of(dto));
     }
 
-    @GetMapping("api/v1/settlements")
+    @GetMapping("/api/v1/settlements")
     public ResponseEntity<Response<Page<SettlementResponse>>> findSettlements(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute PageCond pageCond) {
-        Long currentUserId = 1L;
+        Long currentUserId = authUser.getId();
 
         return ResponseEntity.ok(settlementService.findSettlements(currentUserId, pageCond));
     }
 
-    @GetMapping("api/v1/settlements/{settlementId}")
+    @GetMapping("/api/v1/settlements/{settlementId}")
     public ResponseEntity<Response<SettlementResponse>> findSettlement(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long settlementId) {
-        Long currentUserId = 1L;
+        Long currentUserId = authUser.getId();
         return ResponseEntity.ok(Response.of(settlementService.findSettlement(currentUserId, settlementId)));
     }
 }

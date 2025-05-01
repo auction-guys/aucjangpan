@@ -13,6 +13,7 @@ import com.fifteen.auction.domain.payment.entity.Payment;
 import com.fifteen.auction.domain.payment.enums.PaymentStatus;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
 import com.fifteen.auction.domain.payment.util.IdempotencyKeyGenerator;
+import com.fifteen.auction.domain.payment.util.toss.Jmeterfeigin;
 import com.fifteen.auction.domain.payment.util.toss.TossFeignClient;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
@@ -42,6 +43,8 @@ public class PaymentService {
     private final TossFeignClient tossFeignClient;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    // 부하테스트용 코드
+    private final Jmeterfeigin jmeterfeigin;
 
     @Transactional
     public ConfirmResponse confirm(PaymentRequest request, Long currentUserId) {
@@ -85,11 +88,11 @@ public class PaymentService {
         PaymentResponse response;
         // 승인 요청
         try {
-            // 결제 정보 반
             response = tossFeignClient.confirmPayment(request, idempotencyKey);
+            // 부하테스트용 코드
+//            response = jmeterfeigin.confirmPayment(request, idempotencyKey);
         } catch (FeignException e) {
             log.error("결제 실패", e);
-            log.error("응답내용: {}", e.contentUTF8());
             throw new PaymentFailException(e.status(), e.contentUTF8());
         }
 
@@ -103,7 +106,7 @@ public class PaymentService {
             // 웹훅으로 먼저 들어온 정보와 일치한지 검증
             payment.check(response);
         } catch (Exception e) {
-            log.error("결제 정보 저장 실패", e);
+            log.error("결제 정보 저장 실패 : {}", e.getMessage());
             cancelInvalidPayment(String.valueOf(response.getPaymentKey()), new CancelPaymentRequest(e.getMessage()));
             throw e;
         }
@@ -162,6 +165,8 @@ public class PaymentService {
         String idempotencyKey = idempotencyKeyGenerator.generate();
 
         tossFeignClient.cancelPayment(paymentKey, dto, idempotencyKey);
+        // 테스트용 코드
+//        jmeterfeigin.cancelPayment(paymentKey, dto, idempotencyKey);
     }
 
     @Transactional(readOnly = true)
