@@ -8,9 +8,9 @@
 - [2. 주요 기능](#2-주요-기능)
 - [3. 기술 스택](#3-기술-스택)
 - [4. 기술적 의사 결정 과정](#4-기술적-의사-결정-과정)
-- [5. 트러블 슈팅 / 성능 개선](#5-트러블-슈팅-/-성능-개선)
-- [6. 아키텍처](#6-인프라-아키텍처-/-적용-기술)
-- [7. ERD / API 문서](#7-ERD-/-API-문서) 
+- [5. 트러블 슈팅 / 성능 개선](#5-트러블-슈팅--성능-개선)
+- [6. 아키텍처](#6-인프라-아키텍처--적용-기술)
+- [7. ERD / API 문서](#7-ERD--API-문서) 
 - [8. 성과 및 회고](#8-성과-및-회고)
 - [9. 팀원 소개](#9-팀원-소개)
 
@@ -86,7 +86,59 @@
 
 <details>
   <summary>
-    <a href="https://yeim.notion.site/INSERT-UPDATE-1ad16458a6bf80dbaefefe3bfadff7b2?pvs>https://yeim.notion.site/INSERT-UPDATE-1ad16458a6bf80dbaefefe3bfadff7b2?pvs=4">💡 입찰을 INSERT가 아닌, UPDATE로 한 이유</a>
+    <a href="https://www.notion.so/1e70b71c146780bebf28e31cf5d182e9?pvs=4">🔑 큐 기반 웹훅 재시도 로직을 채택한 이유</a>
+  </summary>
+</details>
+
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/1e70b71c1467803cb906d03f6a3fc9f9?pvs=4">🔑 실시간 채팅 기능 개선을 위한 메시징 시스템 도입 결정 과정</a>
+  </summary>
+</details>
+
+<details>
+  <summary>
+    <a href=https://www.notion.so/1e70b71c146780b3a839c0056b4f7ad6?pvs=4">🔑 유저 도메인 의사결정 과정 정리</a>
+  </summary>
+</details>
+
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/SQS-EDA-1e70b71c146780c4b1e2f69ed8abe86a?pvs=4">🔑 빠른 입찰 응답을 위해 SQS를 활용한 EDA를 적용한 이유</a>
+  </summary>
+</details>
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/EventBridge-Scheduler-1e70b71c146780a68acdf52069735353?pvs=4">🔑 경매 마감 처리와 알림을 위해 EventBridge Scheduler를 적용한 이유</a>
+  </summary>
+</details>
+
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/1e70b71c14678064a10fdd7a168ad1f1?pvs=4">🔑 경매 단건 조회에 시세 예측 기능을 도입한 이유</a>
+  </summary>
+</details>
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/Redis-SortedSet-Auction-1e70b71c1467800e8de0eca7bc300098?pvs=4">🔑 Redis SortedSet을 통한 Auction 추천을 도입한 이유</a>
+  </summary>
+</details>
+
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/Rule-Based-1e70b71c1467801080c6d56100f8fc75?pvs=4">🔑 태그 기반 Rule-Based 추천 로직을 채택한 이유</a>
+  </summary>
+</details>
+
+<details>
+  <summary>
+    <a href="https://www.notion.so/S3-CloudFront-1e70b71c1467801a83baf6cf4e84debd?pvs=4">🔑 상품 이미지 업로드에 S3 + CloudFront를 도입한 이유</a>
   </summary>
 </details>
 
@@ -97,10 +149,76 @@
 ## 5. 트러블 슈팅 / 성능 개선
 
 <details>
-    <summary><a href="https://yeim.notion.site/AWS-EC2-19b16458a6bf808391f0c77b5f21fd22">[🎯 트러블슈팅] AWS EC2 서버 시간 불일치 이슈</a></summary>
+    <summary>
+	    <a href="https://www.notion.so/Redisson-1e70b71c146780859b00eac5e85712c9?pvs=4">🎯 Redisson 분산 락과 트랜잭션 분리를 통한 결제 안정성 확보</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/STOMP-Redis-pub-sub-1e70b71c1467806590f1f529a090cb63?pvs=4">🎯 STOMP + Redis pub/sub 를 통한 실시간 채팅 시스템 성능 개선</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/Google-OAuth-URI-1e70b71c146780fc83f6e5fd3f949e44?pvs=4">🎯 Google OAuth 리디렉션 URI 오류</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/Google-OAuth-HttpMessageConverter-1e70b71c14678072b631de42e41b51e1?pvs=4">🎯 Google OAuth 토큰 교환 시 HttpMessageConverter 오류</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/TPS-18-1-2K-1e70b71c146780a8a0bde177f9eab0af?pvs=4">🎯 입찰 최대 TPS 18 → 1.2K 까지의 개선 과정</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/Redis-1e70b71c1467804e88dff440c0b4b3e1?pvs=4">🎯 Redis의 병목지점을 찾고 해결한 과정</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/1e70b71c1467805fb1aed63f21052f44?pvs=4">🎯 상품 시세 예측결과가 동일한 금액으로 고정되는 문제</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/500-1e70b71c146780329605f0f52259a301?pvs=4">🎯 시세 예측 실패시 500 에러 → 메시지 응답</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/S3-1e70b71c1467801e8229d45e326a473a?pvs=4">🎯 S3 이미지 업로드 실패 해결</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/Redis-TTL-1e70b71c146780e99d58ff771dd97d57?pvs=4">🎯 Redis TTL 설정으로 조회수 관리</a>
+    </summary>
+</details>
+
+<details>
+    <summary>
+	    <a href="https://www.notion.so/Auction-API-1e70b71c1467806eb9daf4c41554bd19?pvs=4">🎯 Auction 전체조회 + 추천목록 API 응답 지연 개선과정</a>
+    </summary>
 </details>
 
 <br/>
+
+
+
+
 
 
 ## 6. 아키텍처
