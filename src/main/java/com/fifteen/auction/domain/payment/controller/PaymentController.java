@@ -6,15 +6,17 @@ import com.fifteen.auction.domain.payment.dto.response.ConfirmResponse;
 import com.fifteen.auction.domain.payment.dto.response.FindPaymentResponse;
 import com.fifteen.auction.domain.payment.dto.response.PaymentResponse;
 import com.fifteen.auction.domain.payment.service.PaymentService;
+import com.fifteen.auction.domain.payment.util.lock.PaymentLockFacade;
 import com.fifteen.auction.domain.payment.util.toss.TossWebhookVerifier;
+import com.fifteen.auction.domain.user.auth.entity.AuthUser;
 import com.fifteen.auction.global.dto.Response;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ServerException;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.Executor;
@@ -24,9 +26,14 @@ import java.util.concurrent.Executor;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentLockFacade paymentLockFacade;
     private final Executor executor;
 
-    public PaymentController(PaymentService paymentService, @Qualifier("customWebhookExecutor") Executor executor) {
+    public PaymentController(
+            PaymentService paymentService,
+            @Qualifier("customWebhookExecutor") Executor executor,
+            PaymentLockFacade paymentLockFacade) {
+        this.paymentLockFacade = paymentLockFacade;
         this.paymentService = paymentService;
         this.executor = executor;
     }
@@ -44,30 +51,30 @@ public class PaymentController {
 
     @GetMapping("/api/v1/payments/confirm")
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute PaymentRequest paymentRequest) {
-        Long currentUserId = 2L;// 테스트용
+        Long currentUserId = authUser.getId();
 
-        return ResponseEntity.ok(Response.of(paymentService.confirm(paymentRequest, currentUserId)));
+        return ResponseEntity.ok(Response.of(paymentLockFacade.confirmPaymentWithLock(paymentRequest, currentUserId)));
     }
 
     @PostMapping("/api/v1/payments/{paymentKey}/cancel")
     public ResponseEntity<Void> cancelPayment(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String paymentKey,
             @RequestBody CancelPaymentRequest dto) {
 
-        Long currentUserId = 2L;
-        paymentService.cancelPaymentByUser(paymentKey, dto, currentUserId);
+        Long currentUserId = authUser.getId();
+        paymentLockFacade.cancelPaymentWithLock(paymentKey, dto, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/api/v1/payments/{paymentKey}")
     public ResponseEntity<Response<FindPaymentResponse>> findPayment(
-//            @AuthenticationPrincipal AuthUser authUser,
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable String paymentKey) {
 
-        Long currentUserId = 2L;
+        Long currentUserId = authUser.getId();
         return ResponseEntity.ok(Response.of(paymentService.findPayment(paymentKey, currentUserId)));
     }
 
@@ -83,7 +90,7 @@ public class PaymentController {
         }
 
         // 웹훅 처리 (비동기)
-        executor.execute(() -> { paymentService.receiveWebhook(dto); });
+        executor.execute(() -> paymentLockFacade.receiveWebhookWithLock(dto));
 
         return ResponseEntity.ok().build();
     }

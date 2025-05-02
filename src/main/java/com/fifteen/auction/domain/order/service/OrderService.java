@@ -24,6 +24,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -52,7 +54,7 @@ public class OrderService {
 
         // TODO 여기도 책임분산 되려나? 나중에 질문하기
         // 유저 검증
-        if (!auction.getWinnerId().equals(currentUserId)) {
+        if (!Objects.equals(auction.getWinnerId(), currentUserId)) {
             throw new ClientException(ErrorCode.AUCTION_ACCESS_DENIED);
         }
 

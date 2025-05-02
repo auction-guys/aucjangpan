@@ -104,6 +104,22 @@ dependencies {
 
     //feign
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
+
+    // Redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:3.45.1'
+
+    // Batch
+    implementation 'org.springframework.batch:spring-batch-core:5.2.2'
+
+    // Redis_test
+    testImplementation 'com.github.kstyrc:embedded-redis:0.6'
+
+    // Lombok_test
+    testCompileOnly 'org.projectlombok:lombok:1.18.26'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
+
+    // WireMock
+    testImplementation 'org.wiremock:wiremock:3.13.0'
 }
 
 tasks.named('test') {

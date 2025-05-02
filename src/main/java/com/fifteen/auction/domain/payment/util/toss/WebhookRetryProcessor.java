@@ -1,6 +1,5 @@
 package com.fifteen.auction.domain.payment.util.toss;
 
-import com.fifteen.auction.domain.order.repository.OrderRepository;
 import com.fifteen.auction.domain.payment.entity.Payment;
 import com.fifteen.auction.domain.payment.repository.PaymentRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
@@ -8,9 +7,7 @@ import com.fifteen.auction.global.dto.exception.ServerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -26,8 +23,7 @@ public class WebhookRetryProcessor {
     private static final int MAX_RETRIES = 3;
     private static final String RETRY_COUNT_KEY_PREFIX = "webhook:retry:count:";
 
-    @Scheduled(fixedDelay = 10000) // 10초마다 실행_이후 서비스가 어느정도 사이즈냐에 따라 조정
-    @Transactional
+    //@Scheduled(fixedDelay = 10000) // 10초마다 실행_이후 서비스가 어느정도 사이즈냐에 따라 조정
     public void processRetryQueue() {
         // Redis 리스트에서 paymentKey 꺼내기
         String paymentKey = redisTemplate.opsForList().rightPop(RETRY_QUEUE);

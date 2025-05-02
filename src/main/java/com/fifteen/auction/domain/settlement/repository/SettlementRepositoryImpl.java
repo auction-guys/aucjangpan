@@ -54,6 +54,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                         auction.winPrice.stringValue(),
                         settlement.charge.stringValue(),
                         settlement.settlementAmount.stringValue(),
+                        settlement.status.stringValue(),
                         settlement.settledAt.stringValue(),
                         settlement.createdAt.stringValue(),
                         user.accountNumber.stringValue()
