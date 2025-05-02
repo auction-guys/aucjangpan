@@ -34,8 +34,6 @@ dependencies {
     implementation 'com.opencsv:opencsv:5.10'
 
     //mysql
-    runtimeOnly 'com.mysql:mysql-connector-j'
-
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -97,11 +95,7 @@ dependencies {
     // Thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-
-    // rabbitmq
-    implementation 'org.springframework.boot:spring-boot-starter-amqp'
-    testImplementation 'org.springframework.amqp:spring-rabbit-test'
-
+    
     //feign
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
 

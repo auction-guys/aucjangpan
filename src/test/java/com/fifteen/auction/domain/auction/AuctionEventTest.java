@@ -10,6 +10,8 @@ import com.fifteen.auction.domain.auction.service.AuctionService;
 import com.fifteen.auction.domain.auction.service.BidEventService;
 import com.fifteen.auction.domain.inbox.dto.CreateMessageRequest;
 import com.fifteen.auction.domain.inbox.service.InboxService;
+import com.fifteen.auction.domain.recommend.service.RedisService;
+import com.fifteen.auction.domain.tag.repository.TagRepository;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import org.junit.jupiter.api.Nested;
@@ -154,7 +156,8 @@ public class AuctionEventTest {
                             auctionRepository,
                             null, null, null,
                             auctionRedisRepository,
-                            null, null, null, null
+                            null, null, null, null,
+                            mock(RedisService.class), mock(TagRepository.class)
                     )),
                     inboxService
             );

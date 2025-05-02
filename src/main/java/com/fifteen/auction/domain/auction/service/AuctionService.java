@@ -6,6 +6,7 @@ import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
 import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
 import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
 import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
+import com.fifteen.auction.domain.auction.dto.response.CurrentPriceInfo;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
@@ -18,12 +19,12 @@ import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.product.service.MarketPriceService;
+import com.fifteen.auction.domain.recommend.service.RedisService;
 import com.fifteen.auction.domain.tag.entity.Tag;
 import com.fifteen.auction.domain.tag.repository.TagRepository;
 import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
-import com.fifteen.auction.domain.recommend.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -36,10 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-import java.time.LocalDateTime;
 import java.util.List;
-
 
 import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
@@ -224,5 +222,11 @@ public class AuctionService {
 
         // 경매가 개시되면 이벤트 등록 -> 마감 메시지 스케줄링
         auctionEndScheduleService.scheduleAuctionEnd(AuctionOpenEvent.fromAuction(auction));
+    }
+
+    @Transactional
+    public CurrentPriceInfo findCurrentPrice(String auctionSeq) {
+        Long currentPrice = auctionRedisRepository.findCurrentPrice(auctionSeq);
+        return new CurrentPriceInfo(currentPrice);
     }
 }

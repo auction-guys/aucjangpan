@@ -28,7 +28,7 @@ public class AwsAuctionMessageListener {
     private final SqsClient sqsClient;
     private final ObjectMapper om = new ObjectMapper();
 
-    @Value("${aws-scheduler.url.sqs}")
+    @Value("${cloud.aws.sqs.url.auction-end-queue}")
     private String sqsUrl;
 
     @Scheduled(fixedDelay = 5000)
