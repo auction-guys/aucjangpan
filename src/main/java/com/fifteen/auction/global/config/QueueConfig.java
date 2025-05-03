@@ -25,7 +25,7 @@ public class QueueConfig {
     private String secretAccessKey;
 
     @Bean
-    @Profile("prod")
+//    @Profile("prod")
     public SqsClient sqsProdClient() {
         return SqsClient.builder()
                 .region(Region.AP_NORTHEAST_2)
@@ -35,8 +35,8 @@ public class QueueConfig {
                 .build();
     }
 
-    @Bean
-    @Profile("local")
+//    @Bean
+//    @Profile("local")
     public SqsClient sqsLocalClient() {
         return SqsClient.builder()
                 .region(Region.AP_NORTHEAST_2)
