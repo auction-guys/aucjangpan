@@ -477,24 +477,184 @@ Redis Sorted Set이 빠르고 점수 정렬을 지원하는 부분에 있어 본
     <summary>
 	    <a href="https://www.notion.so/Redisson-1e70b71c146780859b00eac5e85712c9?pvs=4">🎯 Redisson 분산 락과 트랜잭션 분리를 통한 결제 안정성 확보</a>
     </summary>
+
+ ### 문제 상황
+
+- 결제 승인/취소 시 분산 락(Redisson)과 DB 트랜잭션이 충돌하여 `rollback-only`, `Transaction synchronization error` 등의 예외가 발생함.
+    
+
+### 원인 분석
+
+- 락 획득 후 트랜잭션 처리 로직이 길고 복잡해 충돌 발생.
+- 분산 락과 트랜잭션의 범위가 중첩되어 트랜잭션 롤백 현상 발생.
+
+### 문제 해결
+
+- **분산 락 범위 최소화**: 락 내부에서 서비스 메서드만 호출.
+- **트랜잭션 분리**: 실제 DB 작업은 `@Transactional`로 명확히 분리.
+- **Redis 멱등성 처리**: 중복 결제 방지를 위해 Redis 캐시 활용.
+
+### 적용 결과
+
+- 트랜잭션 충돌 발생이 완전히 사라짐.
+- 결제 안정성과 응답 성능이 모두 개선됨.
+
+<br/>
+
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/STOMP-Redis-pub-sub-1e70b71c1467806590f1f529a090cb63?pvs=4">🎯 STOMP + Redis pub/sub 를 통한 실시간 채팅 시스템 성능 개선</a>
     </summary>
+	
+### 1. 문제
+
+- 채팅 메시지 전송 시 사용자 응답 속도가 느리고 실시간성이 떨어짐.
+- 서버 확장 시 채팅 메시지가 일부 인스턴스에서만 처리되어 메시지 누락 문제가 발생
+- 서버 장애나 과부하 시 전체 채팅 서비스의 안정성과 가용성이 크게 저하
+
+### 2. 요구사항
+
+- 체팅 메시지가 사용자에게 즉시 전달되어야 합니다.
+- 메시지를 DB에 저장하는 과정에서 에러가 발생해도 사용자에게 메시지가 전달되어야 합니다.
+- Scale-out 시에도 안정적으로 동작되어야 합니다.
+
+### 3. 원인
+
+- 메시지가 DB에 동기적으로 저장되므로 메시지 처리 속도가 느려지고, 메시지를 DB에 저장하는 과정에서 에러가 발생시 사용자에게 메시지가 전달되지 않을 수 있음
+- STOMP 기반 메시지 전달 방식이 **단일 인스턴스 중심**으로 작동해, 서버 확장 시 인스턴스 간 메시지 공유가 불가능함.
+- 메시지 브로커나 분산 처리가 없기 때문에, 서버 장애나 부하 발생 시 대체 인스턴스가 역할을 수행하지 못함
+
+### 4. 해결
+
+**Redis pub/sub 적용**: Redis를 사용하여 메시지가 발행되면, 모든 서버 인스턴스가 이를 구독하고 메시지를 즉시 사용자에게 전달하도록 설정.
+
+- 메시지는 Redis로 즉시 전달되고, DB에 대한 저장은 비동기로 처리하여 서버 성능에 부담을 주지 않도록 구성.
+- 서버 인스턴스를 늘려도 메시지 동기화가 이루어지므로 scale-out 가능
+
+<br/>
+
+### 5. 결과
+
+부하 테스트는 로컬에서 150명의 가상 사용자(VUS)를 대상으로 5분간 **v1**과 **v2**의 성능을 비교
+
+**RPS (Requests Per Second)**
+
+- **v1**: 약 112.84 RPS (초당 처리되는 요청 수)
+![image](https://github.com/user-attachments/assets/7aca3632-a165-4fe9-b080-b4fc1924912c)
+
+
+- **v2**: 약 153.32 RPS (초당 처리되는 요청 수)
+![image](https://github.com/user-attachments/assets/ed0289e8-2045-4b0f-9865-b55cac90df6e)
+
+
+v2에서는 Redis의 pub/sub 방식과 비동기 DB 저장을 통해 요청 처리 속도가 약 35.87**%** 향상되었습니다.
+
+<br/>
+
+**Latency (응답 시간)**
+
+- **v1**: 평균 응답 시간 **30.1ms**
+  
+![image](https://github.com/user-attachments/assets/3f125c61-455b-4f18-9abc-f82df981cfcd)
+
+- **v2**: 평균 응답 시간 **22.5ms**
+
+![image](https://github.com/user-attachments/assets/6f7e7107-3190-47a0-af88-e49f0a4491bd)
+
+
+v2에서는 Redis로 메시지를 즉시 전달하고, DB 저장을 비동기 처리하면서 메시지 처리 시간이 약 **25.6%** 감소하였습니다.
+
+<br/>
+
+### 6. 한계점 및 보완 방안
+
+**Redis pub/sub의 메시지 유실 가능성**
+
+서버가 일시적으로 다운되어 구독하지 못하면 해당 메시지를 수신하지 못하고 **유실될 수 있습니다.**
+
+- 보완 방안
+    - Kafka 등의 메시지 브로커를 도입하여 메시지를 저장 기반으로 처리하도록 변경
+    - 메시지를 Redis에 저장 후 메시지 ID를 기준으로 ack 처리 방식 도입 가능.
+
+<br/>
+
+**메시지 순서 보장 어려움**
+
+Redis pub/sub 및 비동기 처리 구조에서는 메시지 순서가 **보장되지 않을 수 있습니다.** 
+
+- 보완 방안
+    - 메시지에 **timestamp** 또는 **순번 필드**를 부여하여 클라이언트에서 정렬 처리.
+    - Kafka 등 메시지 순서를 보장하는 브로커로 구조 변경 고려.
+
+<br/>
+
+**Redis 단일 장애 지점(SPOF)**
+
+Redis가 단일 인스턴스일 경우 장애 시 전체 채팅 기능이 마비될 수 있습니다.
+
+- 보완 방안
+    - Redis Cluster 구성으로 고가용성 확보
+
+<br/>
+  
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/Google-OAuth-URI-1e70b71c146780fc83f6e5fd3f949e44?pvs=4">🎯 Google OAuth 리디렉션 URI 오류</a>
     </summary>
+
+### 문제 상황
+
+Google OAuth 로그인 시 `redirect_uri_mismatch` 오류로 **로그인 실패** 발생
+
+### 원인
+
+- Google Cloud Console에 등록된 리디렉션 URI와 **실제 콜백 URL 불일치**
+- OAuth는 **정확히 일치하는 URI만 허용**하여 토큰 교환 실패
+
+### 해결 전략
+
+- Google Cloud Console의 OAuth 설정에서 **정확한 콜백 URI 등록**
+- Postman을 활용한 **OAuth 흐름 수동 테스트**로 설정 검증
+
+### 도입 효과
+
+- Google OAuth 로그인이 **정상 작동**
+- 액세스 토큰 발급 및 사용자 정보 조회까지 **전 과정 성공적으로 확인**
+
+<br/>
+ 
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/Google-OAuth-HttpMessageConverter-1e70b71c14678072b631de42e41b51e1?pvs=4">🎯 Google OAuth 토큰 교환 시 HttpMessageConverter 오류</a>
     </summary>
+
+### 문제 상황
+
+`OAuthService.loginWithGoogle()` 메서드에서 Google OAuth 토큰 교환 시, `No suitable HttpMessageConverter` 예외로 **JSON 응답 파싱 실패**
+
+### 원인
+
+- `RestTemplate`에 JSON 응답을 처리할 **MappingJackson2HttpMessageConverter 누락**
+- 요청 본문 형식인 **application/x-www-form-urlencoded**도 처리 불가
+
+### 해결 전략
+
+- `FormHttpMessageConverter`, `MappingJackson2HttpMessageConverter`를 명시적으로 추가
+- `setMessageConverters()`로 RestTemplate 동작을 **예측 가능하게 구성**
+
+### 결과
+
+- Google OAuth API의 **JSON 응답 파싱 및 토큰 수신 정상화**
+- 이후 사용자 정보 조회 및 로그인 흐름까지 **안정적으로 동작**
+
+<br/>
+
 </details>
 
 <details>
@@ -543,38 +703,307 @@ Redis Sorted Set이 빠르고 점수 정렬을 지원하는 부분에 있어 본
     <summary>
 	    <a href="https://www.notion.so/1e70b71c1467805fb1aed63f21052f44?pvs=4">🎯 상품 시세 예측결과가 동일한 금액으로 고정되는 문제</a>
     </summary>
+
+### 문제점
+
+- 상품명과 설명을 기준으로 시세 예측을 요청했지만,
+    
+    **모든 상품에 대해 항상 동일한 결과** (`min: 30000`, `max: 50000`)만 반환됨
+    
+
+<br/>
+
+### 원인 분석
+
+- 프롬프트 내에 아래와 같은 **고정 예시 값**이 포함되어 있었음:
+
+```java
+
+String.format("""
+    제품명: %s
+    설명: %s
+
+    해당 중고 상품의 예상 거래 가격 범위를 알려주세요.
+    아래 형식처럼 JSON 형식으로만 응답해 주세요.
+
+    {
+      "min": 30000,
+      "max": 50000
+    }
+""", productName, productDescription)
+
+```
+
+ChatGPT가 해당 숫자들을 **예시가 아닌 정답으로 인식**하여 반복 출력함
+
+<br/>
+
+### 해결 방법
+
+- 프롬프트에서 **구체적인 예시 숫자 제거**
+
+```java
+String.format("""
+    제품명: %s
+    설명: %s
+
+    해당 중고 상품의 예상 거래 가격 범위를 알려주세요.
+    아래 형식처럼 JSON 형식으로만 응답해 주세요.
+
+    {
+      "min": [예상 최소 가격 숫자만 입력],
+      "max": [예상 최대 가격 숫자만 입력]
+    }
+""", productName, productDescription)
+
+```
+
+<br/>
+
+### 적용 결과
+
+```json
+{
+  "productName": "아이폰 13",
+  "todayPrice": {
+    "min": 420000,
+    "max": 520000,
+    "priceType": "TODAY",
+    "priceDate": "2025-04-30"
+  },
+  "message": "시세 예측 완료"
+}
+
+```
+
+정상적으로 예측값 반환됨
+
+<br/>
+
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/500-1e70b71c146780329605f0f52259a301?pvs=4">🎯 시세 예측 실패시 500 에러 → 메시지 응답</a>
     </summary>
+
+### 문제점
+
+- GPT 호출 중 예외가 발생하면 단순한 시세 예측 실패에도 상품 등록/경매 단건조회 기능 전체가 500
+
+오류로 실패
+
+- 사용자 입장에서는 단순 시세 조회 실패가 전체 기능 장애처럼 보이게 됨
+
+<br/>
+
+### 원인 분석
+
+- `ChatGPTClient`에서 예측이 실패하면서 500 에러 발생
+
+<br/>
+
+### 해결 방법
+
+**ChatGPTClient**
+
+```java
+
+try {
+    return chatGPTClient.callGptForHistoricalPrices(query);
+} catch (Exception e) {
+    log.warn("GPT 예측 실패: {}", e.getMessage());
+    return Collections.emptyList();
+}
+
+```
+
+**MarketPriceService**
+
+```java
+
+if (predictedPrices.isEmpty()) {
+    return MarketPriceResponse.error("시세 정보가 존재하지 않습니다.");
+}
+
+```
+
+<br/>
+
+### 적용 결과
+
+```json
+
+{
+  "message": "시세 정보가 존재하지 않습니다."
+}
+
+```
+
+GPT 예측 실패 시에도 **200 OK + 안내 메시지 응답**
+
+<br/>
+
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/S3-1e70b71c1467801e8229d45e326a473a?pvs=4">🎯 S3 이미지 업로드 실패 해결</a>
     </summary>
+
+ ### 1. 배경
+
+중고 경매 플랫폼에서는 사용자가 상품을 등록할 때 이미지를 함께 업로드합니다. 이때 이미지 업로드가 정상적으로 동작하지 않는 문제가 발견되었습니다. 클라이언트 측에서 **HTTP 403 오류** 또는 **`AccessDenied` 응답**이 발생했으며, 특히 프론트엔드에서 `multipart/form-data` 형식으로 전송한 요청에서 문제가 집중적으로 발생했습니다. 반면 Postman에서는 정상적으로 업로드가 가능했고, 직접 S3 객체 URL에 접근하면 AccessDenied 화면이 출력되는 상황이었습니다.
+
+</br>
+
+### 2. 원인
+
+문제를 분석한 결과, 여러 요소가 복합적으로 작용한 것으로 나타났습니다.
+
+- **IAM 권한 부족**: S3 버킷에 파일을 업로드하거나 조회할 수 있는 권한이 계정 또는 IAM Role에 누락되어 있었습니다.
+- **CORS 미설정**: 프론트엔드가 브라우저 환경에서 직접 S3로 요청을 보낼 경우 CORS 설정이 되어 있지 않으면 브라우저가 요청을 차단합니다.
+- **Content-Type 누락**: 업로드 요청 시 `Content-Type` 헤더가 누락되어, S3가 파일을 제대로 처리하지 못하고 거부했습니다.
+- **버킷의 퍼블릭 접근 제한**: S3는 기본적으로 모든 요청을 차단하며, 공개 접근 허용이 없으면 외부에서 이미지를 열람할 수 없습니다.
+
+</br>
+
+### 3. 문제 해결
+
+문제를 해결하기 위해 아래와 같은 조치를 단계적으로 적용했습니다:
+
+- **IAM 정책 수정**: `s3:PutObject`, `s3:GetObject` 권한을 명시적으로 포함한 정책을 EC2 인스턴스 혹은 사용 계정에 적용하여 업로드 및 조회 권한을 확보했습니다.
+- **CORS 설정 추가**: S3 버킷에 `AllowedMethods`, `AllowedOrigins`, `AllowedHeaders` 설정을 추가하여 브라우저 환경에서도 CORS 오류 없이 요청이 가능하도록 구성했습니다.
+- **버킷 정책 수정**: 이미지 열람이 필요한 최소 범위에서 `public-read` 접근을 허용하도록 설정해, CloudFront 및 직접 URL 접근이 가능해졌습니다.
+- **Content-Type 명시**: 파일 업로드 시 `ObjectMetadata`에 `Content-Type`을 명확히 설정하여 S3가 파일 형식을 정확히 인식하도록 보완했습니다.
+
+</br>
+
+### 4. 결론
+
+이러한 설정을 통해 이미지 업로드와 접근이 모두 정상화되었습니다. 프론트엔드에서 발생하던 403 및 AccessDenied 오류가 해결되었고, 사용자 입장에서도 이미지 미리보기 및 접근이 원활하게 작동하게 되었습니다.
+
+이번 경험을 통해, **S3를 활용한 이미지 업로드에서는 IAM, CORS, Content-Type, 버킷 정책이 서로 맞물려 동작하므로 종합적인 접근이 필수**라는 점을 명확히 인식할 수 있었습니다.
+
+</br>
+
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/Redis-TTL-1e70b71c146780e99d58ff771dd97d57?pvs=4">🎯 Redis TTL 설정으로 조회수 관리</a>
     </summary>
+
+### 1. 배경
+
+경매 상세 조회 API 호출 시마다 DB의 `view` 필드가 무조건 증가하는 구조로 되어 있어 문제가 발생
+동일 사용자가 새로고침을 반복해도 조회수가 계속 증가했고, 특히 JMeter를 활용한 부하 테스트에서는 **DB에 과도한 update 쿼리**가 발생해 CPU 사용률이 급격히 상승함. 현재는 Redis 캐시를 활용 중이었지만, **중복 조회 방지 로직이 없는 상태**였으며 문제 해결이 필요
+
+<br/>
+
+### 2. 원인
+
+- **중복 조회 제한 미비**: 동일 사용자에 의한 반복 접근도 모두 조회수에 반영됨
+- **TTL 설정 누락**: Redis에 캐시된 조회 여부가 영구 저장되거나 아예 저장되지 않음
+- **Redis 키 설계 부재**: 사용자 단위를 식별할 수 있는 키 구조(`userId`, `IP`)가 없었음
+- **실시간 통계 반영 실패**: 단순 카운터 증가 방식이 의도한 통계 구조와 부합하지 않음
+
+<br/>
+
+### 3. 문제 해결
+
+- **사용자 기반 조회 캐시**: Redis에 사용자의 조회 이력을 남겨 중복 조회 차단
+- **TTL 설정**: 일정 시간(예: 1시간) 동안 동일 사용자의 조회는 무시
+- **Redis 키 구조 개선**: `view:auction:{auctionId}:user:{userKey}` 형태로 키 설계
+- **DB 조회수 증가 조건화**: Redis에서 중복 확인 후에만 `view` 필드를 증가시키도록 변경
+
+<br/>
+
+### 4. 적용
+
+- Redis에 사용자의 조회 이력을 캐시하며, TTL은 60분으로 설정
+- 조회 요청이 들어오면 Redis에서 최근 조회 여부를 확인한 뒤, 없을 경우에만 DB 조회수 증가 수행
+- 조회 후에는 Redis에 해당 키를 저장하여 중복 방지
+
+```java
+java
+복사편집
+String redisKey = "view:auction:" + auctionId + ":user:" + userKey;
+Duration ttl = Duration.ofMinutes(60);
+
+if (!redisService.isViewedRecently(redisKey)) {
+    auction.increaseViews();
+    redisService.markViewed(redisKey, ttl);
+}
+
+```
+
+<br/>
+
+### 5. 결론
+
+이 개선을 통해 **의미 없는 중복 조회수 증가를 방지하고, DB 부하를 크게 줄였고,**
+
+DB 업데이트는 실질적인 사용자 접근에만 반응하게 되었으며, TPS는 약 300 → 1000 이상으로 증가했으며, 평균 응답 속도도 300ms ~ 500ms 수준으로 개선
+
+Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 키 관리로 효율적 운영이 가능
+
+이로써 조회수 통계의 정확도와 시스템의 성능이 동시에 향상
+
+<br/>
+
 </details>
 
 <details>
     <summary>
 	    <a href="https://www.notion.so/Auction-API-1e70b71c1467806eb9daf4c41554bd19?pvs=4">🎯 Auction 전체조회 + 추천목록 API 응답 지연 개선과정</a>
     </summary>
-</details>
+
+### 1. 배경
+
+`/api/v2/auctions/overview` API는 **추천 경매 + 일반 경매 목록을 함께 반환**하는 통합 API였습니다.
+
+그러나 부하 테스트 결과, **응답 지연(2~6초)**과 **TPS 300 수준에서 CPU 부하/DB 병목**이 발생해 사용자 경험이 크게 저하되었습니다.
 
 <br/>
 
+### 2. 원인
 
+- **추천 ID는 Redis에 있지만 상세 정보는 RDB에서 별도 조회**
+- **`currentPrice`, `bidCount`를 매 경매마다 Redis에서 개별 조회(N+1 문제)**
+- **추천과 일반 경매 구분 및 정렬/페이징 로직이 복잡**
+- **전체 응답에 대한 캐싱이 없어 모든 요청이 풀로직 수행**
 
+<br/>
 
+### 3. 해결 방안 및 적용
 
+- **`currentPrice`, `bidCount` Redis 요청을 Bulk 처리** → N+1 제거, pipeline 활용
+- **추천 ID 목록만 Redis TTL 캐싱** → 반복 요청에 대응
+- **DB 조회 최적화** → IN 조건 + Projection 기반 조회
+- **전체 응답 캐싱은 보류**, 추천 대상만 캐싱
+
+<br/>
+
+### 4. 결과
+
+- 평균 응답 시간: 약 **200ms로 대폭 단축**
+- TPS 처리: **300 → 1000~2000 수준으로 개선**
+- Redis 요청 수 감소 및 DB 쿼리 최적화로 전반적인 시스템 성능 향상
+- 사용자 입장에서 **실시간처럼 빠른 응답 체감**
+
+<br/>
+
+### 5. 후속 과제
+
+- **추천 목록 전체를 Redis에 JSON으로 캐싱**하는 전략 검토
+- **공통 조회 필드(예: 가격, 입찰수 등)에 대한 Embedded DTO 캐싱** 도입 예정
+
+<br/>
+
+</details>
+
+<br/>
 
 ## 6. 아키텍처
 
