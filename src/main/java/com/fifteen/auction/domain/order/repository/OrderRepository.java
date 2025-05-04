@@ -16,4 +16,9 @@ public interface OrderRepository extends JpaRepository<Order, String>, OrderRepo
             "join fetch p.seller u " +
             "where o.id = :orderId")
     Optional<Order> findByOrderId(@Param("orderId") String orderId);
+
+    @Query("select o from Order o " +
+            "join fetch o.auction " +
+            "where o.id = :orderId")
+    Optional<Order> findByIdFetchAuction(String orderId);
 }
