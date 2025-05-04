@@ -25,4 +25,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void softDeleteByEmail(@Param("email") String email);
 
     List<User> findByRecommendGroup(RecommendGroup recommendGroup);
+
+    @Query("SELECT u FROM User u " +
+            "WHERE u.id = :userId " +
+            "AND u.role = 'ROLE_ADMIN'")
+    Optional<User> findByUserIdAndUserRole(Long userId);
 }
