@@ -1,11 +1,13 @@
 package com.fifteen.auction.domain.auction.service;
 
+import com.fifteen.auction.domain.auction.dto.constant.BidResult;
 import com.fifteen.auction.domain.auction.dto.event.BidProcessEvent;
 import com.fifteen.auction.domain.auction.dto.event.BidRequestEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowProcessEvent;
 import com.fifteen.auction.domain.auction.dto.event.BuyNowRequestEvent;
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
 import com.fifteen.auction.domain.auction.dto.response.BidHistoryInfo;
+import com.fifteen.auction.domain.auction.dto.response.BidRequestResult;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.entity.Bid;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
@@ -94,6 +96,10 @@ public class BidService {
         return bidRepository.findAllInProgressByAuctionSeq(pageRequest, auctionSeq);
     }
 
+    /**
+     * Bid V2 Methods
+     */
+
     @Secured(ROLE_USER)
     public void putBidIntoQueue(String auctionSeq, Long userId, Long bidPrice) {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
@@ -105,10 +111,11 @@ public class BidService {
             throw new ClientException(ErrorCode.LOW_BID_PRICE);
         }
 
-        auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice));
+        auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice, findAuction.getBidUnit()));
     }
 
 
+    @Secured(ROLE_USER)
     @Transactional
     public void putBuyNowIntoQueue(String auctionSeq, Long userId) {
         Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
@@ -123,6 +130,71 @@ public class BidService {
         auctionEventPublisher.publishBuyNowRequest(
                 new BuyNowRequestEvent(auctionSeq, userId, findAuction.getBuyNowPrice()));
     }
+
+    /**
+     * Bid V3 Methods
+     */
+
+    @Secured(ROLE_USER)
+    public BidRequestResult putBidIntoQueueV2(String auctionSeq, Long userId, Long bidPrice) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq).orElse(null);
+
+        if (findAuction == null) {
+            return BidRequestResult.of(BidResult.CANNOT_FIND_AUCTION);
+        }
+
+        if (findAuction.isOwnedByUser(userId)) {
+            return BidRequestResult.of(BidResult.UNBIDDABLE_AUCTION);
+        }
+
+        if (auctionRedisRepository.isBidUnderPrice(auctionSeq, bidPrice, findAuction.getBidUnit())) {
+            return BidRequestResult.of(BidResult.LOW_BID_PRICE);
+        }
+
+        auctionEventPublisher.publishBidRequest(new BidRequestEvent(auctionSeq, userId, bidPrice, findAuction.getBidUnit()));
+
+        return BidRequestResult.of(BidResult.BID_SUCCEED);
+    }
+
+
+    @Secured(ROLE_USER)
+    public BidRequestResult putBuyNowIntoQueueV2(String auctionSeq, Long userId) {
+        Auction findAuction = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq).orElse(null);
+
+        if (findAuction == null) {
+            return BidRequestResult.of(BidResult.CANNOT_FIND_AUCTION);
+        }
+
+        if (findAuction.isOwnedByUser(userId)) {
+            return BidRequestResult.of(BidResult.UNBIDDABLE_AUCTION);
+        }
+
+        if (!findAuction.isBuyNowSet()) {
+            return BidRequestResult.of(BidResult.CANNOT_BUY_NOW);
+        }
+
+        auctionEventPublisher.publishBuyNowRequest(
+                new BuyNowRequestEvent(auctionSeq, userId, findAuction.getBuyNowPrice()));
+
+        return BidRequestResult.of(BidResult.BUY_NOW_SUCCEED);
+    }
+
+    @Transactional
+    public void settleBid(String auctionSeq, Long bidderId, Long bidPrice) {
+        Auction auc = auctionRepository.findOpenOneBySeqWithSeller(auctionSeq)
+                .orElseThrow(() -> new ClientException(ErrorCode.AUCTION_NOT_FOUND));
+
+        LocalDateTime bidAt = verifyAndGetRequestTime(auc.getExpiresAt(), ErrorCode.INVALID_BID_REQUEST);
+
+        bidRepository.save(new Bid(auc, bidderId, bidPrice, bidAt));
+
+        // 자동연장 처리
+        auc.extendExpireTime(bidAt);
+    }
+
+    /**
+     * private method
+     */
 
     private LocalDateTime verifyAndGetRequestTime(LocalDateTime expiresAt, ErrorCode errorCode) {
         LocalDateTime buyAt = clockHolder.now();
