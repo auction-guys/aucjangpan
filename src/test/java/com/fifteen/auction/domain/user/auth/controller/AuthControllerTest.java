@@ -21,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@ActiveProfiles("local")
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
@@ -40,9 +42,6 @@ class AuthControllerTest {
 
     @MockBean
     private OAuthService oAuthService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -105,8 +104,7 @@ class AuthControllerTest {
     void 로그아웃_성공() throws Exception {
         mockMvc.perform(post("/api/v1/auth/logout")
                         .header("Authorization", "Bearer test-token"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("로그아웃이 완료되었습니다."));
+                .andExpect(status().isNoContent());
     }
 
     @Test
