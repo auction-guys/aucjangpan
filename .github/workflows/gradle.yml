@@ -132,7 +132,7 @@ jobs:
             depends_on:
               - aujangpan
             networks:
-              aucjangpan-network
+              - aucjangpan-network
 
         networks:
           aucjangpan-network:
