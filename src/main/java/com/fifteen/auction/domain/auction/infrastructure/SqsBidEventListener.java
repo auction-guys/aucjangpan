@@ -59,7 +59,7 @@ public class SqsBidEventListener {
                 case TYPE_ID_BID_REQUEST_EVENT -> {
                     BidRequestEvent e = JsonUtil.readValue(bodyString, BidRequestEvent.class);
                     log.info("[입찰 큐 이벤트 처리] auctionSeq={}\tbidderId={}\tbidPrice={}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
-                    bidEventHandler.handleBidFromQueue(e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
+                    bidEventHandler.handleBidFromQueue(e.getAuctionSeq(), e.getUserId(), e.getBidPrice(), e.getBidUnit());
                 }
                 case TYPE_ID_BUY_NOW_REQUEST_EVENT -> {
                     BuyNowRequestEvent e = JsonUtil.readValue(bodyString, BuyNowRequestEvent.class);
@@ -94,7 +94,7 @@ public class SqsBidEventListener {
             try {
                 auctionParticipationHandler();
             } catch (Exception e) {
-                log.warn("[SQS Listener] Listener Thread가 비정상 종료되었습니다. 재시작합니다.");
+                log.warn("[SQS Listener] Listener Thread가 비정상 종료되었습니다. 재시작합니다.", e);
                 if (!listenerThread.isInterrupted()) {
                     startListener();
                 }
