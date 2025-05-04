@@ -17,10 +17,14 @@
 <br/>
 
 ## 1. 프로젝트 소개
+<p>
+	<img src="https://github.com/user-attachments/assets/ca97d5a5-266b-4f59-bdfd-b4b8b2ac379f" width="300px" />
+	<img src="https://github.com/user-attachments/assets/a51a3b70-45d4-4ec0-ae6d-714def0cef99" width="300px" />	
+</p>
+
+<br/><br/>
 
 **옥장판은 중고 거래에 경매의 짜릿함을 더한 새로운 방식의 중고 옥션입니다.**
-
-<br/>
 
 > 
 > 원하는 물건을 단순히 **사는 것**에서 벗어나, 경쟁을 통해 더 합리적인 가격에 구매할 수 있습니다.
@@ -1028,28 +1032,75 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 
 ## 9. 팀원 소개
 
-
 <table>
-    <tr>
-        <!-- 프로필 -->
-          <td>
-            <a href="https://github.com/yeongbinim">
-                <img src="https://github.com/user-attachments/assets/bd5971a1-a5b5-434b-9ea6-15fcf47ed6fd" width="100px;" alt="프로필 사진">
-            </a>
-          </td>
-        <td align="center" style="width: 150px;">    
-            <p>
-                <b></b>
-            </p>
-        </td>
-        <td>
-	        <p>
-                📌 실시간 입찰 동시성 제어 <br/>
-                📌 입찰 시 최고가 조회 속도 향상 <br/>
-                📌 인프라 구축, CI/CD, UI(React) <br/>
-                📌 결제 API 연동(Toss Payments)
-            </p>
-        </td>
-    </tr>
+	<tr align="center">
+		<td width="240px"><code>팀장</code> 김종연</td>
+		<td width="240px"><code>부팀장</code> 박경민</td>
+		<td width="240px">김종훈</td>
+	</tr>
+	<tr align="center">
+		<td width="240px"><img src="https://github.com/user-attachments/assets/7867dd29-f9e1-4614-8b96-03d842a2aafe"></td>
+		<td width="240px"><img src="https://github.com/user-attachments/assets/86e73c0c-e01f-4ea6-9866-8f00ee50425e"></td>
+		<td width="240px"><img src="https://github.com/user-attachments/assets/14e71d7c-72f5-4e36-845a-f0306c6979a2"></td>
+	</tr>
+	<tr>
+		<td width="240px"> 
+			 <p>
+				 	📌 경매 CRUD<br/>
+					📌 입찰 서비스(SQS & Redis)<br/>
+				 	📌 마감 처리 예약(EventBridge)<br/>
+					📌 마감 알림 발송(BulkInsert)<br/>
+			</p>
+		</td>
+		<td width="240px">
+			 <p>
+					📌 상품 CRUD <br/>
+					📌 찜하기, Views 기능<br/>
+					📌 추천 기능 개발 <br/>
+					📌 상품 이미지 관리 기능
+			</p>
+		</td>
+		<td width="240px">
+			 <p>
+					📌 상품 시세예측 <br/>
+					📌 ChatGPT & Naver쇼핑 API <br/>
+					📌 API 호출 최적화(Redis 캐싱) <br/>
+			</p>
+		</td>
+	</tr>
+	<tr align="center">
+		<td width="240px">김대정</td>
+		<td width="240px">김수환</td>
+		<td width="240px">김성찬</td>
+	</tr>
+	<tr align="center">
+		<td width="240px"><img src="https://github.com/user-attachments/assets/bb030eda-d9c0-47b9-86ab-97e874c01b24"></td>
+		<td width="240px"><img src="https://github.com/user-attachments/assets/f7c68aad-4fb0-468b-8d7b-ac386a8f6559"></td>
+		<td width="240px"><img src="https://github.com/user-attachments/assets/1274a8ac-ddf5-4d5e-a11b-78d9aa6d4d93"></td>
+	</tr>
+	<tr>
+		<td width="240px">
+			 <p>
+					📌 주문 CRUD<br/>
+					📌 결제 API 연동(TossPayments) <br/>
+					📌 정산 자동화 시스템 구현
+			</p>
+		</td>
+		<td width="240px">
+			 <p>
+					📌 유저 인증/인가 CRUD</br>
+					📌 JWT & Spring Security</br>
+					📌 OAuth 적용</br>
+					📌 RTR 적용
+			</p>
+		</td>
+		<td width="240px">
+			 <p>
+				📌 AWS 인프라 & CI/CD<br/>
+				📌 Prometheus & Grafana<br/>
+				📌 실시간 채팅 구현(STOMP)
+			</p>
+		</td>
+	</tr>
 </table>
 
