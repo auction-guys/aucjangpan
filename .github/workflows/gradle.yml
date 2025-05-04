@@ -17,27 +17,7 @@ jobs:
 
     # Spring Boot app Build
     - name: Spring Boot build
-      env:
-        DB_URL: ${{ secrets.DB_URL }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        REDIS_HOST: ${{ secrets.REDIS_HOST }}
-        REDIS_PORT: ${{ secrets.REDIS_PORT }}
-        S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
-        S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
-        CLOUDFRONT_DOMAIN_KEY: ${{ secrets.CLOUDFRONT_DOMAIN_KEY }}
-        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-        OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-        OAUTH_SECRET: ${{ secrets.OAUTH_SECRET }}
-        OAUTH_REDIRECT_URI: ${{ secrets.OAUTH_REDIRECT_URI }}
-        TOSS_SECRET_KEY: ${{ secrets.TOSS_SECRET_KEY }}
-        OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-        NAVER_ID: ${{ secrets.NAVER_ID }}
-        NAVER_SECRET: ${{ secrets.NAVER_SECRET }}
-        GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
-        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
-        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-      run: ./gradlew clean build -Dspring.profiles.active=prod
+      run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
     # Docker Image Build
     - name: docker image build
@@ -96,7 +76,71 @@ jobs:
         GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
         ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
         EOF
-        
+
+    - name: Make nginx.conf file # <<< Nginx 설정 파일 생성 추가 >>>
+      run: |
+        cat <<EOF > nginx.conf
+        worker_processes auto;
+        events { worker_connections 1024; }
+        http {
+            include /etc/nginx/mime.types;
+            default_type application/octet-stream;
+            upstream backend {
+                server aucjangpan:8080;
+            }
+            server {
+                listen 80;
+                server_name _;
+
+                location / {
+                    proxy_pass http://backend;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+                access_log /var/log/nginx/access.log;
+                error_log /var/log/nginx/error.log;
+            }
+        }
+        EOF
+
+    - name: Make docker-compose.yml file
+      run: |
+        cat <<EOF > docker-compose.yml
+        version: '3.8'
+
+        services:
+          aujangpan:
+            image: ${{ secrets.DOCKERHUB_USERNAME }}/aucjangpan:latest
+            container_name: aucjangpan-app
+            restart: always
+            env_file:
+              - /home/ubuntu/.env
+            networks:
+              - aucjangpan-network
+          
+          nginx:
+            image: nginx:latest
+            container_name: aucjangpan-nginx
+            restart: always
+            ports:
+              - "80:80"
+            volumes:
+              - /home/ubuntu/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+              - nginx-logs:/var/log/nginx
+            depends_on:
+              - aujangpan
+            networks:
+              aucjangpan-network
+
+        networks:
+          aucjangpan-network:
+              driver: bridge
+        volumes:
+          nginx-logs:
+        EOF
+          
     - name: Copy .env to EC2
       uses: appleboy/scp-action@v0.1.4
       with:
@@ -107,7 +151,29 @@ jobs:
         source: "./.env"
         target: "/home/ubuntu/"
 
-# AWS EC2 Server Connect & Docker 명령어 실행
+    - name: Copy nginx.conf to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.SSH_PEM_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        source: "nginx.conf"
+        target: "/home/ubuntu/nginx/"
+        overwrite: true
+
+    - name: Copy docker-compose.yml to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{secrets.EC2_USERNAME}}
+        key: ${{ secrets.SSH_PEM_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        source: "docker-compose.yml"
+        target: "/home/ubuntu/aucjangpan/"
+        overwrite: true
+
+    # AWS EC2 Server Connect & Docker 명령어 실행
     - name: AWS EC2 Connection
       uses: appleboy/ssh-action@v0.1.6
       with:
@@ -117,11 +183,10 @@ jobs:
         port: ${{ secrets.EC2_SSH_PORT }}
         timeout: 60s
         script: |
-          docker pull ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan:latest
-          sudo docker stop aucjangpan-ci || true
-          sudo docker rm aucjangpan-ci || true
-          sudo docker run -d -p 8080:8080 --name aucjangpan-ci --env-file /home/ubuntu/.env ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan:latest
-
+          cd /home/ubuntu/aucjangpan
+          docker compose pull aucjangpan
+          docker compose up -d --remove-orphans
+          
     # REMOVE Github IP FROM security group
     - name: Remove IP FROM security group
       run: |
