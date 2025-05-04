@@ -17,6 +17,26 @@ jobs:
 
     # Spring Boot app Build
     - name: Spring Boot build
+      env:
+        DB_URL: ${{ secrets.DB_URL }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        REDIS_PORT: ${{ secrets.REDIS_PORT }}
+        S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+        S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+        CLOUDFRONT_DOMAIN_KEY: ${{ secrets.CLOUDFRONT_DOMAIN_KEY }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+        OAUTH_SECRET: ${{ secrets.OAUTH_SECRET }}
+        OAUTH_REDIRECT_URI: ${{ secrets.OAUTH_REDIRECT_URI }}
+        TOSS_SECRET_KEY: ${{ secrets.TOSS_SECRET_KEY }}
+        OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        NAVER_ID: ${{ secrets.NAVER_ID }}
+        NAVER_SECRET: ${{ secrets.NAVER_SECRET }}
+        GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
       run: ./gradlew clean build -Dspring.profiles.active=prod
 
     # Docker Image Build
