@@ -137,6 +137,7 @@ jobs:
         networks:
           aucjangpan-network:
               driver: bridge
+              name: aucjangpan-network
         volumes:
           nginx-logs:
         EOF
