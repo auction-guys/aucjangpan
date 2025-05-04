@@ -12,4 +12,5 @@ public class BidRequestEvent {
     private String auctionSeq;
     private Long userId;
     private Long bidPrice;
+    private int bidUnit;
 }

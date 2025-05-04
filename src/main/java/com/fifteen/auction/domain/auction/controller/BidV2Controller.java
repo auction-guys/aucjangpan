@@ -2,8 +2,10 @@ package com.fifteen.auction.domain.auction.controller;
 
 
 import com.fifteen.auction.domain.auction.dto.request.BidRequest;
+import com.fifteen.auction.domain.auction.dto.response.BidRequestResult;
 import com.fifteen.auction.domain.auction.service.BidService;
 import com.fifteen.auction.domain.user.auth.entity.AuthUser;
+import com.fifteen.auction.global.dto.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,5 +37,26 @@ public class BidV2Controller {
     ) {
         bidService.putBuyNowIntoQueue(auctionSeq, authUser.getId());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/v3/auctions/{auctionSeq}/bids")
+    public ResponseEntity<Response<BidRequestResult>> bidV3(
+            @PathVariable("auctionSeq") String auctionSeq,
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody BidRequest req
+    ) {
+        BidRequestResult result = bidService.putBidIntoQueueV2(auctionSeq, authUser.getId(), req.getPrice());
+        return result.isSuccess() ? ResponseEntity.ok(Response.of(result))
+                : ResponseEntity.badRequest().body(Response.of(result));
+    }
+
+    @PostMapping("/v3/auctions/{auctionSeq}/buynow")
+    public ResponseEntity<Response<BidRequestResult>> buyNowV3(
+            @PathVariable("auctionSeq") String auctionSeq,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        BidRequestResult result = bidService.putBuyNowIntoQueueV2(auctionSeq, authUser.getId());
+        return result.isSuccess() ? ResponseEntity.ok(Response.of(result))
+                : ResponseEntity.badRequest().body(Response.of(result));
     }
 }
