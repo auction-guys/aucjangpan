@@ -98,6 +98,8 @@ dependencies {
     
     //feign
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
+    implementation 'io.github.openfeign:feign-jackson:13.6'
+
 
     // Redisson
     implementation 'org.redisson:redisson-spring-boot-starter:3.45.1'
@@ -111,9 +113,6 @@ dependencies {
     // Lombok_test
     testCompileOnly 'org.projectlombok:lombok:1.18.26'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
-
-    // WireMock
-    testImplementation 'org.wiremock:wiremock:3.13.0'
 }
 
 tasks.named('test') {
