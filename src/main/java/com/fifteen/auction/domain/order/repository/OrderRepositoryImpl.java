@@ -77,9 +77,6 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom{
                 .where(user.id.eq(currentUserId).and(order.id.eq(orderId)))
                 .fetchOne();
 
-
         return Optional.ofNullable(query);
     }
-
-
 }

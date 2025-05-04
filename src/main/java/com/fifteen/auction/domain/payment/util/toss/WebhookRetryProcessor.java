@@ -49,7 +49,6 @@ public class WebhookRetryProcessor {
             String orderId = donePayment.getOrder().getId();
             log.info("결제 정보 확인: paymentKey: {}, orderId: {}", paymentKey, orderId);
 
-
             // 재시도 카운트 삭제
             redisTemplate.delete(retryCountKey);
         } else {
