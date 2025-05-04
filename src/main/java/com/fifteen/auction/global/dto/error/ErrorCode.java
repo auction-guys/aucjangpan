@@ -36,6 +36,7 @@ public enum ErrorCode {
     // Settlement Exceptions
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SETTLEMENT-1", "정산할 데이터가 존재하지 않습니다"),
     SETTLEMENT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SETTLEMENT-2", "정산 데이터 출력 중 오류가 생겼습니다."),
+    CHARGE_UPDATE_FORBIDDEN(HttpStatus.FORBIDDEN, "SETTLEMENT-3", "해당 기능에 대한 권한이 없습니다."),
 
     // Charge Exceptions
     CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHARGE-1", "해당 수수료가 존재하지 않습니다."),
