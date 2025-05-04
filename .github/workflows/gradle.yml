@@ -9,189 +9,195 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout 
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    # Spring Boot app Build
-    - name: Spring Boot build
-      run: ./gradlew clean build -x test -Dspring.profiles.active=prod
+      # Spring Boot app Build
+      - name: Spring Boot build
+        run: ./gradlew clean build -x test -Dspring.profiles.active=prod
 
-    # Docker Image Build
-    - name: docker image build
-      run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan .
+      # Docker Image Build
+      - name: docker image build
+        run: docker build -t ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan .
 
-    # DockerHub Login
-    - name: docker login
-      uses: docker/login-action@v2
-      with:
-        username: ${{secrets.DOCKERHUB_USERNAME}}
-        password: ${{secrets.DOCKERHUB_PASSWORD}}
+      # DockerHub Login
+      - name: docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_PASSWORD}}
 
-    # DockerHub push
-    - name: docker hub push
-      run: docker push ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan
+      # DockerHub push
+      - name: docker hub push
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/aucjangpan
 
-# GET GitHub IP
-    - name: get GitHub IP 
-      id: ip
-      uses: haythem/public-ip@v1.2
+      # GET GitHub IP
+      - name: get GitHub IP
+        id: ip
+        uses: haythem/public-ip@v1.2
       
-# Configure AWS Credentials
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with: 
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
+      # Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
 
-# Add github ip to AWS
-    - name: Add GitHub IP to AWS
-      run: |
-        aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      # Add github ip to AWS
+      - name: Add GitHub IP to AWS
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
-    - name: Make .env file
-      run: |
-        cat <<EOF > .env
-        DB_URL=${{ secrets.DB_URL }}
-        DB_USERNAME=${{ secrets.DB_USERNAME }}
-        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-        REDIS_HOST=${{ secrets.REDIS_HOST }}
-        REDIS_PORT=${{ secrets.REDIS_PORT }}
-        S3_ACCESS_KEY=${{secrets.S3_ACCESS_KEY}}
-        S3_SECRET_KEY=${{secrets.S3_SECRET_KEY}}
-        CLOUDFRONT_DOMAIN_KEY=${{secrets.CLOUDFRONT_DOMAIN_KEY}}
-        JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
-        OAUTH_CLIENT_ID=${{secrets.OAUTH_CLIENT_ID}}
-        OAUTH_SECRET=${{secrets.OAUTH_SECRET}}
-        OAUTH_REDIRECT_URI=${{secrets.OAUTH_REDIRECT_URI}}
-        TOSS_SECRET_KEY=${{secrets.TOSS_SECRET_KEY}}
-        OPENAI_KEY=${{secrets.OPENAI_KEY}}
-        NAVER_ID=${{secrets.NAVER_ID}}
-        NAVER_SECRET=${{secrets.NAVER_SECRET}}
-        EC2_HOST=${{secrets.EC2_HOST}}
-        GMAIL_USERNAME=${{secrets.GMAIL_USERNAME}}
-        GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
-        ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
-        EOF
+      - name: Make .env file
+        run: |
+          cat <<EOF > .env
+          DB_URL=${{ secrets.DB_URL }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          S3_ACCESS_KEY=${{secrets.S3_ACCESS_KEY}}
+          S3_SECRET_KEY=${{secrets.S3_SECRET_KEY}}
+          CLOUDFRONT_DOMAIN_KEY=${{secrets.CLOUDFRONT_DOMAIN_KEY}}
+          JWT_SECRET_KEY=${{secrets.JWT_SECRET_KEY}}
+          OAUTH_CLIENT_ID=${{secrets.OAUTH_CLIENT_ID}}
+          OAUTH_SECRET=${{secrets.OAUTH_SECRET}}
+          OAUTH_REDIRECT_URI=${{secrets.OAUTH_REDIRECT_URI}}
+          TOSS_SECRET_KEY=${{secrets.TOSS_SECRET_KEY}}
+          OPENAI_KEY=${{secrets.OPENAI_KEY}}
+          NAVER_ID=${{secrets.NAVER_ID}}
+          NAVER_SECRET=${{secrets.NAVER_SECRET}}
+          EC2_HOST=${{secrets.EC2_HOST}}
+          GMAIL_USERNAME=${{secrets.GMAIL_USERNAME}}
+          GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
+          ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
+          AUCTION_END_SQS_URL=${{secrets.AUCTION_QUEUE_URL}}
+          AUCTION_REQ_SQS_URL=${{secrets.AUCTION_REQ_SQS_URL}}
+          SCHEDULE_ROLE_ARN=${{secrets.SCHEDULE_ROLE_ARN}}
+          AUCTION_END_SQS_ARN=${{secrets.AUCTION_END_SQS_ARN}}
+          SQS_ACCESS_KEY=${{secrets.SQS_ACCESS_KEY}}
+          SQS_SECRET_KEY=${{secrets.SQS_SECRET_KEY}}
+          EOF
 
-    - name: Make nginx.conf file
-      run: |
-        cat <<EOF > nginx.conf
-        worker_processes auto;
-        events { worker_connections 1024; }
-        http {
-            include /etc/nginx/mime.types;
-            default_type application/octet-stream;
-            
-            resolver 127.0.0.11 valid=10s;
-        
-            server {
-                listen 80;
-                server_name _;
-        
-                location / {
-                    set \$upstream_url http://aucjangpan:8080;
-        
-                    proxy_pass \$upstream_url;
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
-                }
-                access_log /var/log/nginx/access.log;
-                error_log /var/log/nginx/error.log;
-            }
-        }
-        EOF
-
-    - name: Make docker-compose.yml file
-      run: |
-        cat <<EOF > docker-compose.yml
-        version: '3.8'
-
-        services:
-          aucjangpan:
-            image: ${{ secrets.DOCKERHUB_USERNAME }}/aucjangpan:latest
-            container_name: aucjangpan-app
-            restart: always
-            env_file:
-              - /home/ubuntu/.env
-            networks:
-              - aucjangpan-network
+      - name: Make nginx.conf file
+        run: |
+          cat <<EOF > nginx.conf
+          worker_processes auto;
+          events { worker_connections 1024; }
+          http {
+              include /etc/nginx/mime.types;
+              default_type application/octet-stream;
           
-          nginx:
-            image: nginx:latest
-            container_name: aucjangpan-nginx
-            restart: always
-            ports:
-              - "80:80"
-            volumes:
-              - /home/ubuntu/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-              - nginx-logs:/var/log/nginx
-            depends_on:
-              - aucjangpan
-            networks:
-              - aucjangpan-network
-
-        networks:
-          aucjangpan-network:
-              driver: bridge
-              name: aucjangpan-network
-        volumes:
-          nginx-logs:
-        EOF
+              resolver 127.0.0.11 valid=10s;
           
-    - name: Copy .env to EC2
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.SSH_PEM_KEY }}
-        port: ${{ secrets.EC2_SSH_PORT }}
-        source: "./.env"
-        target: "/home/ubuntu/"
-
-    - name: Copy nginx.conf to EC2
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.SSH_PEM_KEY }}
-        port: ${{ secrets.EC2_SSH_PORT }}
-        source: "nginx.conf"
-        target: "/home/ubuntu/nginx/"
-        overwrite: true
-
-    - name: Copy docker-compose.yml to EC2
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{secrets.EC2_USERNAME}}
-        key: ${{ secrets.SSH_PEM_KEY }}
-        port: ${{ secrets.EC2_SSH_PORT }}
-        source: "docker-compose.yml"
-        target: "/home/ubuntu/aucjangpan/"
-        overwrite: true
-
-    # AWS EC2 Server Connect & Docker 명령어 실행
-    - name: AWS EC2 Connection
-      uses: appleboy/ssh-action@v0.1.6
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{secrets.EC2_USERNAME}}
-        key: ${{secrets.SSH_PEM_KEY}} 
-        port: ${{ secrets.EC2_SSH_PORT }}
-        timeout: 60s
-        script: |
-          cd /home/ubuntu/aucjangpan
-          docker compose pull aucjangpan
-          docker compose up -d --remove-orphans
+              server {
+                  listen 80;
+                  server_name _;
           
-    # REMOVE Github IP FROM security group
-    - name: Remove IP FROM security group
-      run: |
-        aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+                  location / {
+                      set \$upstream_url http://aucjangpan:8080;
+          
+                      proxy_pass \$upstream_url;
+                      proxy_set_header Host \$host;
+                      proxy_set_header X-Real-IP \$remote_addr;
+                      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                      proxy_set_header X-Forwarded-Proto \$scheme;
+                  }
+                  access_log /var/log/nginx/access.log;
+                  error_log /var/log/nginx/error.log;
+              }
+          }
+          EOF
+
+      - name: Make docker-compose.yml file
+        run: |
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+          
+          services:
+            aucjangpan:
+              image: ${{ secrets.DOCKERHUB_USERNAME }}/aucjangpan:latest
+              container_name: aucjangpan-app
+              restart: always
+              env_file:
+                - /home/ubuntu/.env
+              networks:
+                - aucjangpan-network
+          
+            nginx:
+              image: nginx:latest
+              container_name: aucjangpan-nginx
+              restart: always
+              ports:
+                - "80:80"
+              volumes:
+                - /home/ubuntu/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+                - nginx-logs:/var/log/nginx
+              depends_on:
+                - aucjangpan
+              networks:
+                - aucjangpan-network
+          
+          networks:
+            aucjangpan-network:
+                driver: bridge
+                name: aucjangpan-network
+          volumes:
+            nginx-logs:
+          EOF
+
+      - name: Copy .env to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PEM_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          source: "./.env"
+          target: "/home/ubuntu/"
+
+      - name: Copy nginx.conf to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PEM_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          source: "nginx.conf"
+          target: "/home/ubuntu/nginx/"
+          overwrite: true
+
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{ secrets.SSH_PEM_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/aucjangpan/"
+          overwrite: true
+
+      # AWS EC2 Server Connect & Docker 명령어 실행
+      - name: AWS EC2 Connection
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{secrets.SSH_PEM_KEY}}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          timeout: 60s
+          script: |
+            cd /home/ubuntu/aucjangpan
+            docker compose pull aucjangpan
+            docker compose up -d --remove-orphans
+
+      # REMOVE Github IP FROM security group
+      - name: Remove IP FROM security group
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
       

@@ -67,6 +67,16 @@ cloud:
       auto: false
     cloudfront:
       domain: ${{CLOUDFRONT_DOMAIN_KEY}}
+    sqs:
+      url:
+        auction-end-queue: ${{AUCTION_END_SQS_URL}}
+        auction-req-queue-fifo: ${{AUCTION_REQ_SQS_URL}}
+    scheduler:
+      arn:
+        schedule-role: ${{SCHEDULE_ROLE_ARN}}
+        sqs-queue: ${{AUCTION_END_SQS_ARN}}
+      access-key-id: ${{SQS_ACCESS_KEY}}
+      secret-access-key: ${{SQS_SECRET_KEY}}
 
 management:
   endpoints:
