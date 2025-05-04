@@ -44,18 +44,54 @@
 
 
 ## 2. 주요 기능
-
-
 <details>
     <summary><b>[🔒 회원가입/로그인]</b> JWT, Spring Security 및 OAuth2.0을 이용한 유저 인증/인가</summary>
+<br/>
+<table>
+	<tr>
+		<td width="50%"><img src="https://github.com/user-attachments/assets/06812d54-af6c-490e-a99c-f23806286cb2"/></td>
+		<td width="50%"><img src="https://github.com/user-attachments/assets/e4d9a163-365f-4424-ba76-3868efbffe1a"/></td>
+	</tr>
+	<tr>
+		<td>JWT를 이용한 자체 인증</td>
+		<td>OAuth 2.0을 이용한 인증</td>
+	</tr>
+</table>
+<br/>
 </details>
 
 <details>
     <summary><b>[💰 결제/정산]</b> 토스 페이먼츠를 이용한 결제 기능과 스케줄러를 이용한 자동 정산 기능</summary>
+	<br/>
+	<table>
+		<tr>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/3ada77c3-fe42-48a9-9a92-0bf8b536f9ad"/></td>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/ba806099-3967-43a7-876f-e789861b1f54"/></td>
+		</tr>
+		<tr>
+			<td>결제</td>
+			<td>정산</td>
+		</tr>
+	</table>
+	<br/>
 </details>
 
 <details>
-    <summary><b>[💬 판매자 채팅]</b> </summary>
+    <summary><b>[💬 판매자 채팅]</b> Stomp + Redis를 이용한 실시간 채팅</summary>
+	<br/>
+	<table>
+		<tr>
+			<td width="33%"><img src="https://github.com/user-attachments/assets/ecd73cbc-3e8e-47d4-8238-a3ba63cb1f73"/></td>
+			<td width="33%"><img src="https://github.com/user-attachments/assets/0cdba674-2980-403d-bd57-282a9376fba7"/></td>
+			<td width="33%"><img src="https://github.com/user-attachments/assets/a0c6ccb6-8f0c-482f-a434-c57c0a585b9a"/></td>
+		</tr>
+		<tr>
+			<td>채팅 요청</td>
+			<td>메시지 전송 V1</td>
+			<td>메시지 전송 V2</td>
+		</tr>
+	</table>
+	<br/>
 </details>
 
 <details>
@@ -64,18 +100,64 @@
 
 <details>
   <summary><b>[👍🏻 경매 추천]</b> Redis SortedSet을 통한 경매 Rule-based 추천 시스템</summary>
+	<br/>
+	<table>
+		<tr>
+			<td><img src="https://github.com/user-attachments/assets/f0280283-d991-49ee-b588-e679cf932443" width="400px"/></td>
+		</tr>
+		<tr>
+			<td>경매 추천</td>
+		</tr>
+	</table>
+	<br/>
 </details>
 
 <details>
     <summary><b>[📈 상품 가격 예측]</b> Chat GPT + Naver OpenAPI를 결합한 경매 상품 시세 예측</summary>
+	<br/>
+	<table>
+		<tr>
+			<td><img src="https://github.com/user-attachments/assets/e76af344-ccc9-4fbe-9a93-779a11ac0283" width="400px"/></td>
+		</tr>
+		<tr>
+			<td>경매 추천</td>
+		</tr>
+	</table>
+	<br/>
 </details>
 
 <details>
-    <summary><b>[🏁 입찰 / 즉시 구매]</b> JWT, Spring Security 및 OAuth2.0을 이용한 유저 인증/인가 기능</summary>
+    <summary><b>[🏁 입찰 / 즉시 구매]</b> Redis + SQS를 활용한 이벤트 기반의 입찰 / 즉시 구매 처리</summary>
+	<br/>
+	<table>
+		<tr>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/0443bb2c-57c8-4af4-b837-dd761dd06989" /></td>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/cb9a443a-faf2-417d-a81e-ead68c52e7b0" /></td>
+		</tr>
+		<tr>
+			<td>입찰 V1</td>
+			<td>입찰 V2</td>
+		</tr>
+	</table>
+	<br/>
 </details>
 
 <details>
-    <summary><b>[⏰ 경매 종료 알림]</b> </summary>
+    <summary><b>[⏰ 경매 종료 알림]</b> Eventbridge + SQS를 활용한 경매 종료 알림</summary>
+ 	<br/>
+	<table>
+		<tr>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/410b793d-561e-4c32-a1fe-6eb4bea862cf" /></td>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/e6d72305-55d7-4ca1-929c-d7edc6b435d3" /></td>
+		</tr>
+		<tr>
+			<td>입찰 V1</td>
+			<td>입찰 V2</td>
+		</tr>
+	</table>
+	<br/>
+
+
 </details>
 
 <br/>
@@ -92,6 +174,7 @@
   <summary>
     <a href="https://www.notion.so/1e70b71c146780bebf28e31cf5d182e9?pvs=4">🔑 큐 기반 웹훅 재시도 로직을 채택한 이유</a>
   </summary>
+
 
 ### 문제 상황
 
