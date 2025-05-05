@@ -115,14 +115,14 @@ public class MarketPriceService {
     }
 
 
-    // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 5개 상품 기준으로 경매 결과 분석)
+    // 미래 3개월 시세 예측 기능 (동일 상품이 있는 경우 최근 10개 상품 기준으로 경매 결과 분석)
     @Transactional
     public FutureMarketPriceResponse findOrPredictFutureMarketPrices(String productName) {
         LocalDate today = LocalDate.now();
         List<LocalDate> futureDates = IntStream.rangeClosed(1, 3)
                 .mapToObj(i -> today.plusMonths(i).withDayOfMonth(1))
                 .toList();
-        //최근 등록된 동일 상품명 기준 상품 5개 조회
+        //최근 등록된 동일 상품명 기준 상품 10개 조회
         List<Product> recentProducts = productRepository.findTop10ByNameOrderByCreatedAtDesc(productName);
         if (recentProducts.isEmpty()) {
             return FutureMarketPriceResponse.builder()
@@ -152,28 +152,31 @@ public class MarketPriceService {
                     .filter(Objects::nonNull)
                     .toList();
 
-            //description 5개를 모두 합쳐서 프롬프트 생성
-        String combinedDescription = recentProducts.stream()
-                .map(Product::getDescription)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.joining("\n"));
+            if (!winPrices.isEmpty()) {
+                String combinedDescription = recentProducts.stream()
+                        .map(Product::getDescription)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .collect(Collectors.joining("\n"));
 
-            predicted = chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
+                predicted = chatGPTClient.callGptForFuturePrices(productName, combinedDescription, winPrices);
 
-            List<MarketPrice> toSave = predicted.stream()
-                    .filter(p -> missingDates.contains(LocalDate.parse(p.getDate())))
-                    .map(p -> MarketPrice.builder()
-                            .product(productRef)
-                            .priceDate(LocalDate.parse(p.getDate()))
-                            .minMarketPrice(p.getMin())
-                            .maxMarketPrice(p.getMax())
-                            .priceType(PriceType.PREDICTED)
-                            .build())
-                    .toList();
+                List<MarketPrice> toSave = predicted.stream()
+                        .filter(p -> missingDates.contains(LocalDate.parse(p.getDate())))
+                        .map(p -> MarketPrice.builder()
+                                .product(productRef)
+                                .priceDate(LocalDate.parse(p.getDate()))
+                                .minMarketPrice(p.getMin())
+                                .maxMarketPrice(p.getMax())
+                                .priceType(PriceType.PREDICTED)
+                                .build())
+                        .toList();
 
-            marketPriceRepository.saveAll(toSave);
-            toSave.forEach(mp -> existingPriceMap.put(mp.getPriceDate(), mp));
+                marketPriceRepository.saveAll(toSave);
+                toSave.forEach(mp -> existingPriceMap.put(mp.getPriceDate(), mp));
+            } else {
+                log.info("1일 기준 향후 3개월 시세 정보가 존재하지 않습니다.");
+            }
         }
 
         List<MarketPriceResponse> finalResult = futureDates.stream()
@@ -183,7 +186,7 @@ public class MarketPriceService {
                 .toList();
 
         String message = finalResult.isEmpty()
-                ? "향후 3개월 1일 기준 시세 정보가 존재하지 않습니다."
+                ? "1일 기준 향후 3개월 시세 정보가 존재하지 않습니다."
                 : null;
 
         return FutureMarketPriceResponse.builder()
