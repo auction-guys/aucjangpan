@@ -1108,6 +1108,7 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 
 <details>
     <summary>회원</summary>
+<img src="https://github.com/user-attachments/assets/784bf420-d2a5-4482-a9dd-d6e57b1cf542" width="900px"/>
 </details>
 
 <details>
