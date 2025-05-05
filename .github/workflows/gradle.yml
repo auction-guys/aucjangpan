@@ -75,7 +75,7 @@ jobs:
           GMAIL_USERNAME=${{secrets.GMAIL_USERNAME}}
           GMAIL_PASSWORD=${{secrets.GMAIL_PASSWORD}}
           ADMIN_EMAIL=${{secrets.ADMIN_EMAIL}}
-          AUCTION_END_SQS_URL=${{secrets.AUCTION_QUEUE_URL}}
+          AUCTION_END_SQS_URL=${{secrets.AUCTION_END_SQS_URL}}
           AUCTION_REQ_SQS_URL=${{secrets.AUCTION_REQ_SQS_URL}}
           SCHEDULE_ROLE_ARN=${{secrets.SCHEDULE_ROLE_ARN}}
           AUCTION_END_SQS_ARN=${{secrets.AUCTION_END_SQS_ARN}}
