@@ -1108,7 +1108,7 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 
 <details>
     <summary>회원</summary>
-<img src="https://github.com/user-attachments/assets/784bf420-d2a5-4482-a9dd-d6e57b1cf542" width="900px"/>
+<img src="https://github.com/user-attachments/assets/cea19207-0cac-4f47-a803-e958f58c9e37" width="900px"/>
 </details>
 
 <details>
@@ -1142,7 +1142,14 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 </details>
 
 <details>
-    <summary>상품</summary>
+    <summary>상품/찜하기</summary>
+
+#### 상품
+<img src="https://github.com/user-attachments/assets/b32d1505-e058-4297-b1f1-2b15ab7d2712" width="900px"/>
+<img src="https://github.com/user-attachments/assets/e40472d9-6e5f-41c3-a69c-caa2e0201736" width="900px"/>
+
+#### 찜하기
+<img src="https://github.com/user-attachments/assets/adbe8bb6-7dc4-4038-adbd-d793d3dfee25" width="900px"/>
 </details>
 
 <details>
