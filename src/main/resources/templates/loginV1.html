@@ -53,7 +53,7 @@
         const password = document.getElementById('password').value;
 
         const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "test";
-        const API_URL = `http://${API_HOST}:8080/api/v1/auth/login`;
+        const API_URL = `http://${API_HOST}/api/v1/auth/login`;
 
         fetch(API_URL, {
             method: 'POST',
@@ -82,7 +82,7 @@
         const sellerId = document.getElementById("sellerId").value;
 
         const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
-        const API_URL = `http://${API_HOST}:8080/api/v1/chatRoom`;
+        const API_URL = `http://${API_HOST}/api/v1/chatRoom`;
 
         fetch(API_URL, {
             method: "POST",
@@ -118,7 +118,7 @@
     function connectStomp(chatRoomId) {
         const token = sessionStorage.getItem("jwt");
         const API_HOST = /*[[${@environment.getProperty('api.host')}]]*/ "localhost";
-        const API_URL = `http://${API_HOST}:8080/chat/inbox`;
+        const API_URL = `http://${API_HOST}/chat/inbox`;
 
         const socket = new SockJS(API_URL);
         stompClient = Stomp.over(socket);
