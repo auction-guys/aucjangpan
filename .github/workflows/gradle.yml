@@ -17,7 +17,7 @@ jobs:
 
       # Spring Boot app Build
       - name: Spring Boot build
-        run: ./gradlew clean build -x test -Dspring.profiles.active=prod
+        run: ./gradlew clean build -Dspring.profiles.active=prod
 
       # Docker Image Build
       - name: docker image build
