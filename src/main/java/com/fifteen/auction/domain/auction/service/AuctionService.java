@@ -264,3 +264,5 @@ public class AuctionService {
 
         return new AuctionOverviewResponse(recommended, others.getContent(), PageInfo.fromPage(others));
     }
+}
+
