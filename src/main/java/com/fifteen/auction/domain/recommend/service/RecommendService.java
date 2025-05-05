@@ -35,7 +35,7 @@ public class RecommendService {
     private final RecommendRedisRepository recommendRedisRepository;
 
 
-    public void generateRecommendationsForGroup(RecommendGroup group) {
+    public void generateRecommendationsForGroup(RecommendGroup group, Long currentUserId) {
         List<User> users = userRepository.findByRecommendGroup(group);
         if (users.isEmpty()) return;
 
@@ -72,9 +72,12 @@ public class RecommendService {
 
         List<Auction> auctions = auctionRepository.findOpenAuctionsByTagIds(topTagIds);
 
+        List<Auction> filteredAuctions = auctions.stream()
+                .filter(a -> !Objects.equals(a.getProduct().getSeller().getId(), currentUserId))
+                .toList();
         Map<Long, Integer> scoreMap = new HashMap<>();
 
-        for (Auction auction : auctions) {
+        for (Auction auction : filteredAuctions) {
             Set<Long> auctionTagIds = auction.getTagIds();
             for (Long tagId : topTagIds) {
                 if (auctionTagIds.contains(tagId)) {
@@ -91,25 +94,27 @@ public class RecommendService {
         List<RecommendRedisRepository.AuctionScore> scores = sorted.stream()
                 .map(e -> new RecommendRedisRepository.AuctionScore(e.getKey(), e.getValue()))
                 .toList();
-      
+
         recommendRedisRepository.saveRecommendations(group.getId(), scores);
     }
 
     @Transactional(readOnly = true)
-    public List<RecommendationResponse> getRecommendationsForGroup(RecommendGroup group) {
+    public List<RecommendationResponse> getRecommendationsForGroup(RecommendGroup group, Long currentUserId) {
         Set<ZSetOperations.TypedTuple<String>> results =
                 recommendRedisRepository.getTopRecommendations(group.getId(), 10);
 
         if (results.isEmpty()) {
-            generateRecommendationsForGroup(group);
+            generateRecommendationsForGroup(group, currentUserId);
             results = recommendRedisRepository.getTopRecommendations(group.getId(), 10);
         }
 
-        return mapToRecommendationResponses(results);
+        return mapToRecommendationResponses(results, currentUserId);
     }
 
-    private List<RecommendationResponse> mapToRecommendationResponses(Set<ZSetOperations.TypedTuple<String>> results) {
-      
+    private List<RecommendationResponse> mapToRecommendationResponses(
+            Set<ZSetOperations.TypedTuple<String>> results,
+            Long currentUserId
+    ) {
         List<Long> auctionIds = results.stream().map(t -> Long.valueOf(t.getValue())).toList();
         List<Auction> auctions = auctionRepository.findAllById(auctionIds);
         Map<Long, Auction> auctionMap = auctions.stream().collect(Collectors.toMap(Auction::getId, a -> a));
@@ -119,7 +124,8 @@ public class RecommendService {
         for (ZSetOperations.TypedTuple<String> tuple : results) {
             Long id = Long.valueOf(tuple.getValue());
             Auction auction = auctionMap.get(id);
-            if (auction != null) {
+
+            if (auction != null && !auction.getProduct().getSeller().getId().equals(currentUserId)) {
                 response.add(RecommendationResponse.of(auction, tuple.getScore().intValue(), ranking++));
             }
         }

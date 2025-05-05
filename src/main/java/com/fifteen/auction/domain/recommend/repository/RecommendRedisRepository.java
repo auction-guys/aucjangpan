@@ -50,4 +50,9 @@ public class RecommendRedisRepository {
     }
 
     public record AuctionScore(Long auctionId, int score) {}
+
+    public Set<String> findTopAuctionIds(Long groupId, int limit) {
+        String key = RECOMMEND_KEY_PREFIX + groupId;
+        return redisTemplate.opsForZSet().reverseRange(key, 0, limit - 1);
+    }
 }

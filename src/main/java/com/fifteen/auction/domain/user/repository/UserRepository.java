@@ -25,4 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void softDeleteByEmail(@Param("email") String email);
 
     List<User> findByRecommendGroup(RecommendGroup recommendGroup);
+
+    @Query("SELECT u.recommendGroup.id FROM User u WHERE u.id = :userId")
+    Optional<Long> findRecommendGroupId(@Param("userId") Long userId);
 }

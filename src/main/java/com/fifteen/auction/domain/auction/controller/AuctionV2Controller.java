@@ -1,8 +1,10 @@
 package com.fifteen.auction.domain.auction.controller;
 
+import com.fifteen.auction.domain.auction.dto.response.AuctionOverviewResponse;
 import com.fifteen.auction.domain.auction.dto.response.CurrentPriceInfo;
 import com.fifteen.auction.domain.auction.service.AuctionService;
 import com.fifteen.auction.domain.user.auth.entity.AuthUser;
+import com.fifteen.auction.global.dto.PageCond;
 import com.fifteen.auction.global.dto.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,5 +33,14 @@ public class AuctionV2Controller {
     ) {
         CurrentPriceInfo currentPrice = auctionService.findCurrentPrice(auctionSeq);
         return ResponseEntity.ok(Response.of(currentPrice));
+    }
+
+    @GetMapping("/v2/auctions/overview")
+    ResponseEntity<Response<AuctionOverviewResponse>> getAuctionOverview(
+            @AuthenticationPrincipal AuthUser authUser,
+            @ModelAttribute PageCond cond
+    ) {
+        AuctionOverviewResponse result = auctionService.getAuctionOverview(authUser.getId(), cond);
+        return ResponseEntity.ok(Response.of(result));
     }
 }
