@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "auction_tag", uniqueConstraints = @UniqueConstraint(columnNames = {"auction_id", "tag_id"}))
@@ -26,6 +28,10 @@ public class AuctionTag {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tag_id")
     private Tag tag;
+
+    private LocalDateTime auctionTagAt;
+
+    private LocalDateTime auctionTagUpdatedAt;
 
     // 생성자
     private AuctionTag(Auction auction, Tag tag) {

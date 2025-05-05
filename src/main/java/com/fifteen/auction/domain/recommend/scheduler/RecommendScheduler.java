@@ -25,7 +25,7 @@ public class RecommendScheduler {
 
         log.info("[배치 시작] 전체 그룹 수: {}", groups.size());
         for (RecommendGroup group : groups) {
-            recommendService.generateRecommendationsForGroup(group); // 기존 추천 생성 로직 재사용
+            recommendService.generateRecommendationsForGroup(group, null); // 기존 추천 생성 로직 재사용
             log.info("추천 갱신 완료 - groupId: {}", group.getId());
         }
         log.info("[배치 종료]");
