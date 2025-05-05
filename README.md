@@ -1113,6 +1113,12 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 <details>
     <summary>경매</summary>
 
+#### V1
+<img src="https://github.com/user-attachments/assets/a37cbc28-d59a-4d94-9373-2562007c204a" width="900px"/>
+<img src="https://github.com/user-attachments/assets/c965375a-6b45-4c33-b502-98588f190469" width="900px"/>
+<img src="https://github.com/user-attachments/assets/7bf9d8d6-48b6-45f9-9415-e82b9a6cc747" width="900px"/>
+
+
 #### V2, V3
 
 <img src="https://github.com/user-attachments/assets/45fb123d-d714-4dfb-a713-4a6093baf1cf" width="900px"/>
