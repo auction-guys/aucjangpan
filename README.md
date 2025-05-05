@@ -1100,10 +1100,59 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 
 ## 7. ERD / API 문서
 
+### 📗 ERD
+
 <br/>
 
-## 8. 성과 및 회고
+### 📕 API 문서
 
+<details>
+    <summary>회원</summary>
+</details>
+
+<details>
+    <summary>경매</summary>
+
+#### V2, V3
+
+<img src="https://github.com/user-attachments/assets/45fb123d-d714-4dfb-a713-4a6093baf1cf" width="900px"/>
+</details>
+
+<details>
+    <summary>알림함</summary>
+<img src="https://github.com/user-attachments/assets/cc97b2a6-e089-4951-b93d-83406ae2ab13" width="900px"/>
+</details>
+
+<details>
+    <summary>주문/결제</summary>
+	
+#### 주문
+<img src="https://github.com/user-attachments/assets/7af110f3-5bf1-4df6-98af-d50285c857a9" width="900px"/>
+
+#### 결제
+<img src="https://github.com/user-attachments/assets/7c97ea37-8d1e-4ff5-b2ad-5f315a07f432" width="900px"/>
+
+</details>
+
+<details>
+    <summary>상품</summary>
+</details>
+
+<details>
+    <summary>정산</summary>
+<img src="https://github.com/user-attachments/assets/6c087dc3-af76-4688-9bf8-68d48c3d6990" width="900px"/>
+<img src="https://github.com/user-attachments/assets/1aec81f6-2c72-4ac6-860c-30adf07487bc" width="900px"/>
+</details>
+
+<details>
+    <summary>채팅</summary>
+<img src="https://github.com/user-attachments/assets/98a92feb-872c-4391-b37b-d6d1de6058cc" width="900px"/>
+<img src="https://github.com/user-attachments/assets/c24e453b-e3f3-481a-8b5f-31760dc8b091" width="900px"/>
+</details>
+<br/>
+
+
+## 8. 성과 및 회고
 
 ### 👍🏻 잘된 점
     
