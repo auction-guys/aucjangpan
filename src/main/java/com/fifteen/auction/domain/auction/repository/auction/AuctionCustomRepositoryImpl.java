@@ -34,6 +34,8 @@ public class AuctionCustomRepositoryImpl implements AuctionCustomRepository {
                 .join(product.seller, user).fetchJoin()
                 .where(statusIsOpen())
                 .orderBy(auction.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch()
                 .stream()
                 .map(AuctionListItem::fromAuction)
@@ -68,4 +70,59 @@ public class AuctionCustomRepositoryImpl implements AuctionCustomRepository {
     private BooleanExpression sellerIdEquals(Long sellerId) {
         return auction.product.seller.id.eq(sellerId);
     }
+
+    @Override
+    public List<AuctionListItem> findListItemsByIds(List<Long> ids) {
+        if (ids.isEmpty()) return List.of();
+
+        List<Auction> auctions = queryFactory
+                .selectFrom(auction)
+                .join(auction.product, product).fetchJoin()
+                .join(product.seller, user).fetchJoin()
+                .where(auction.id.in(ids), auction.status.eq(AuctionStatus.OPEN))
+                .fetch();
+
+        // Redis에서의 순서 유지
+        return ids.stream()
+                .map(id -> auctions.stream()
+                        .filter(a -> a.getId().equals(id))
+                        .findFirst()
+                        .map(AuctionListItem::fromAuction)
+                        .orElse(null))
+                .filter(a -> a != null)
+                .toList();
+    }
+
+    @Override
+    public Page<AuctionListItem> findAllOpenExcludingIds(List<Long> excludeIds, Pageable pageable) {
+        List<Auction> result = queryFactory
+                .selectFrom(auction)
+                .join(auction.product, product).fetchJoin()
+                .join(product.seller, user).fetchJoin()
+                .where(
+                        auction.status.eq(AuctionStatus.OPEN),
+                        excludeIds == null || excludeIds.isEmpty() ? null : auction.id.notIn(excludeIds)
+                )
+                .orderBy(auction.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        List<AuctionListItem> items = result.stream()
+                .map(AuctionListItem::fromAuction)
+                .toList();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(auction.count())
+                .from(auction)
+                .where(
+                        auction.status.eq(AuctionStatus.OPEN),
+                        excludeIds == null || excludeIds.isEmpty() ? null : auction.id.notIn(excludeIds)
+                );
+
+        return PageableExecutionUtils.getPage(items, pageable, countQuery::fetchOne);
+    }
+
+
 }
+

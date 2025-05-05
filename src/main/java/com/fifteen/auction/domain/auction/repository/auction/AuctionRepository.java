@@ -23,10 +23,12 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
 
     // Auction과 Tag를 연결하는 AuctionTag를 통해 경매와 태그를 찾음
     @Query("""
-            SELECT DISTINCT a FROM Auction a
-            JOIN a.tags at
-            WHERE at.tag.id IN :tagIds AND a.status = 'OPEN'
-            """)
+        SELECT DISTINCT a FROM Auction a
+        JOIN FETCH a.product p
+        JOIN FETCH p.seller s
+        JOIN a.tags at
+        WHERE at.tag.id IN :tagIds AND a.status = 'OPEN'
+    """)
     List<Auction> findOpenAuctionsByTagIds(@Param("tagIds") List<Long> tagIds);
 
     List<Auction> findByProduct_NameAndStatus(String name, AuctionStatus status);

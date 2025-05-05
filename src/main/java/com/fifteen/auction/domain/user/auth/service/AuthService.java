@@ -71,7 +71,7 @@ public class AuthService {
                 UserRole.valueOf(signupRequest.getRole())
         );
         userRepository.save(user);
-        recommendService.generateRecommendationsForGroup(group);
+        recommendService.generateRecommendationsForGroup(group, user.getId());
     }
 
     @Transactional

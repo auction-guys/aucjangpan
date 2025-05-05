@@ -3,10 +3,7 @@ package com.fifteen.auction.domain.auction.service;
 import com.fifteen.auction.domain.auction.dto.event.AuctionOpenEvent;
 import com.fifteen.auction.domain.auction.dto.request.AuctionCreateRequest;
 import com.fifteen.auction.domain.auction.dto.request.AuctionUpdateRequest;
-import com.fifteen.auction.domain.auction.dto.response.AuctionDetail;
-import com.fifteen.auction.domain.auction.dto.response.AuctionListItem;
-import com.fifteen.auction.domain.auction.dto.response.AuctionLog;
-import com.fifteen.auction.domain.auction.dto.response.CurrentPriceInfo;
+import com.fifteen.auction.domain.auction.dto.response.*;
 import com.fifteen.auction.domain.auction.entity.Auction;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRedisRepository;
 import com.fifteen.auction.domain.auction.repository.auction.AuctionRepository;
@@ -19,10 +16,13 @@ import com.fifteen.auction.domain.product.dto.response.MarketPriceFullResponse;
 import com.fifteen.auction.domain.product.entity.Product;
 import com.fifteen.auction.domain.product.repository.ProductRepository;
 import com.fifteen.auction.domain.product.service.MarketPriceService;
+import com.fifteen.auction.domain.recommend.repository.RecommendRedisRepository;
 import com.fifteen.auction.domain.recommend.service.RedisService;
 import com.fifteen.auction.domain.tag.entity.Tag;
 import com.fifteen.auction.domain.tag.repository.TagRepository;
+import com.fifteen.auction.domain.user.repository.UserRepository;
 import com.fifteen.auction.global.dto.PageCond;
+import com.fifteen.auction.global.dto.PageInfo;
 import com.fifteen.auction.global.dto.error.ErrorCode;
 import com.fifteen.auction.global.dto.exception.ClientException;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import static com.fifteen.auction.domain.user.enums.UserRole.Authority.ROLE_USER;
 
@@ -58,6 +59,9 @@ public class AuctionService {
 
     private final RedisService redisService;
     private final TagRepository tagRepository;
+
+    private final UserRepository userRepository;
+    private final RecommendRedisRepository recommendRedisRepository;
 
     @Secured(ROLE_USER)
     @Transactional
@@ -229,4 +233,34 @@ public class AuctionService {
         Long currentPrice = auctionRedisRepository.findCurrentPrice(auctionSeq);
         return new CurrentPriceInfo(currentPrice);
     }
-}
+
+    @Secured(ROLE_USER)
+    @Transactional(readOnly = true)
+    public AuctionOverviewResponse getAuctionOverview(Long userId, PageCond cond) {
+        // 1. 추천 그룹 ID 조회
+        Long groupId = userRepository.findRecommendGroupId(userId)
+                .orElseThrow(() -> new ClientException(ErrorCode.RECOMMEND_NOT_FOUND));
+
+        // 2. Redis에서 추천 ID 조회
+        Set<String> redisIds = recommendRedisRepository.findTopAuctionIds(groupId, 10);
+        List<Long> recommendedIds = redisIds.stream().map(Long::valueOf).toList();
+
+        // 3. 추천 옥션 상세 조회 (순서 유지)
+        List<AuctionListItem> recommended = auctionRepository.findListItemsByIds(recommendedIds);
+        recommended.forEach(a -> {
+            Long currentPrice = auctionRedisRepository.findCurrentPrice(a.getAuctionSeq());
+            Long bidCount = auctionRedisRepository.findBidCount(a.getAuctionSeq());
+            a.updateBidInfo(currentPrice, bidCount);
+        });
+
+        // 4. 나머지 옥션 페이징 조회
+        Pageable pageable = PageRequest.of(cond.getPageNum() - 1, cond.getPageSize());
+        Page<AuctionListItem> others = auctionRepository.findAllOpenExcludingIds(recommendedIds, pageable);
+        others.forEach(a -> {
+            Long currentPrice = auctionRedisRepository.findCurrentPrice(a.getAuctionSeq());
+            Long bidCount = auctionRedisRepository.findBidCount(a.getAuctionSeq());
+            a.updateBidInfo(currentPrice, bidCount);
+        });
+
+        return new AuctionOverviewResponse(recommended, others.getContent(), PageInfo.fromPage(others));
+    }
