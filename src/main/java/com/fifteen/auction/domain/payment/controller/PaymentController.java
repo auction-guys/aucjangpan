@@ -79,7 +79,7 @@ public class PaymentController {
     }
 
     @PostMapping("/api/v1/payments/webhook")
-    public ResponseEntity<Response<FindPaymentResponse>> receiveWebhook(
+    public ResponseEntity<Void> receiveWebhook(
             @RequestBody PaymentResponse dto,
             HttpServletRequest request) {
 
