@@ -96,6 +96,18 @@
 
 <details>
   <summary><b>[📦 상품 이미지 관리]</b> S3 + CloudFront를 이용한 최적화된 이미지 관리</summary>
+	<br/>
+	<table>
+		<tr>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/1669e37c-6455-423c-89aa-21a4c21d9b70" /></td>
+			<td width="50%"><img src="https://github.com/user-attachments/assets/c1cfc923-b389-42e2-9ef0-7b6fad2c078c" /></td>
+		</tr>
+		<tr>
+			<td>이미지 업로드</td>
+			<td>이미지 조회</td>
+		</tr>
+	</table>
+	<br/>	
 </details>
 
 <details>
@@ -120,7 +132,7 @@
 			<td><img src="https://github.com/user-attachments/assets/e76af344-ccc9-4fbe-9a93-779a11ac0283" width="400px"/></td>
 		</tr>
 		<tr>
-			<td>경매 추천</td>
+			<td>상품 가격 예측</td>
 		</tr>
 	</table>
 	<br/>
@@ -151,8 +163,8 @@
 			<td width="50%"><img src="https://github.com/user-attachments/assets/e6d72305-55d7-4ca1-929c-d7edc6b435d3" /></td>
 		</tr>
 		<tr>
-			<td>입찰 V1</td>
-			<td>입찰 V2</td>
+			<td>경매 종료 알림 V1</td>
+			<td>경매 종료 알림 V2</td>
 		</tr>
 	</table>
 	<br/>
@@ -1170,11 +1182,25 @@ Redis의 메모리 사용량은 소폭 증가했지만, TTL을 기반으로 한 
 
 ## 8. 성과 및 회고
 
-### 👍🏻 잘된 점
-    
-### 👀 아쉬운 점
+### ✅ 잘된 점
+- 팀원 간 **화목한 분위기를 유지하며 소통**하고, 갈등 없이 프로젝트를 마무리한 것
+- 개발 과정에 있어 **토의를 통해 함께  깊이 있는 고민**을 하고 문제 해결 방안을 찾아 적용한 것
+- 기획 당시 생각했던 **도전 기능을 모두 반영**한 것
+- 부하 테스트를 통해 **성능 저하에 대한 가설**을 세우고 **개선**해 가는 과정을 경험한 것
+- 활발하게 **PR을 검토하고 리뷰**하는 문화를 시도한 것
+
+### 🏃 아쉬운 점
+- 프로젝트 상황상 로컬 환경에서만 부하 테스트를 진행, **프로덕션 환경과 동일하지 못했던 점**
+- 개선의 방향성을 설계했으나 **모든 개선 사항을 반영하지는 못한 것**
+- Use Case에 대한 **테스트를 전부 커버하지 못한 것**
+- MSA에서 **일관성, 가용성, 분할 허용성 간의 관계**를 고려하며 설계하는 경험을 하지 못한 것
 
 ### 📆 향후 계획
+- 상품명 정규화 또는 **ElasticSearch** 도입
+- 모놀리식 → 마이크로 서비스 아키텍처(**MSA**) 전환
+- 분산 환경에서의 **Tx 관리, Eventual Consistency** 보장
+- 정산 등에 **Spring Batch 적용 및 비동기 처리** 이벤트 큐 구조로 전환
+
 
 <br/>
 
