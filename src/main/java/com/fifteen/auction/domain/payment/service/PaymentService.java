@@ -44,7 +44,7 @@ public class PaymentService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     // 부하테스트용 코드
-    private final Jmeterfeigin jmeterfeigin;
+//    private final Jmeterfeigin jmeterfeigin;
 
     @Transactional
     public ConfirmResponse confirm(PaymentRequest request, Long currentUserId) {
@@ -187,7 +187,7 @@ public class PaymentService {
         PaymentStatus status = dto.getStatus();
 
         // 서버 멱등성 체크용 키
-        String key = DigestUtils.sha256Hex(paymentKey+status);
+        String key = DigestUtils.sha256Hex(paymentKey + status);
         // Redis 캐시 확인
         String cacheKey = "webhook:idempotency:" + key;
         // 이미 처리된 요청인지 체크

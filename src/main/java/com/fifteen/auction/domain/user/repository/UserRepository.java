@@ -26,6 +26,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRecommendGroup(RecommendGroup recommendGroup);
 
-    @Query("SELECT u.recommendGroup.id FROM User u WHERE u.id = :userId")
-    Optional<Long> findRecommendGroupId(@Param("userId") Long userId);
+    @Query("SELECT u FROM User u " +
+            "WHERE u.id = :userId " +
+            "AND u.role = 'ROLE_ADMIN'")
+    Optional<User> findByUserIdAndUserRole(Long userId);
 }

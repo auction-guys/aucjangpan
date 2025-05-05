@@ -106,7 +106,7 @@ public class OrderService {
     @Transactional
     public void confirmOrder(Long currentUserId, String orderId) {
 
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdFetchAuction(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.ORDER_NOT_FOUND));
 
         order.confirm(currentUserId);
