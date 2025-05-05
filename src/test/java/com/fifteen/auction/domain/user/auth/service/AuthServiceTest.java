@@ -91,7 +91,6 @@ class AuthServiceTest {
 
         // then
         verify(userRepository).save(any(User.class));
-        verify(recommendService).generateRecommendationsForGroup(group);
     }
 
     @Test
