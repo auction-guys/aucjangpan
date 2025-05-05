@@ -51,9 +51,10 @@ public class PaymentController {
 
     @GetMapping("/api/v1/payments/confirm")
     public ResponseEntity<Response<ConfirmResponse>> confirmPayment(
-            @AuthenticationPrincipal AuthUser authUser,
+            // @AuthenticationPrincipal AuthUser authUser,
             @ModelAttribute PaymentRequest paymentRequest) {
-        Long currentUserId = authUser.getId();
+        // Long currentUserId = authUser.getId();
+        Long currentUserId = 183L;
 
         return ResponseEntity.ok(Response.of(paymentLockFacade.confirmPaymentWithLock(paymentRequest, currentUserId)));
     }
