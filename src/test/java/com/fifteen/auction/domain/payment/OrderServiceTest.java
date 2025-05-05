@@ -127,14 +127,13 @@ class OrderServiceTest {
             String orderId = "order-123";
             Long userId = 42L;
             Order order = mock(Order.class);
-            given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
+            given(orderRepository.findByIdFetchAuction(orderId)).willReturn(Optional.of(order));
 
             // when
             orderService.confirmOrder(userId, orderId);
 
             // then
-            ArgumentCaptor<OrderConfirmedEvent> event =
-                    ArgumentCaptor.forClass(OrderConfirmedEvent.class);
+            ArgumentCaptor<OrderConfirmedEvent> event = ArgumentCaptor.forClass(OrderConfirmedEvent.class);
             then(publisher).should().publishEvent(event.capture());
 
             OrderConfirmedEvent published = event.getValue();
@@ -146,7 +145,7 @@ class OrderServiceTest {
             // given
             String orderId = "nope";
             Long userId = 42L;
-            given(orderRepository.findById(orderId)).willReturn(Optional.empty());
+            given(orderRepository.findByIdFetchAuction(orderId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> orderService.confirmOrder(userId, orderId))
