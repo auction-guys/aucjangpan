@@ -66,7 +66,7 @@ public class SqsBidEventListener {
                     log.info("[즉시 구매 큐 이벤트 처리] auctionSeq={}\tbidderId={}\tbidPrice={}", e.getAuctionSeq(), e.getUserId(), e.getBidPrice());
                     bidEventHandler.handleBuyNowFromQueue(e.getAuctionSeq(), e.getUserId());
                 }
-                default -> log.warn("[RabbitBidRequestListener] 알 수 없는 이벤트 타입={}", typeId);
+                default -> log.warn("[SQS Listener] 알 수 없는 이벤트 타입={}", typeId);
             }
             sqsClient.deleteMessage(b -> b.queueUrl(sqsUrl).receiptHandle(receiptHandle));
         } catch (ClientException e) {

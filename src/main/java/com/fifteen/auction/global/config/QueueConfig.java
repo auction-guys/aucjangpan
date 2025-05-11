@@ -9,6 +9,8 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
+import java.net.URI;
+
 @Configuration
 public class QueueConfig {
 
@@ -23,7 +25,7 @@ public class QueueConfig {
     private String secretAccessKey;
 
     @Bean
-//    @Profile("prod")
+    @Profile("prod")
     public SqsClient sqsProdClient() {
         return SqsClient.builder()
                 .region(Region.AP_NORTHEAST_2)
@@ -33,15 +35,15 @@ public class QueueConfig {
                 .build();
     }
 
-//    @Bean
-//    @Profile("local")
+    @Bean
+    @Profile("local")
     public SqsClient sqsLocalClient() {
         return SqsClient.builder()
                 .region(Region.AP_NORTHEAST_2)
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
-                ))
-//                .endpointOverride(URI.create("http://localhost:4566"))
+//                .credentialsProvider(StaticCredentialsProvider.create(
+//                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
+//                ))
+                .endpointOverride(URI.create("http://localhost:4566"))
                 .build();
     }
 }

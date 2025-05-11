@@ -36,7 +36,6 @@ public class SqsBidEventPublisher implements AuctionEventPublisher {
                                 .stringValue(TYPE_ID_BID_REQUEST_EVENT)
                                 .dataType(STRING_DATA_TYPE).build())
                 )
-                .messageDeduplicationId(event.getAuctionSeq())
                 .messageBody(JsonUtil.writeValueAsString(event))
                 .messageGroupId(event.getAuctionSeq())
                 .build();
